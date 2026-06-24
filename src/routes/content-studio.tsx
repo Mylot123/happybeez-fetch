@@ -264,7 +264,6 @@ function ContentStudio() {
       const { data: inserted, error: insErr } = await supabase
         .from("library_photos")
         .insert({
-          user_id: user.id,
           title,
           caption: subject || null,
           tags: ["ai-gegenereerd", channel],
