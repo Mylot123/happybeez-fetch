@@ -9,6 +9,9 @@ import {
   Wand2,
   Loader2,
   Trash2,
+  Copy,
+  Download,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
