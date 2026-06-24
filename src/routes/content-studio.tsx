@@ -224,23 +224,27 @@ function ContentStudio() {
     const tokens = new Set(tokenize(contextText));
     if (photos.length === 0) return [];
     if (tokens.size === 0) return photos.slice(0, 6);
-    // Photos already used by other channels — push to the back so each channel gets variety
     const usedElsewhere = new Set(
       Object.entries(photoByChannel)
         .filter(([ch]) => ch !== channel)
         .map(([, id]) => id),
     );
+    const recent = recentByChannel[channel] ?? [];
     return [...photos]
       .map((p) => {
         let s = scorePhoto(p, tokens);
         if (usedElsewhere.has(p.id)) s -= 3;
+        // Recent posts in THIS channel get penalised, so each new post rotates
+        const recentIdx = recent.indexOf(p.id);
+        if (recentIdx >= 0) s -= 5 - recentIdx; // most recent = biggest penalty
         return { p, s };
       })
       .sort((a, b) => b.s - a.s)
-      .filter((x) => x.s > -2)
+      .filter((x) => x.s > -5)
       .slice(0, 6)
       .map((x) => x.p);
-  }, [photos, topic, keywords, generated, channel, photoByChannel]);
+  }, [photos, topic, keywords, generated, channel, photoByChannel, recentByChannel]);
+
 
   // auto-select top-ranked when ranking changes and nothing selected for this channel
   useEffect(() => {
