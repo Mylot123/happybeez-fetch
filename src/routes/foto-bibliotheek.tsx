@@ -40,6 +40,7 @@ function Kennisbank() {
   const [books, setBooks] = useState<Book[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
 
@@ -67,9 +68,29 @@ function Kennisbank() {
       );
       return;
     }
+    const photoRows = (p.data ?? []) as Photo[];
     setBooks((b.data ?? []) as Book[]);
     setSections((s.data ?? []) as Section[]);
-    setPhotos((p.data ?? []) as Photo[]);
+    setPhotos(photoRows);
+
+    const paths = photoRows
+      .map((row) => row.storage_path)
+      .filter((path): path is string => Boolean(path));
+    if (paths.length > 0) {
+      const { data: signed, error: signErr } = await supabase.storage
+        .from("library-photos")
+        .createSignedUrls(paths, 60 * 60 * 8);
+      if (signErr) {
+        toast.error(`Foto-URL's konden niet worden opgehaald: ${signErr.message}`);
+      } else if (signed) {
+        const map: Record<string, string> = {};
+        signed.forEach((entry, i) => {
+          const path = paths[i];
+          if (path && entry.signedUrl) map[path] = entry.signedUrl;
+        });
+        setSignedUrls(map);
+      }
+    }
   }
 
   const filteredPhotos = useMemo(() => {
@@ -137,7 +158,14 @@ function Kennisbank() {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
               {filteredPhotos.map((photo) => (
-                <PhotoCard key={photo.id} photo={photo} />
+                <PhotoCard
+                  key={photo.id}
+                  photo={photo}
+                  displayUrl={
+                    (photo.storage_path && signedUrls[photo.storage_path]) ||
+                    photo.image_url
+                  }
+                />
               ))}
             </div>
           )}
@@ -187,12 +215,12 @@ function Kennisbank() {
   );
 }
 
-function PhotoCard({ photo }: { photo: Photo }) {
+function PhotoCard({ photo, displayUrl }: { photo: Photo; displayUrl: string }) {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
 
   async function copyUrl() {
-    await navigator.clipboard.writeText(photo.image_url);
+    await navigator.clipboard.writeText(displayUrl);
     toast.success("URL gekopieerd.");
   }
 
@@ -205,7 +233,7 @@ function PhotoCard({ photo }: { photo: Photo }) {
       channel: "instagram",
       content_type: "foto",
       status: "idee",
-      notes: `Foto: ${photo.image_url}\nBron: ${photo.credit ?? ""}`,
+      notes: `Foto: ${displayUrl}\nBron: ${photo.credit ?? ""}`,
     });
     setSaving(false);
     if (error) return toast.error(error.message);
@@ -215,13 +243,13 @@ function PhotoCard({ photo }: { photo: Photo }) {
   return (
     <article className="bg-card border border-border rounded-lg overflow-hidden shadow-sm flex flex-col">
       <a
-        href={photo.image_url}
+        href={displayUrl}
         target="_blank"
         rel="noopener noreferrer"
         className="block aspect-[4/3] bg-muted overflow-hidden"
       >
         <img
-          src={photo.image_url}
+          src={displayUrl}
           alt={photo.title}
           loading="lazy"
           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
@@ -247,7 +275,7 @@ function PhotoCard({ photo }: { photo: Photo }) {
             <Copy className="h-3 w-3" /> URL
           </Button>
           <Button size="sm" variant="outline" asChild>
-            <a href={photo.image_url} download>
+            <a href={displayUrl} download>
               <Download className="h-3 w-3" />
             </a>
           </Button>
