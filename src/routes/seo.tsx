@@ -131,13 +131,18 @@ function Seo() {
     setAnalyzing(true);
     try {
       const data = await analyzeDomain({ data: { domain: domain.trim(), database } });
-      toast.success(`Analyse klaar — ${data.organic_keywords ?? 0} organische keywords gevonden.`);
-      await loadAll();
+      if (data.soft_error) {
+        toast.error(data.soft_error);
+      } else {
+        toast.success(`Analyse klaar — ${data.organic_keywords ?? 0} organische keywords gevonden.`);
+        await loadAll();
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Analyse mislukt.");
     } finally {
       setAnalyzing(false);
     }
+
   }
 
   async function runResearch(s?: string) {
