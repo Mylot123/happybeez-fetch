@@ -158,7 +158,14 @@ function Kennisbank() {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
               {filteredPhotos.map((photo) => (
-                <PhotoCard key={photo.id} photo={photo} />
+                <PhotoCard
+                  key={photo.id}
+                  photo={photo}
+                  displayUrl={
+                    (photo.storage_path && signedUrls[photo.storage_path]) ||
+                    photo.image_url
+                  }
+                />
               ))}
             </div>
           )}
