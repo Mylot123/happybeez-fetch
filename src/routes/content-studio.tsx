@@ -264,6 +264,24 @@ FACEBOOK PLAYBOOK (verplicht volgen voor Facebook):
 • HASHTAGS: maximaal 2–4 onderaan, of helemaal geen. Geen lijst van 10 hashtags — dat oogt als marketing.
 • Vermijd absolute claims, generieke "bijen" (gebruik "wilde bijen" / "solitaire bijen").
 `;
+      const linkedinPlaybook = `
+LINKEDIN PLAYBOOK (verplicht volgen voor LinkedIn):
+• Doel: reacties, shares, profielbezoeken via professionele micro-inzichten. GEEN likes-jacht, GEEN engagement farming ("reageer BIJ als…"), GEEN harde verkoop.
+• TOON: professioneel, deskundig, rustig, toegankelijk, menselijk. HappyBeez = betrouwbare expert in wilde bijen, biodiversiteit en natuurvriendelijke bijenhotels.
+• EÉN HOOFDBOODSCHAP per post. Eén scherpe stelling, observatie of misverstand.
+• STRUCTUUR (strikt):
+  1. HOOK: sterke professionele observatie of stelling in MAX 12 woorden, als losse openingsregel.
+  2. Korte uitleg van probleem of misverstand (1–2 zinnen).
+  3. 2–4 praktische inzichten of tips, elk op een nieuwe regel met witregel ertussen. Mag een 🌿 / ☀️ / 🐝 / 📌 emoji vooraan, maximaal één per regel.
+  4. Subtiele HappyBeez-koppeling, PAS NA de educatieve waarde. Productdetails alleen als inhoudelijk relevant: handgemaakt in Boekel, onbehandeld beukenhout, Douglas hout, geborsteld RVS, diepe gladde nestgangen, verschillende diameters, verwisselbare cassettes.
+  5. Afsluitende INHOUDELIJKE vraag waarop professionals vanuit eigen ervaring kunnen reageren — concreet over tuin, werkplek, bedrijfsterrein, schoolplein of duurzaam/MVO-beleid. NIET "Wat vind jij hiervan?".
+• LENGTE: 900–1400 tekens. Korte zinnen, korte alinea's, witregels tussen blokken.
+• GEEN MARKDOWN, geen sterretjes, geen ###-koppen, geen lijsten met "-" of "*".
+• EMOJI: maximaal 3, functioneel (🌿 biodiversiteit, 🐝 bijen, ☀️ zon, 🚫 gif, 📌 checklist). Niet elke regel een emoji.
+• HASHTAGS: maximaal 3 onderaan, relevant (bv. #biodiversiteit #wildebijen #bijenhotel).
+• Vermijd: clickbait, overdreven claims ("red de bijen", "perfecte oplossing"), generieke "bijen" — gebruik "wilde bijen" / "solitaire bijen". Benadruk dat een bijenhotel alleen werkt mét bloemen, zon, beschutting en gifvrije omgeving.
+• Relevant voor: bedrijven met groen terrein, scholen, zorginstellingen, gemeenten, hoveniers, vastgoed, recreatieparken, duurzame ondernemers, HR/CSR/ESG-verantwoordelijken én tuinliefhebbers.
+`;
 
       const prompt = `Je schrijft een ${contentType.replace("_", " ")} post voor ${channel} namens HappyBeez — handgemaakte natuurvriendelijke bijenhotels uit Boekel.
 
@@ -276,7 +294,7 @@ MERKSTIJL: rustig, deskundig, natuurvriendelijk. Gebruik termen: solitaire/wilde
 
 VERMIJD: absolute claims, generiek "bijen", suggestie dat een hotel voedsel biedt, garanties.
 
-${channel === "instagram" ? instagramPlaybook : channel === "facebook" ? facebookPlaybook : `CTA kort en neutraal. Geen hashtags.`}
+${channel === "instagram" ? instagramPlaybook : channel === "facebook" ? facebookPlaybook : channel === "linkedin" ? linkedinPlaybook : `CTA kort en neutraal. Geen hashtags.`}
 
 Geef ALLEEN de posttekst terug, in het Nederlands.`;
       const { text } = await generate({ data: { prompt } });
