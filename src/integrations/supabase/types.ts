@@ -138,6 +138,8 @@ export type Database = {
           content_type: string | null
           created_at: string
           id: string
+          image_storage_path: string | null
+          image_url: string | null
           notes: string | null
           publish_date: string | null
           source_id: string | null
@@ -154,6 +156,8 @@ export type Database = {
           content_type?: string | null
           created_at?: string
           id?: string
+          image_storage_path?: string | null
+          image_url?: string | null
           notes?: string | null
           publish_date?: string | null
           source_id?: string | null
@@ -170,6 +174,8 @@ export type Database = {
           content_type?: string | null
           created_at?: string
           id?: string
+          image_storage_path?: string | null
+          image_url?: string | null
           notes?: string | null
           publish_date?: string | null
           source_id?: string | null

@@ -1,0 +1,1 @@
+ALTER TABLE public.content_calendar_items ADD COLUMN IF NOT EXISTS image_url TEXT; ALTER TABLE public.content_calendar_items ADD COLUMN IF NOT EXISTS image_storage_path TEXT;
