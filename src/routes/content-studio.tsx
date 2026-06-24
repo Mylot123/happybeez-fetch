@@ -175,8 +175,14 @@ function ContentStudio() {
   );
 
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
+  // Per-channel selection so switching channel doesn't reuse the same image
+  const [photoByChannel, setPhotoByChannel] = useState<Record<string, string>>({});
+  const selectedPhotoId = photoByChannel[channel] ?? null;
   const [generatingImage, setGeneratingImage] = useState(false);
+
+  function setSelectedPhotoId(id: string) {
+    setPhotoByChannel((prev) => ({ ...prev, [channel]: id }));
+  }
 
   useEffect(() => {
     void loadPhotos();
@@ -211,28 +217,41 @@ function ContentStudio() {
   }
 
   const rankedPhotos = useMemo(() => {
-    const contextText = [topic, keywords, generated].filter(Boolean).join(" ");
+    const contextText = [topic, keywords, generated, channel].filter(Boolean).join(" ");
     const tokens = new Set(tokenize(contextText));
     if (photos.length === 0) return [];
     if (tokens.size === 0) return photos.slice(0, 6);
+    // Photos already used by other channels — push to the back so each channel gets variety
+    const usedElsewhere = new Set(
+      Object.entries(photoByChannel)
+        .filter(([ch]) => ch !== channel)
+        .map(([, id]) => id),
+    );
     return [...photos]
-      .map((p) => ({ p, s: scorePhoto(p, tokens) }))
+      .map((p) => {
+        let s = scorePhoto(p, tokens);
+        if (usedElsewhere.has(p.id)) s -= 3;
+        return { p, s };
+      })
       .sort((a, b) => b.s - a.s)
-      .filter((x) => x.s > 0)
+      .filter((x) => x.s > -2)
       .slice(0, 6)
       .map((x) => x.p);
-  }, [photos, topic, keywords, generated]);
+  }, [photos, topic, keywords, generated, channel, photoByChannel]);
 
-  // auto-select top-ranked when ranking changes and nothing selected (or selection no longer in top)
+  // auto-select top-ranked when ranking changes and nothing selected for this channel
   useEffect(() => {
     if (rankedPhotos.length === 0) return;
     if (!selectedPhotoId || !rankedPhotos.some((p) => p.id === selectedPhotoId)) {
-      setSelectedPhotoId(rankedPhotos[0]!.id);
+      setPhotoByChannel((prev) => ({ ...prev, [channel]: rankedPhotos[0]!.id }));
     }
-  }, [rankedPhotos, selectedPhotoId]);
+  }, [rankedPhotos, selectedPhotoId, channel]);
 
   const selectedPhoto =
     photos.find((p) => p.id === selectedPhotoId) ?? rankedPhotos[0] ?? null;
+
+
+
 
   async function runGenerateImage() {
     if (!user) return;
@@ -296,7 +315,10 @@ function ContentStudio() {
   }
 
   async function runGenerate() {
+    if (generating) return;
+    setGenerating(true);
     setGenerated("");
+
     try {
       const toneLabel = TONES.find((t) => t.value === tone)?.label ?? "warm en educatief";
       const channelHint = CHANNELS.find((c) => c.value === channel)?.hint ?? "";
