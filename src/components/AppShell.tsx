@@ -10,6 +10,7 @@ import {
   Users,
   Menu,
   LogOut,
+  Images,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/auth";
@@ -19,6 +20,7 @@ const navItems = [
   { path: "/nieuws", label: "Nieuws", icon: Newspaper },
   { path: "/kalender", label: "Kalender", icon: CalendarDays },
   { path: "/boek", label: "Boekbibliotheek", icon: BookOpen },
+  { path: "/foto-bibliotheek", label: "Foto's & Kennisbank", icon: Images },
   { path: "/content-studio", label: "Content Studio", icon: Wand2 },
   { path: "/social-profielen", label: "Social Profielen", icon: Users },
   { path: "/seo", label: "SEO & Ranking", icon: Search },
