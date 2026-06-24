@@ -61,6 +61,7 @@ export type Database = {
       }
       content_calendar_items: {
         Row: {
+          canva_link: string | null
           channel: string
           content_text: string | null
           content_type: string | null
@@ -76,6 +77,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          canva_link?: string | null
           channel: string
           content_text?: string | null
           content_type?: string | null
@@ -91,6 +93,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          canva_link?: string | null
           channel?: string
           content_text?: string | null
           content_type?: string | null

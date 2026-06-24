@@ -1,0 +1,1 @@
+ALTER TABLE public.content_calendar_items ADD COLUMN canva_link TEXT;
