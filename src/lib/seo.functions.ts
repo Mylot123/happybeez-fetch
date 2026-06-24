@@ -192,8 +192,18 @@ export const analyzeDomain = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
-    return { id: inserted.id, created_at: inserted.created_at, ...snapshot };
+    return { id: inserted.id, created_at: inserted.created_at, ...snapshot, soft_error: null as string | null };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Onbekende fout";
+      return {
+        id: null, created_at: null, domain, database_code: db,
+        rank_global: null, organic_keywords: null, organic_traffic: null, organic_cost: null,
+        top_keywords: [] as never[], competitors: [] as never[], quick_wins: [] as never[],
+        soft_error: msg,
+      };
+    }
   });
+
 
 // ──────────────────────────────────────────────────────────────────
 // Keyword research: related + question phrases for a seed
