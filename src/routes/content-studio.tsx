@@ -16,6 +16,9 @@ import {
   Send,
   Bookmark,
   MoreHorizontal,
+  ThumbsUp,
+  Globe,
+  Share2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
