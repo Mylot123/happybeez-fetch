@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -10,6 +10,12 @@ import {
   RefreshCw,
   Sparkles,
   ExternalLink,
+  Image as ImageIcon,
+  Heart,
+  MessageCircle,
+  Send,
+  Bookmark,
+  MoreHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -22,7 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { generateText } from "@/lib/ai.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,6 +49,15 @@ type Tone =
   | "persoonlijk"
   | "professioneel"
   | "poetisch";
+
+type Photo = {
+  id: string;
+  title: string;
+  caption: string | null;
+  tags: string[];
+  storage_path: string | null;
+  image_url: string;
+};
 
 const CHANNELS: { value: Channel; label: string; hint: string }[] = [
   { value: "instagram", label: "📸 Instagram", hint: "Emoji, persoonlijk, hashtags, max 2200 tekens" },
@@ -71,6 +85,45 @@ const TONES: { value: Tone; label: string }[] = [
   { value: "professioneel", label: "🎯 Professioneel & betrouwbaar" },
   { value: "poetisch", label: "✨ Poëtisch & inspirerend" },
 ];
+
+const STOPWORDS = new Set([
+  "de","het","een","en","of","maar","in","op","aan","met","voor","van","te","is","zijn","was","ook","dit","dat","die","der","den","bij","uit","om","door","naar","als","dan","ja","nee","wel","niet","je","jij","we","wij","ze","zij","hij","u","mij","ons","onze","jouw","jullie","hun","er","wat","wie","hoe","waar","wanneer","want","dus","nog","heel","veel","meer","minder","hier","daar","zo","over","tot","bij","tussen","onder","boven","tegen","na","zonder","binnen","buiten","ieder","alle","geen","kan","kunt","gaan","gaat","heeft","hebben","worden","wordt","maakt","maken","hou","houdt","goed","beter","beste","echt","echte"
+]);
+
+function tokenize(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .split(/\s+/)
+    .filter((w) => w.length >= 4 && !STOPWORDS.has(w));
+}
+
+function scorePhoto(photo: Photo, contextTokens: Set<string>): number {
+  if (contextTokens.size === 0) return 0;
+  const haystack = [
+    photo.title,
+    photo.caption ?? "",
+    photo.tags.join(" "),
+    photo.tags.join(" "), // tags weigh double
+  ].join(" ");
+  const photoTokens = tokenize(haystack);
+  let score = 0;
+  for (const tok of photoTokens) {
+    if (contextTokens.has(tok)) score += 1;
+    for (const ctx of contextTokens) {
+      if (tok !== ctx && (tok.includes(ctx) || ctx.includes(tok)) && Math.min(tok.length, ctx.length) >= 5) {
+        score += 0.5;
+        break;
+      }
+    }
+  }
+  // tag exact matches extra boost
+  for (const tag of photo.tags) {
+    const t = tag.toLowerCase();
+    if (contextTokens.has(t)) score += 2;
+  }
+  return score;
+}
 
 export const Route = createFileRoute("/content-studio")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -116,6 +169,65 @@ function ContentStudio() {
     new Date().toISOString().split("T")[0]!,
   );
 
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
+
+  useEffect(() => {
+    void loadPhotos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function loadPhotos() {
+    const { data, error } = await supabase
+      .from("library_photos")
+      .select("id,title,caption,tags,storage_path,image_url");
+    if (error) return;
+    const rows = (data ?? []) as Photo[];
+    const paths = rows
+      .map((r) => r.storage_path)
+      .filter((p): p is string => Boolean(p));
+    const urlMap: Record<string, string> = {};
+    if (paths.length > 0) {
+      const { data: signed } = await supabase.storage
+        .from("library-photos")
+        .createSignedUrls(paths, 60 * 60 * 8);
+      signed?.forEach((entry, i) => {
+        const path = paths[i];
+        if (path && entry.signedUrl) urlMap[path] = entry.signedUrl;
+      });
+    }
+    setPhotos(
+      rows.map((r) => ({
+        ...r,
+        image_url: (r.storage_path && urlMap[r.storage_path]) || r.image_url,
+      })),
+    );
+  }
+
+  const rankedPhotos = useMemo(() => {
+    const contextText = [topic, keywords, generated].filter(Boolean).join(" ");
+    const tokens = new Set(tokenize(contextText));
+    if (photos.length === 0) return [];
+    if (tokens.size === 0) return photos.slice(0, 6);
+    return [...photos]
+      .map((p) => ({ p, s: scorePhoto(p, tokens) }))
+      .sort((a, b) => b.s - a.s)
+      .filter((x) => x.s > 0)
+      .slice(0, 6)
+      .map((x) => x.p);
+  }, [photos, topic, keywords, generated]);
+
+  // auto-select top-ranked when ranking changes and nothing selected (or selection no longer in top)
+  useEffect(() => {
+    if (rankedPhotos.length === 0) return;
+    if (!selectedPhotoId || !rankedPhotos.some((p) => p.id === selectedPhotoId)) {
+      setSelectedPhotoId(rankedPhotos[0]!.id);
+    }
+  }, [rankedPhotos, selectedPhotoId]);
+
+  const selectedPhoto =
+    photos.find((p) => p.id === selectedPhotoId) ?? rankedPhotos[0] ?? null;
+
   async function runGenerate() {
     setGenerating(true);
     setGenerated("");
@@ -125,52 +237,32 @@ function ContentStudio() {
       const instagramPlaybook = `
 INSTAGRAM VIRAL-PLAYBOOK (verplicht volgen voor Instagram):
 • Doel: saves + shares + profielbezoeken. "Slow virality" via educatie en herkenning, niet schreeuwerig.
-• EÉN HOOFDBOODSCHAP per post: één probleem, één inzicht, één actie. Niet meerdere onderwerpen mixen (bv. niet tegelijk pesticiden + ophangen + voedselzekerheid). Te brede onderwerpen splits je impliciet in losse posts; kies hier de scherpste invalshoek.
-• HOOK (max 12 woorden, eerste regel): laat scrollen stoppen. Persoonlijk, prikkelend of verrassend. Geen algemeenheden als "Bijen zijn belangrijk". Voorkeurs-formules: "Wist je dat ...", "Zonder wilde bijen ...", "Veel mensen ... verkeerd ...", "Deze fout maken veel mensen met ...", "... pas écht als je dit ook doet". Hooks die werken: eten, gezondheid, tuin/balkon, fouten, simpel advies, natuur dichtbij huis.
-• DEELBAARHEID: elke post moet één concreet, praktisch inzicht bevatten dat iemand wil doorsturen ("dit wist ik niet", "handig voor jouw tuin", "dit doen veel mensen fout"). Niet alleen uitleggen wát iets is, maar een bruikbaar inzicht geven.
-• STRUCTUUR (probleem → oplossing): (1) hook, (2) probleem of misverstand, (3) gevolg in 1 zin, (4) concrete oplossing/inzicht, (5) lichte productkoppeling alléén als logisch (bv. "daarom hebben onze bijenhotels gladde, diepe nestgangen"), (6) één specifieke CTA. Korte alinea's met witregels.
-• MICRO-CONTROVERSE (welkom, niet schreeuwerig): zinnen die een misverstand corrigeren werken sterk, bv. "Een bijenhotel alleen is niet genoeg", "Niet elk bijenhotel is goed voor bijen", "Te netjes tuinieren helpt wilde bijen niet", "Bloemen zijn net zo belangrijk als nestelruimte".
-• LENGTE: MAX 150 woorden (liever 100–140). 9–14 woorden per zin gem. B1-niveau, actieve zinnen, "je/jij".
-• GEEN MARKDOWN: NOOIT **vet**, *cursief* of "* " als bullet-prefix — Instagram rendert dit niet. Bullets = emoji vooraan de regel ("🌼 Plant ..."). Korte alinea's, geen koppen.
-• EMOJI: 1–4 in lopende tekst, functioneel (🐝 🌼 ☀️ 🌿 🍎 🚫 🔒). Bullet-emoji's tellen apart, max één per bulletregel. Nooit decoratief stapelen.
-• MINDER COMMERCIEEL: eerst waarde, product daarna. Niet "Onze bijenhotels zijn perfect voor ..." → wel "Wilde bijen hebben diepe, gladde nestgangen nodig. Daarom zijn onze bijenhotels daarop ontworpen." Niet "Koop nu" → wel "Bekijk via ons profiel welk hotel past bij jouw tuin of balkon."
-• CTA (één, specifiek, bij voorkeur save/share/profile, niet algemene like): "Sla deze checklist op voor je tuin", "Stuur dit naar iemand met een balkon", "Deel dit met iemand die zijn tuin bijvriendelijker wil maken", "Bewaar dit voordat je een bijenhotel ophangt", "Reageer met 🌼 als jij dit voorjaar meer bloemen plant", "Bekijk in ons profiel ...". DM-doorsturen weegt zwaar voor bereik — richt je CTA vaak op één persoon doorsturen.
-• SAVE-WAARDIG eindigen waar passend: "Bewaar deze post voor het moment dat je je bijenhotel ophangt." Vooral bij checklists, stappenplannen, foutenlijsten, seizoensadvies, onderhoud.
-• INSTAGRAM SEO: verwerk zoekwoorden natuurlijk in de caption (niet alleen in hashtags): bijenhotel, wilde bijen, solitaire bijen, bijvriendelijke tuin, biodiversiteit, bijen helpen, bijenhotel ophangen, bijenhotel onderhouden, bloemen voor bijen, tuin vergroenen, duurzaam bijenhotel. Kies de 2–4 die bij dit onderwerp passen.
-• HASHTAGS: exact 3–5 onderaan, witregel ervoor. Mix: 1 branded (#HappyBeez of #happybeeznl) + max 1 local (#Boekel, #Brabant — alléén bij lokaal/community-onderwerp) + 2–3 niche (#wildebijen, #solitairebijen, #bijenhotel, #biodiversiteit, #bijvriendelijktuin, #bloemenvoorbijen, #ecologischtuinieren, #geveltuin). Geen spam-tags (#nature, #flowers, #love).
-• GEEN ABSOLUTE CLAIMS: vermijd "zonder bijen geen appels", "perfecte aanvulling", "redt de bijen". Zacht formuleren: "veel minder appels, peren en aardbeien", "een waardevolle aanvulling", "help je wilde bijen echt mee". Geen verzonnen percentages — "meer dan de helft van de wilde bijensoorten in Nederland staat onder druk" mag.
-• Voor carousels (contentType = carousel): geef ipv lopende caption een lijst slides terug, slide 1 = hook, slides 2–6 = één inzicht per slide (max 6 woorden tekstoverlay-suggestie + 1 zin uitleg), laatste slide = CTA + "Bewaar deze post".
-• ZELF-CHECK voor je teruggeeft: (1) stopkracht in eerste zin? (2) één hoofdboodschap? (3) kort genoeg? (4) praktisch inzicht om te bewaren? (5) reden om door te sturen? (6) deskundig zonder hard verkopen? (7) CTA concreet? (8) claims feitelijk en zacht? (9) hashtags beperkt en relevant? Als één antwoord nee is: herschrijf vóór je antwoordt.
+• EÉN HOOFDBOODSCHAP per post: één probleem, één inzicht, één actie.
+• HOOK (max 12 woorden, eerste regel): laat scrollen stoppen.
+• DEELBAARHEID: concreet, praktisch inzicht.
+• STRUCTUUR probleem → oplossing met korte alinea's.
+• LENGTE: MAX 150 woorden (100–140). B1, "je/jij".
+• GEEN MARKDOWN. Bullets = emoji vooraan.
+• EMOJI: 1–4 functioneel.
+• CTA: save/share/DM/profielbezoek.
+• HASHTAGS: 3–5 onderaan, mix branded + niche.
+• Vermijd absolute claims, generieke "bijen" (gebruik "wilde bijen").
 `;
 
-
-
-      const prompt = `Je schrijft een ${contentType.replace("_", " ")} post voor ${channel} namens HappyBeez — een Nederlands merk dat handgemaakte, natuurvriendelijke bijenhotels maakt in Boekel en educeert over solitaire bijen en biodiversiteit.
+      const prompt = `Je schrijft een ${contentType.replace("_", " ")} post voor ${channel} namens HappyBeez — handgemaakte natuurvriendelijke bijenhotels uit Boekel.
 
 Toon: ${toneLabel}
 Platform: ${channelHint}
 ${topic ? `Onderwerp: ${topic}` : ""}
 ${keywords ? `Kernwoorden: ${keywords}` : ""}
 
-MERKSTIJL (verplicht volgen):
-• Rustig, deskundig, natuurvriendelijk — eerst helpen, daarna pas verkopen. Geen schreeuwerige urgentie of kortingsdruk.
-• Perspectief: "we / onze" namens HappyBeez, "je" voor praktisch advies. "u" alleen voor B2B/ESG.
-• Zinsbouw: kort tot middellang (9–14 woorden gem.). Vaak probleem → oplossing → onderbouwing.
-• Structuur waar passend: 1 korte conclusie + 2–4 praktische bullets.
+MERKSTIJL: rustig, deskundig, natuurvriendelijk. Gebruik termen: solitaire/wilde bijen, nestelgelegenheid, biodiversiteit, onbehandeld beukenhout/Douglas, diepe gladde nestgangen, handgemaakt in Boekel.
 
-GEBRUIK DEZE TERMEN waar relevant: natuurvriendelijke bijenhotels, solitaire bijen, wilde bijen, veilige nestelplaats, geschikte nestgangen, verwisselbare cassettes, onbehandeld beukenhout, Douglas hout, geborsteld RVS, diepe gladde nestgangen, verschillende diameters en dieptes, bestuiving, bloemen en voedsel, biodiversiteit, handgemaakt in Boekel.
+VERMIJD: absolute claims, generiek "bijen", suggestie dat een hotel voedsel biedt, garanties.
 
-VERMIJD STRIKT:
-• Absolute claims als "dit redt de bijen" of "alle bijensoorten gebruiken dit hotel".
-• Het woord "bijen" generiek — gebruik "wilde bijen" of "solitaire bijen". Honingbijen gebruiken geen bijenhotel.
-• De suggestie dat een bijenhotel voedsel biedt — het biedt nestelgelegenheid; bloemen leveren het voedsel.
-• Garanties dat er bijen komen (locatie, zon, beschutting en bloemen bepalen het resultaat).
-• Het woord "inheems" tenzij je zeker weet dat de plant in NL inheems is — anders "bijvriendelijk".
-• Generieke marketingtaal en clichés.
+${channel === "instagram" ? instagramPlaybook : `CTA kort en neutraal. Geen hashtags.`}
 
-${channel === "instagram" ? instagramPlaybook : `CTA-stijl: kort en neutraal ("bekijken", "lees meer", "naar de webshop") — alleen toevoegen als er een logische koopintentie is.\nGeen hashtags.`}
-
-Geef ALLEEN de posttekst terug, in het Nederlands. Geen uitleg of meta-commentaar.`;
+Geef ALLEEN de posttekst terug, in het Nederlands.`;
       const { text } = await generate({ data: { prompt } });
       setGenerated(text);
       toast.success("Content gegenereerd.");
@@ -199,11 +291,15 @@ Geef ALLEEN de posttekst terug, in het Nederlands. Geen uitleg of meta-commentaa
       status: "idee",
       publish_date: saveDate,
       content_text: generated,
+      image_url: selectedPhoto?.image_url ?? null,
+      image_storage_path: selectedPhoto?.storage_path ?? null,
     });
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Opgeslagen in kalender.");
   }
+
+  const isInstagram = channel === "instagram";
 
   return (
     <div
@@ -218,16 +314,14 @@ Geef ALLEEN de posttekst terug, in het Nederlands. Geen uitleg of meta-commentaa
         ["--hb-border" as string]: "#E5E2DA",
         background: "var(--hb-offwhite)",
         color: "var(--hb-dark)",
-        fontFamily:
-          'Inter, "Helvetica Neue", Roboto, Arial, system-ui, sans-serif',
+        fontFamily: 'Inter, "Helvetica Neue", Roboto, Arial, system-ui, sans-serif',
       }}
     >
-      <div className="px-4 sm:px-8 py-8 max-w-6xl mx-auto">
+      <div className="px-4 sm:px-8 py-8 max-w-7xl mx-auto">
         <div
           className="mb-6 rounded-2xl px-6 py-7 flex items-center justify-between gap-4 shadow-sm"
           style={{
-            background:
-              "linear-gradient(135deg, var(--hb-green) 0%, var(--hb-green-dark) 100%)",
+            background: "linear-gradient(135deg, var(--hb-green) 0%, var(--hb-green-dark) 100%)",
             color: "#fff",
           }}
         >
@@ -235,16 +329,11 @@ Geef ALLEEN de posttekst terug, in het Nederlands. Geen uitleg of meta-commentaa
             <span className="text-[11px] tracking-[0.22em] uppercase opacity-80">
               HappyBeez · Social Studio
             </span>
-            <h1
-              className="font-bold text-2xl sm:text-3xl mt-1"
-              style={{ fontFamily: "inherit", letterSpacing: "-0.01em" }}
-            >
+            <h1 className="font-bold text-2xl sm:text-3xl mt-1" style={{ letterSpacing: "-0.01em" }}>
               Schrijf in onze stem
             </h1>
             <p className="text-sm mt-2 opacity-90 max-w-xl">
-              Rustig, deskundig en natuurvriendelijk. Eerst helpen, daarna pas
-              verkopen — voor solitaire bijen, biodiversiteit en handgemaakte
-              bijenhotels uit Boekel.
+              Rustig, deskundig en natuurvriendelijk. Eerst helpen, daarna pas verkopen.
             </p>
           </div>
           <div
@@ -255,23 +344,12 @@ Geef ALLEEN de posttekst terug, in het Nederlands. Geen uitleg of meta-commentaa
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div className={isInstagram ? "grid lg:grid-cols-3 gap-6" : "grid lg:grid-cols-2 gap-6"}>
+          {/* Settings column */}
           <div className="space-y-5">
-            <div
-              className="rounded-2xl p-6 shadow-sm"
-              style={{
-                background: "#fff",
-                border: "1px solid var(--hb-border)",
-              }}
-            >
-              <h2
-                className="font-semibold mb-4 flex items-center gap-2 text-base"
-                style={{ color: "var(--hb-dark)" }}
-              >
-                <span
-                  className="inline-block h-2 w-2 rounded-full"
-                  style={{ background: "var(--hb-green)" }}
-                />
+            <div className="rounded-2xl p-6 shadow-sm" style={{ background: "#fff", border: "1px solid var(--hb-border)" }}>
+              <h2 className="font-semibold mb-4 flex items-center gap-2 text-base" style={{ color: "var(--hb-dark)" }}>
+                <span className="inline-block h-2 w-2 rounded-full" style={{ background: "var(--hb-green)" }} />
                 Instellingen
               </h2>
 
@@ -288,9 +366,7 @@ Geef ALLEEN de posttekst terug, in het Nederlands. Geen uitleg of meta-commentaa
                           type="button"
                           className="px-3 py-2 rounded-lg text-xs font-medium transition-all text-left"
                           style={{
-                            background: active
-                              ? "var(--hb-green)"
-                              : "var(--hb-offwhite)",
+                            background: active ? "var(--hb-green)" : "var(--hb-offwhite)",
                             color: active ? "#fff" : "var(--hb-dark)",
                             border: `1px solid ${active ? "var(--hb-green)" : "var(--hb-border)"}`,
                           }}
@@ -304,18 +380,11 @@ Geef ALLEEN de posttekst terug, in het Nederlands. Geen uitleg of meta-commentaa
 
                 <div className="space-y-2">
                   <Label>Type content</Label>
-                  <Select
-                    value={contentType}
-                    onValueChange={(v) => setContentType(v as ContentType)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
+                  <Select value={contentType} onValueChange={(v) => setContentType(v as ContentType)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {CONTENT_TYPES.map((t) => (
-                        <SelectItem key={t.value} value={t.value}>
-                          {t.label}
-                        </SelectItem>
+                        <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -324,14 +393,10 @@ Geef ALLEEN de posttekst terug, in het Nederlands. Geen uitleg of meta-commentaa
                 <div className="space-y-2">
                   <Label>Toon</Label>
                   <Select value={tone} onValueChange={(v) => setTone(v as Tone)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {TONES.map((t) => (
-                        <SelectItem key={t.value} value={t.value}>
-                          {t.label}
-                        </SelectItem>
+                        <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -339,44 +404,21 @@ Geef ALLEEN de posttekst terug, in het Nederlands. Geen uitleg of meta-commentaa
 
                 <div className="space-y-2">
                   <Label htmlFor="topic">Onderwerp (optioneel)</Label>
-                  <Input
-                    id="topic"
-                    value={topic}
-                    onChange={(e) => setTopic(e.target.value)}
-                    placeholder="Bijv: solitaire metselbijen in de lente…"
-                  />
+                  <Input id="topic" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Bijv: solitaire metselbijen in de lente…" />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="kw">Kernwoorden (optioneel)</Label>
-                  <Input
-                    id="kw"
-                    value={keywords}
-                    onChange={(e) => setKeywords(e.target.value)}
-                    placeholder="bijenhotel, bestuiving, biodiversiteit…"
-                  />
+                  <Input id="kw" value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="bijenhotel, bestuiving, biodiversiteit…" />
                 </div>
 
                 <Button
                   onClick={runGenerate}
                   disabled={generating}
                   className="w-full font-semibold rounded-full h-11 hover:brightness-110 transition"
-                  style={{
-                    background: "var(--hb-green)",
-                    color: "#fff",
-                  }}
+                  style={{ background: "var(--hb-green)", color: "#fff" }}
                 >
-                  {generating ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      AI schrijft…
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="w-4 h-4 mr-2" />
-                      Content genereren
-                    </>
-                  )}
+                  {generating ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />AI schrijft…</>) : (<><Wand2 className="w-4 h-4 mr-2" />Content genereren</>)}
                 </Button>
               </div>
             </div>
@@ -386,50 +428,25 @@ Geef ALLEEN de posttekst terug, in het Nederlands. Geen uitleg of meta-commentaa
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-between p-4 rounded-xl transition-colors hover:brightness-105"
-              style={{
-                background: "rgba(210, 161, 58, 0.12)",
-                border: "1px solid rgba(210, 161, 58, 0.35)",
-              }}
+              style={{ background: "rgba(210, 161, 58, 0.12)", border: "1px solid rgba(210, 161, 58, 0.35)" }}
             >
-              <span
-                className="text-sm font-medium"
-                style={{ color: "var(--hb-dark)" }}
-              >
+              <span className="text-sm font-medium" style={{ color: "var(--hb-dark)" }}>
                 🎨 Canva templates voor {channel}
               </span>
-              <ExternalLink
-                className="w-4 h-4"
-                style={{ color: "var(--hb-wood)" }}
-              />
+              <ExternalLink className="w-4 h-4" style={{ color: "var(--hb-wood)" }} />
             </a>
           </div>
 
+          {/* Generated post column */}
           <div>
             <div
               className="rounded-2xl overflow-hidden min-h-[500px] flex flex-col shadow-sm"
-              style={{
-                background: "#fff",
-                border: "1px solid var(--hb-border)",
-              }}
+              style={{ background: "#fff", border: "1px solid var(--hb-border)" }}
             >
-              <div
-                className="flex items-center justify-between px-5 py-4"
-                style={{ borderBottom: "1px solid var(--hb-border)" }}
-              >
-                <h2
-                  className="font-semibold"
-                  style={{ color: "var(--hb-dark)" }}
-                >
-                  Gegenereerde post
-                </h2>
+              <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--hb-border)" }}>
+                <h2 className="font-semibold" style={{ color: "var(--hb-dark)" }}>Gegenereerde post</h2>
                 {generated && !generating && (
-                  <button
-                    onClick={runGenerate}
-                    className="p-2 rounded-md transition-colors hover:bg-[var(--hb-offwhite)]"
-                    title="Opnieuw genereren"
-                    type="button"
-                    style={{ color: "var(--hb-dark)" }}
-                  >
+                  <button onClick={runGenerate} className="p-2 rounded-md transition-colors hover:bg-[var(--hb-offwhite)]" title="Opnieuw genereren" type="button" style={{ color: "var(--hb-dark)" }}>
                     <RefreshCw className="w-4 h-4" />
                   </button>
                 )}
@@ -437,82 +454,70 @@ Geef ALLEEN de posttekst terug, in het Nederlands. Geen uitleg of meta-commentaa
 
               {generating ? (
                 <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8">
-                  <div
-                    className="w-12 h-12 rounded-full flex items-center justify-center"
-                    style={{ background: "rgba(111, 138, 58, 0.12)" }}
-                  >
-                    <Loader2
-                      className="w-6 h-6 animate-spin"
-                      style={{ color: "var(--hb-green)" }}
-                    />
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "rgba(111, 138, 58, 0.12)" }}>
+                    <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--hb-green)" }} />
                   </div>
-                  <p
-                    className="text-sm"
-                    style={{ color: "var(--hb-dark)", opacity: 0.7 }}
-                  >
-                    AI schrijft je post…
-                  </p>
+                  <p className="text-sm" style={{ color: "var(--hb-dark)", opacity: 0.7 }}>AI schrijft je post…</p>
                 </div>
               ) : generated ? (
                 <div className="flex-1 flex flex-col">
-                  <div
-                    className="flex-1 p-5 whitespace-pre-wrap text-[15px] leading-[1.6]"
-                    style={{ color: "var(--hb-dark)" }}
-                  >
+                  <div className="flex-1 p-5 whitespace-pre-wrap text-[15px] leading-[1.6]" style={{ color: "var(--hb-dark)" }}>
                     {generated}
                   </div>
-                  <div
-                    className="p-4 space-y-3"
-                    style={{ borderTop: "1px solid var(--hb-border)" }}
-                  >
+
+                  {isInstagram && (
+                    <div className="p-4 border-t" style={{ borderColor: "var(--hb-border)" }}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--hb-dark)", opacity: 0.7 }}>
+                          <ImageIcon className="w-3.5 h-3.5 inline mr-1" />
+                          Voorgestelde foto's
+                        </span>
+                        <span className="text-[11px]" style={{ color: "var(--hb-dark)", opacity: 0.5 }}>
+                          uit bibliotheek
+                        </span>
+                      </div>
+                      {rankedPhotos.length === 0 ? (
+                        <p className="text-xs" style={{ color: "var(--hb-dark)", opacity: 0.6 }}>
+                          Geen relevante foto's gevonden.
+                        </p>
+                      ) : (
+                        <div className="grid grid-cols-6 gap-2">
+                          {rankedPhotos.map((p) => {
+                            const active = p.id === selectedPhotoId;
+                            return (
+                              <button
+                                key={p.id}
+                                type="button"
+                                onClick={() => setSelectedPhotoId(p.id)}
+                                title={p.title}
+                                className="aspect-square rounded-lg overflow-hidden transition-all"
+                                style={{
+                                  outline: active ? "3px solid var(--hb-green)" : "1px solid var(--hb-border)",
+                                  outlineOffset: active ? "1px" : "0",
+                                }}
+                              >
+                                <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="p-4 space-y-3" style={{ borderTop: "1px solid var(--hb-border)" }}>
                     <div className="flex gap-2">
-                      <Button
-                        onClick={copy}
-                        variant="outline"
-                        className="flex-1 rounded-full"
-                        type="button"
-                        style={{
-                          borderColor: "var(--hb-border)",
-                          color: "var(--hb-dark)",
-                        }}
-                      >
-                        {copied ? (
-                          <>
-                            <CheckCheck className="w-4 h-4 mr-2" /> Gekopieerd
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-4 h-4 mr-2" /> Kopiëren
-                          </>
-                        )}
+                      <Button onClick={copy} variant="outline" className="flex-1 rounded-full" type="button" style={{ borderColor: "var(--hb-border)", color: "var(--hb-dark)" }}>
+                        {copied ? (<><CheckCheck className="w-4 h-4 mr-2" /> Gekopieerd</>) : (<><Copy className="w-4 h-4 mr-2" /> Kopiëren</>)}
                       </Button>
                     </div>
                     <div className="flex gap-2 items-end">
                       <div className="flex-1 space-y-1">
-                        <Label htmlFor="save-date" className="text-xs">
-                          Datum
-                        </Label>
-                        <Input
-                          id="save-date"
-                          type="date"
-                          value={saveDate}
-                          onChange={(e) => setSaveDate(e.target.value)}
-                        />
+                        <Label htmlFor="save-date" className="text-xs">Datum</Label>
+                        <Input id="save-date" type="date" value={saveDate} onChange={(e) => setSaveDate(e.target.value)} />
                       </div>
-                      <Button
-                        onClick={saveToCalendar}
-                        disabled={saving}
-                        className="rounded-full font-semibold hover:brightness-110"
-                        style={{
-                          background: "var(--hb-green)",
-                          color: "#fff",
-                        }}
-                      >
-                        {saving ? (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        ) : (
-                          <Save className="w-4 h-4 mr-2" />
-                        )}
+                      <Button onClick={saveToCalendar} disabled={saving} className="rounded-full font-semibold hover:brightness-110" style={{ background: "var(--hb-green)", color: "#fff" }}>
+                        {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                         Naar kalender
                       </Button>
                     </div>
@@ -520,21 +525,94 @@ Geef ALLEEN de posttekst terug, in het Nederlands. Geen uitleg of meta-commentaa
                 </div>
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center gap-2 p-8 text-center">
-                  <Wand2
-                    className="w-10 h-10"
-                    style={{ color: "var(--hb-green)", opacity: 0.35 }}
-                  />
-                  <p
-                    className="text-sm"
-                    style={{ color: "var(--hb-dark)", opacity: 0.7 }}
-                  >
-                    Stel de instellingen in en klik op{" "}
-                    <span style={{ fontWeight: 600 }}>Content genereren</span>.
+                  <Wand2 className="w-10 h-10" style={{ color: "var(--hb-green)", opacity: 0.35 }} />
+                  <p className="text-sm" style={{ color: "var(--hb-dark)", opacity: 0.7 }}>
+                    Stel de instellingen in en klik op <span style={{ fontWeight: 600 }}>Content genereren</span>.
                   </p>
                 </div>
               )}
             </div>
           </div>
+
+          {/* Instagram phone mockup column */}
+          {isInstagram && (
+            <div className="flex flex-col items-center">
+              <span className="text-xs uppercase tracking-wider mb-3" style={{ color: "var(--hb-dark)", opacity: 0.6 }}>
+                Preview op telefoon
+              </span>
+              <PhoneMockup
+                image={selectedPhoto?.image_url ?? null}
+                caption={generated}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PhoneMockup({ image, caption }: { image: string | null; caption: string }) {
+  const username = "happybeez";
+  // strip markdown leftovers just in case
+  const cleaned = caption.replace(/\*\*/g, "").replace(/^\* /gm, "• ");
+  return (
+    <div
+      className="relative w-[300px] rounded-[44px] p-3 shadow-2xl"
+      style={{ background: "#0f0f10" }}
+    >
+      {/* notch */}
+      <div className="absolute top-2 left-1/2 -translate-x-1/2 h-5 w-24 rounded-full" style={{ background: "#0f0f10" }} />
+      <div className="rounded-[34px] overflow-hidden bg-white" style={{ height: 620 }}>
+        {/* IG top bar */}
+        <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-200">
+          <span className="text-base font-semibold" style={{ fontFamily: "'Segoe Script', cursive" }}>Instagram</span>
+          <div className="flex gap-3 text-neutral-700">
+            <Heart className="w-5 h-5" />
+            <Send className="w-5 h-5" />
+          </div>
+        </div>
+        {/* post header */}
+        <div className="flex items-center justify-between px-3 py-2">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full p-[2px]" style={{ background: "linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)" }}>
+              <div className="w-full h-full rounded-full bg-white p-[1.5px]">
+                <div className="w-full h-full rounded-full" style={{ background: "var(--hb-green)" }} />
+              </div>
+            </div>
+            <div className="flex flex-col leading-tight">
+              <span className="text-[12px] font-semibold">{username}</span>
+              <span className="text-[10px] text-neutral-500">Boekel · Gesponsord</span>
+            </div>
+          </div>
+          <MoreHorizontal className="w-4 h-4 text-neutral-700" />
+        </div>
+        {/* image */}
+        <div className="w-full bg-neutral-100" style={{ aspectRatio: "1 / 1" }}>
+          {image ? (
+            <img src={image} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-neutral-400 text-xs">
+              <ImageIcon className="w-8 h-8" />
+            </div>
+          )}
+        </div>
+        {/* actions */}
+        <div className="px-3 pt-2 flex items-center justify-between">
+          <div className="flex gap-3 text-neutral-900">
+            <Heart className="w-6 h-6" />
+            <MessageCircle className="w-6 h-6" />
+            <Send className="w-6 h-6" />
+          </div>
+          <Bookmark className="w-6 h-6 text-neutral-900" />
+        </div>
+        <div className="px-3 pt-1 text-[12px] font-semibold">128 vind-ik-leuks</div>
+        {/* caption */}
+        <div className="px-3 pt-1 pb-3 text-[12px] leading-snug max-h-[140px] overflow-y-auto">
+          <span className="font-semibold mr-1">{username}</span>
+          <span className="whitespace-pre-wrap text-neutral-800">
+            {cleaned || "Je caption verschijnt hier…"}
+          </span>
         </div>
       </div>
     </div>
