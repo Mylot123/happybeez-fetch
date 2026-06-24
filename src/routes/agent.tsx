@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useConversation } from "@elevenlabs/react";
+import { useConversation, ConversationProvider } from "@elevenlabs/react";
 import { Mic, MicOff, Loader2, MessageSquare, Trash2, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,9 @@ export const Route = createFileRoute("/agent")({
   }),
   component: () => (
     <ProtectedRoute>
-      <AgentPage />
+      <ConversationProvider>
+        <AgentPage />
+      </ConversationProvider>
     </ProtectedRoute>
   ),
 });
