@@ -753,7 +753,7 @@ function PhoneMockup({ image, caption }: { image: string | null; caption: string
   );
 }
 
-function PhoneFrame({ children }: { children: React.ReactNode }) {
+function PhoneFrame({ children }: { children: ReactNode }) {
   return (
     <div className="relative w-[300px] rounded-[44px] p-3 shadow-2xl" style={{ background: "#0f0f10" }}>
       <div className="absolute top-2 left-1/2 -translate-x-1/2 h-5 w-24 rounded-full" style={{ background: "#0f0f10" }} />
