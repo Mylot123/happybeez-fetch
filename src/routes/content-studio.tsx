@@ -115,18 +115,32 @@ function ContentStudio() {
     setGenerated("");
     try {
       const toneLabel = TONES.find((t) => t.value === tone)?.label ?? "warm en educatief";
-      const channelHint =
-        CHANNELS.find((c) => c.value === channel)?.hint ?? "";
-      const prompt = `Schrijf een ${contentType.replace("_", " ")} post voor ${channel} voor een bedrijf dat bijenhotels verkoopt en een boek over bijen heeft geschreven.
+      const channelHint = CHANNELS.find((c) => c.value === channel)?.hint ?? "";
+      const prompt = `Je schrijft een ${contentType.replace("_", " ")} post voor ${channel} namens HappyBeez — een Nederlands merk dat handgemaakte, natuurvriendelijke bijenhotels maakt in Boekel en educeert over solitaire bijen en biodiversiteit.
 
 Toon: ${toneLabel}
-Platform-specificaties: ${channelHint}
+Platform: ${channelHint}
 ${topic ? `Onderwerp: ${topic}` : ""}
 ${keywords ? `Kernwoorden: ${keywords}` : ""}
 
-Het bedrijf staat voor: passie voor natuur en biodiversiteit, ambachtelijke bijenhotels voor solitaire bijen, educatie over bestuivers, duurzaamheid.
+MERKSTIJL (verplicht volgen):
+• Rustig, deskundig, natuurvriendelijk — eerst helpen, daarna pas verkopen. Geen schreeuwerige urgentie of kortingsdruk.
+• Perspectief: "we / onze" namens HappyBeez, "je" voor praktisch advies.
+• Zinsbouw: kort tot middellang. Vaak probleem → oplossing → onderbouwing.
+• Structuur waar passend: 1 korte conclusie + 2–4 praktische bullets.
 
-Schrijf de volledige post in het Nederlands. Voeg voor Instagram relevante hashtags onderaan toe. Geef ALLEEN de posttekst terug.`;
+GEBRUIK DEZE TERMEN waar relevant: natuurvriendelijke bijenhotels, solitaire bijen, veilige nestelplaats, geschikte nestgangen, verwisselbare cassettes, onbehandeld beukenhout, Douglas hout, geborsteld RVS, diepe gladde nestgangen, verschillende diameters en dieptes, bestuiving, bloemen en voedsel, biodiversiteit, handgemaakt in Boekel.
+
+VERMIJD STRIKT:
+• Absolute claims als "dit redt de bijen" of "alle bijensoorten gebruiken dit hotel".
+• De suggestie dat een bijenhotel voedsel biedt — het biedt nestelgelegenheid; bloemen leveren het voedsel.
+• Garanties dat er bijen komen (locatie, zon, beschutting en bloemen bepalen het resultaat).
+• Generieke marketingtaal en clichés.
+
+CTA-stijl: kort en neutraal ("bekijken", "lees meer", "naar de webshop") — alleen toevoegen als er een logische koopintentie is.
+${channel === "instagram" ? "Voeg onderaan 5–10 relevante, niet-spammy hashtags toe." : "Geen hashtags."}
+
+Geef ALLEEN de posttekst terug, in het Nederlands.`;
       const { text } = await generate({ data: { prompt } });
       setGenerated(text);
       toast.success("Content gegenereerd.");
