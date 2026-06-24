@@ -115,18 +115,32 @@ function ContentStudio() {
     setGenerated("");
     try {
       const toneLabel = TONES.find((t) => t.value === tone)?.label ?? "warm en educatief";
-      const channelHint =
-        CHANNELS.find((c) => c.value === channel)?.hint ?? "";
-      const prompt = `Schrijf een ${contentType.replace("_", " ")} post voor ${channel} voor een bedrijf dat bijenhotels verkoopt en een boek over bijen heeft geschreven.
+      const channelHint = CHANNELS.find((c) => c.value === channel)?.hint ?? "";
+      const prompt = `Je schrijft een ${contentType.replace("_", " ")} post voor ${channel} namens HappyBeez — een Nederlands merk dat handgemaakte, natuurvriendelijke bijenhotels maakt in Boekel en educeert over solitaire bijen en biodiversiteit.
 
 Toon: ${toneLabel}
-Platform-specificaties: ${channelHint}
+Platform: ${channelHint}
 ${topic ? `Onderwerp: ${topic}` : ""}
 ${keywords ? `Kernwoorden: ${keywords}` : ""}
 
-Het bedrijf staat voor: passie voor natuur en biodiversiteit, ambachtelijke bijenhotels voor solitaire bijen, educatie over bestuivers, duurzaamheid.
+MERKSTIJL (verplicht volgen):
+• Rustig, deskundig, natuurvriendelijk — eerst helpen, daarna pas verkopen. Geen schreeuwerige urgentie of kortingsdruk.
+• Perspectief: "we / onze" namens HappyBeez, "je" voor praktisch advies.
+• Zinsbouw: kort tot middellang. Vaak probleem → oplossing → onderbouwing.
+• Structuur waar passend: 1 korte conclusie + 2–4 praktische bullets.
 
-Schrijf de volledige post in het Nederlands. Voeg voor Instagram relevante hashtags onderaan toe. Geef ALLEEN de posttekst terug.`;
+GEBRUIK DEZE TERMEN waar relevant: natuurvriendelijke bijenhotels, solitaire bijen, veilige nestelplaats, geschikte nestgangen, verwisselbare cassettes, onbehandeld beukenhout, Douglas hout, geborsteld RVS, diepe gladde nestgangen, verschillende diameters en dieptes, bestuiving, bloemen en voedsel, biodiversiteit, handgemaakt in Boekel.
+
+VERMIJD STRIKT:
+• Absolute claims als "dit redt de bijen" of "alle bijensoorten gebruiken dit hotel".
+• De suggestie dat een bijenhotel voedsel biedt — het biedt nestelgelegenheid; bloemen leveren het voedsel.
+• Garanties dat er bijen komen (locatie, zon, beschutting en bloemen bepalen het resultaat).
+• Generieke marketingtaal en clichés.
+
+CTA-stijl: kort en neutraal ("bekijken", "lees meer", "naar de webshop") — alleen toevoegen als er een logische koopintentie is.
+${channel === "instagram" ? "Voeg onderaan 5–10 relevante, niet-spammy hashtags toe." : "Geen hashtags."}
+
+Geef ALLEEN de posttekst terug, in het Nederlands.`;
       const { text } = await generate({ data: { prompt } });
       setGenerated(text);
       toast.success("Content gegenereerd.");
@@ -162,223 +176,334 @@ Schrijf de volledige post in het Nederlands. Voeg voor Instagram relevante hasht
   }
 
   return (
-    <div className="px-4 sm:px-8 py-8 max-w-6xl mx-auto">
-      <div className="mb-6">
-        <span className="text-xs tracking-[0.2em] uppercase text-muted-foreground font-medium">
-          Studio
-        </span>
-        <h1 className="font-heading font-bold text-ink text-3xl mt-1 ruled-heading">
-          Content Studio
-        </h1>
-        <p className="text-muted-foreground text-sm mt-2">
-          AI-ondersteund schrijven in jullie warm-educatieve toon.
-        </p>
-      </div>
-
-      <div className="grid lg:grid-cols-2 gap-6">
-        <div className="space-y-5">
-          <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-            <h2 className="font-heading font-semibold text-ink mb-4 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-gold" /> Instellingen
-            </h2>
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Kanaal</Label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {CHANNELS.map((ch) => (
-                    <button
-                      key={ch.value}
-                      onClick={() => setChannel(ch.value)}
-                      type="button"
-                      className={cn(
-                        "px-3 py-2 rounded-md text-xs font-medium transition-all text-left border",
-                        channel === ch.value
-                          ? "bg-wine text-primary-foreground border-wine shadow-sm"
-                          : "bg-secondary border-border hover:border-wine/50",
-                      )}
-                    >
-                      {ch.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Type content</Label>
-                <Select
-                  value={contentType}
-                  onValueChange={(v) => setContentType(v as ContentType)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CONTENT_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Toon</Label>
-                <Select value={tone} onValueChange={(v) => setTone(v as Tone)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TONES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="topic">Onderwerp (optioneel)</Label>
-                <Input
-                  id="topic"
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  placeholder="Bijv: solitaire metselbijen in de lente…"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="kw">Kernwoorden (optioneel)</Label>
-                <Input
-                  id="kw"
-                  value={keywords}
-                  onChange={(e) => setKeywords(e.target.value)}
-                  placeholder="bijenhotel, bestuiving, biodiversiteit…"
-                />
-              </div>
-
-              <Button
-                onClick={runGenerate}
-                disabled={generating}
-                className="w-full bg-wine text-primary-foreground hover:bg-wine/90"
-              >
-                {generating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    AI schrijft…
-                  </>
-                ) : (
-                  <>
-                    <Wand2 className="w-4 h-4 mr-2" />
-                    Content genereren
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-
-          <a
-            href={`https://www.canva.com/templates/?query=${channel}+bee+nature`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-between p-4 rounded-md bg-gold/10 border border-gold/30 hover:bg-gold/20 transition-colors"
-          >
-            <span className="text-sm text-ink font-medium">
-              🎨 Canva templates voor {channel}
+    <div
+      className="min-h-full"
+      style={{
+        ["--hb-green" as string]: "#6F8A3A",
+        ["--hb-green-dark" as string]: "#56702A",
+        ["--hb-dark" as string]: "#263022",
+        ["--hb-wood" as string]: "#B98549",
+        ["--hb-honey" as string]: "#D2A13A",
+        ["--hb-offwhite" as string]: "#F6F3EA",
+        ["--hb-border" as string]: "#E5E2DA",
+        background: "var(--hb-offwhite)",
+        color: "var(--hb-dark)",
+        fontFamily:
+          'Inter, "Helvetica Neue", Roboto, Arial, system-ui, sans-serif',
+      }}
+    >
+      <div className="px-4 sm:px-8 py-8 max-w-6xl mx-auto">
+        <div
+          className="mb-6 rounded-2xl px-6 py-7 flex items-center justify-between gap-4 shadow-sm"
+          style={{
+            background:
+              "linear-gradient(135deg, var(--hb-green) 0%, var(--hb-green-dark) 100%)",
+            color: "#fff",
+          }}
+        >
+          <div>
+            <span className="text-[11px] tracking-[0.22em] uppercase opacity-80">
+              HappyBeez · Social Studio
             </span>
-            <ExternalLink className="w-4 h-4 text-muted-foreground" />
-          </a>
+            <h1
+              className="font-bold text-2xl sm:text-3xl mt-1"
+              style={{ fontFamily: "inherit", letterSpacing: "-0.01em" }}
+            >
+              Schrijf in onze stem
+            </h1>
+            <p className="text-sm mt-2 opacity-90 max-w-xl">
+              Rustig, deskundig en natuurvriendelijk. Eerst helpen, daarna pas
+              verkopen — voor solitaire bijen, biodiversiteit en handgemaakte
+              bijenhotels uit Boekel.
+            </p>
+          </div>
+          <div
+            className="hidden sm:flex h-14 w-14 rounded-full items-center justify-center shrink-0"
+            style={{ background: "rgba(255,255,255,0.18)" }}
+          >
+            <Sparkles className="w-7 h-7" style={{ color: "#fff" }} />
+          </div>
         </div>
 
-        <div>
-          <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden min-h-[500px] flex flex-col">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-              <h2 className="font-heading font-semibold text-ink">
-                Gegenereerde content
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div className="space-y-5">
+            <div
+              className="rounded-2xl p-6 shadow-sm"
+              style={{
+                background: "#fff",
+                border: "1px solid var(--hb-border)",
+              }}
+            >
+              <h2
+                className="font-semibold mb-4 flex items-center gap-2 text-base"
+                style={{ color: "var(--hb-dark)" }}
+              >
+                <span
+                  className="inline-block h-2 w-2 rounded-full"
+                  style={{ background: "var(--hb-green)" }}
+                />
+                Instellingen
               </h2>
-              {generated && !generating && (
-                <button
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Kanaal</Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {CHANNELS.map((ch) => {
+                      const active = channel === ch.value;
+                      return (
+                        <button
+                          key={ch.value}
+                          onClick={() => setChannel(ch.value)}
+                          type="button"
+                          className="px-3 py-2 rounded-lg text-xs font-medium transition-all text-left"
+                          style={{
+                            background: active
+                              ? "var(--hb-green)"
+                              : "var(--hb-offwhite)",
+                            color: active ? "#fff" : "var(--hb-dark)",
+                            border: `1px solid ${active ? "var(--hb-green)" : "var(--hb-border)"}`,
+                          }}
+                        >
+                          {ch.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Type content</Label>
+                  <Select
+                    value={contentType}
+                    onValueChange={(v) => setContentType(v as ContentType)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CONTENT_TYPES.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>
+                          {t.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Toon</Label>
+                  <Select value={tone} onValueChange={(v) => setTone(v as Tone)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TONES.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>
+                          {t.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="topic">Onderwerp (optioneel)</Label>
+                  <Input
+                    id="topic"
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    placeholder="Bijv: solitaire metselbijen in de lente…"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="kw">Kernwoorden (optioneel)</Label>
+                  <Input
+                    id="kw"
+                    value={keywords}
+                    onChange={(e) => setKeywords(e.target.value)}
+                    placeholder="bijenhotel, bestuiving, biodiversiteit…"
+                  />
+                </div>
+
+                <Button
                   onClick={runGenerate}
-                  className="p-2 hover:bg-secondary rounded-md text-muted-foreground transition-colors"
-                  title="Opnieuw genereren"
-                  type="button"
+                  disabled={generating}
+                  className="w-full font-semibold rounded-full h-11 hover:brightness-110 transition"
+                  style={{
+                    background: "var(--hb-green)",
+                    color: "#fff",
+                  }}
                 >
-                  <RefreshCw className="w-4 h-4" />
-                </button>
-              )}
+                  {generating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      AI schrijft…
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="w-4 h-4 mr-2" />
+                      Content genereren
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
 
-            {generating ? (
-              <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8">
-                <div className="w-12 h-12 rounded-full bg-wine/10 flex items-center justify-center">
-                  <Loader2 className="w-6 h-6 animate-spin text-wine" />
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  AI schrijft je post…
-                </p>
+            <a
+              href={`https://www.canva.com/templates/?query=${channel}+bee+nature`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between p-4 rounded-xl transition-colors hover:brightness-105"
+              style={{
+                background: "rgba(210, 161, 58, 0.12)",
+                border: "1px solid rgba(210, 161, 58, 0.35)",
+              }}
+            >
+              <span
+                className="text-sm font-medium"
+                style={{ color: "var(--hb-dark)" }}
+              >
+                🎨 Canva templates voor {channel}
+              </span>
+              <ExternalLink
+                className="w-4 h-4"
+                style={{ color: "var(--hb-wood)" }}
+              />
+            </a>
+          </div>
+
+          <div>
+            <div
+              className="rounded-2xl overflow-hidden min-h-[500px] flex flex-col shadow-sm"
+              style={{
+                background: "#fff",
+                border: "1px solid var(--hb-border)",
+              }}
+            >
+              <div
+                className="flex items-center justify-between px-5 py-4"
+                style={{ borderBottom: "1px solid var(--hb-border)" }}
+              >
+                <h2
+                  className="font-semibold"
+                  style={{ color: "var(--hb-dark)" }}
+                >
+                  Gegenereerde post
+                </h2>
+                {generated && !generating && (
+                  <button
+                    onClick={runGenerate}
+                    className="p-2 rounded-md transition-colors hover:bg-[var(--hb-offwhite)]"
+                    title="Opnieuw genereren"
+                    type="button"
+                    style={{ color: "var(--hb-dark)" }}
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </button>
+                )}
               </div>
-            ) : generated ? (
-              <div className="flex-1 flex flex-col">
-                <div className="flex-1 p-5 whitespace-pre-wrap text-sm text-ink leading-relaxed">
-                  {generated}
-                </div>
-                <div className="border-t border-border p-4 space-y-3">
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={copy}
-                      variant="outline"
-                      className="flex-1"
-                      type="button"
-                    >
-                      {copied ? (
-                        <>
-                          <CheckCheck className="w-4 h-4 mr-2" /> Gekopieerd
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-4 h-4 mr-2" /> Kopiëren
-                        </>
-                      )}
-                    </Button>
+
+              {generating ? (
+                <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8">
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center"
+                    style={{ background: "rgba(111, 138, 58, 0.12)" }}
+                  >
+                    <Loader2
+                      className="w-6 h-6 animate-spin"
+                      style={{ color: "var(--hb-green)" }}
+                    />
                   </div>
-                  <div className="flex gap-2 items-end">
-                    <div className="flex-1 space-y-1">
-                      <Label htmlFor="save-date" className="text-xs">
-                        Datum
-                      </Label>
-                      <Input
-                        id="save-date"
-                        type="date"
-                        value={saveDate}
-                        onChange={(e) => setSaveDate(e.target.value)}
-                      />
+                  <p
+                    className="text-sm"
+                    style={{ color: "var(--hb-dark)", opacity: 0.7 }}
+                  >
+                    AI schrijft je post…
+                  </p>
+                </div>
+              ) : generated ? (
+                <div className="flex-1 flex flex-col">
+                  <div
+                    className="flex-1 p-5 whitespace-pre-wrap text-[15px] leading-[1.6]"
+                    style={{ color: "var(--hb-dark)" }}
+                  >
+                    {generated}
+                  </div>
+                  <div
+                    className="p-4 space-y-3"
+                    style={{ borderTop: "1px solid var(--hb-border)" }}
+                  >
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={copy}
+                        variant="outline"
+                        className="flex-1 rounded-full"
+                        type="button"
+                        style={{
+                          borderColor: "var(--hb-border)",
+                          color: "var(--hb-dark)",
+                        }}
+                      >
+                        {copied ? (
+                          <>
+                            <CheckCheck className="w-4 h-4 mr-2" /> Gekopieerd
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-4 h-4 mr-2" /> Kopiëren
+                          </>
+                        )}
+                      </Button>
                     </div>
-                    <Button
-                      onClick={saveToCalendar}
-                      disabled={saving}
-                      className="bg-wine text-primary-foreground hover:bg-wine/90"
-                    >
-                      {saving ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Save className="w-4 h-4 mr-2" />
-                      )}
-                      Naar kalender
-                    </Button>
+                    <div className="flex gap-2 items-end">
+                      <div className="flex-1 space-y-1">
+                        <Label htmlFor="save-date" className="text-xs">
+                          Datum
+                        </Label>
+                        <Input
+                          id="save-date"
+                          type="date"
+                          value={saveDate}
+                          onChange={(e) => setSaveDate(e.target.value)}
+                        />
+                      </div>
+                      <Button
+                        onClick={saveToCalendar}
+                        disabled={saving}
+                        className="rounded-full font-semibold hover:brightness-110"
+                        style={{
+                          background: "var(--hb-green)",
+                          color: "#fff",
+                        }}
+                      >
+                        {saving ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4 mr-2" />
+                        )}
+                        Naar kalender
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center gap-2 p-8 text-center">
-                <Wand2 className="w-10 h-10 text-muted-foreground/40" />
-                <p className="text-sm text-muted-foreground">
-                  Stel de instellingen in en klik op{" "}
-                  <span className="font-medium text-ink">Content genereren</span>.
-                </p>
-              </div>
-            )}
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center gap-2 p-8 text-center">
+                  <Wand2
+                    className="w-10 h-10"
+                    style={{ color: "var(--hb-green)", opacity: 0.35 }}
+                  />
+                  <p
+                    className="text-sm"
+                    style={{ color: "var(--hb-dark)", opacity: 0.7 }}
+                  >
+                    Stel de instellingen in en klik op{" "}
+                    <span style={{ fontWeight: 600 }}>Content genereren</span>.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
