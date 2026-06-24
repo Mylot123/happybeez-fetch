@@ -53,7 +53,7 @@ function Dashboard() {
       body: "Volg relevante nieuwsberichten om op in te haken.",
       to: "/nieuws",
     },
-  ];
+  ] as const;
 
   return (
     <div className="px-4 sm:px-8 py-8 max-w-6xl mx-auto">
