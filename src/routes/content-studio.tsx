@@ -125,17 +125,24 @@ function ContentStudio() {
       const instagramPlaybook = `
 INSTAGRAM VIRAL-PLAYBOOK (verplicht volgen voor Instagram):
 • Doel: saves + shares + profielbezoeken. "Slow virality" via educatie en herkenning, niet schreeuwerig.
-• HOOK: eerste regel = sterke hook binnen 125 tekens, vaak een persoonlijke vraag of verrassend feit dat raakt aan eten, tuin of dagelijks leven. Kies één hooktype passend bij ${contentType}: vraag, mythe/feit, verrassend feit, how-to belofte, microstory, benefit-first, mythbuster, checklist of lokale trots.
-• LENGTE: MAX 150 woorden totaal (liever 100–140). Compacter = meer bereik. Gemiddeld 9–14 woorden per zin. B1-niveau, actieve zinnen, "je/jij".
-• STRUCTUUR: hook (1 regel) → 2–3 korte alinea's herkenning/inzicht (1–3 zinnen elk, witregel ertussen) → optioneel bullet-lijstje → 1 duidelijke CTA → witregel → hashtags.
-• GEEN MARKDOWN: NOOIT **vet**, *cursief*, of "* " als bullet-prefix. Instagram rendert dit niet. Gebruik in plaats van bullets een emoji vooraan de regel: "🌼 Plant bijvriendelijke bloemen ...".
-• EMOJI: 1–4 stuks totaal in lopende tekst, functioneel (🐝 🌼 ☀️ 🌿 🍎 🚫 🔒). Bullet-emoji's tellen apart en mogen per regel één zijn. Nooit decoratief stapelen.
-• CTA: kies één — "Sla deze post op", "Stuur door naar iemand met een tuin", "Reageer met ...", "Tag iemand die ...", "Bekijk in ons profiel". Match CTA aan contenttype (carousel/checklist → save; story/microstory → share/comment).
-• HASHTAGS: exact 3–5 stuks onderaan, witregel ervoor. Mix: 1 branded (#HappyBeez of #happybeeznl) + max 1 local (#Boekel, #Brabant) + 2–3 niche (#wildebijen, #solitairebijen, #bijenhotel, #biodiversiteit, #bijvriendelijktuin, #bloemenvoorbijen, #ecologischtuinieren, #geveltuin). Geen spam-tags (#nature, #flowers, #love).
-• LOCAL tag alleen bij lokaal/community-onderwerp, NIET bij nationaal-educatieve posts.
-• GEEN ABSOLUTE CLAIMS: vermijd "zonder bijen geen appels", "perfecte aanvulling", "redt de bijen". Schrijf zacht: "veel minder appels, peren en aardbeien", "een waardevolle aanvulling", "help je wilde bijen echt mee".
-• Vermijd verzonnen percentages. "Meer dan de helft van de wilde bijensoorten in Nederland staat onder druk" mag.
+• EÉN HOOFDBOODSCHAP per post: één probleem, één inzicht, één actie. Niet meerdere onderwerpen mixen (bv. niet tegelijk pesticiden + ophangen + voedselzekerheid). Te brede onderwerpen splits je impliciet in losse posts; kies hier de scherpste invalshoek.
+• HOOK (max 12 woorden, eerste regel): laat scrollen stoppen. Persoonlijk, prikkelend of verrassend. Geen algemeenheden als "Bijen zijn belangrijk". Voorkeurs-formules: "Wist je dat ...", "Zonder wilde bijen ...", "Veel mensen ... verkeerd ...", "Deze fout maken veel mensen met ...", "... pas écht als je dit ook doet". Hooks die werken: eten, gezondheid, tuin/balkon, fouten, simpel advies, natuur dichtbij huis.
+• DEELBAARHEID: elke post moet één concreet, praktisch inzicht bevatten dat iemand wil doorsturen ("dit wist ik niet", "handig voor jouw tuin", "dit doen veel mensen fout"). Niet alleen uitleggen wát iets is, maar een bruikbaar inzicht geven.
+• STRUCTUUR (probleem → oplossing): (1) hook, (2) probleem of misverstand, (3) gevolg in 1 zin, (4) concrete oplossing/inzicht, (5) lichte productkoppeling alléén als logisch (bv. "daarom hebben onze bijenhotels gladde, diepe nestgangen"), (6) één specifieke CTA. Korte alinea's met witregels.
+• MICRO-CONTROVERSE (welkom, niet schreeuwerig): zinnen die een misverstand corrigeren werken sterk, bv. "Een bijenhotel alleen is niet genoeg", "Niet elk bijenhotel is goed voor bijen", "Te netjes tuinieren helpt wilde bijen niet", "Bloemen zijn net zo belangrijk als nestelruimte".
+• LENGTE: MAX 150 woorden (liever 100–140). 9–14 woorden per zin gem. B1-niveau, actieve zinnen, "je/jij".
+• GEEN MARKDOWN: NOOIT **vet**, *cursief* of "* " als bullet-prefix — Instagram rendert dit niet. Bullets = emoji vooraan de regel ("🌼 Plant ..."). Korte alinea's, geen koppen.
+• EMOJI: 1–4 in lopende tekst, functioneel (🐝 🌼 ☀️ 🌿 🍎 🚫 🔒). Bullet-emoji's tellen apart, max één per bulletregel. Nooit decoratief stapelen.
+• MINDER COMMERCIEEL: eerst waarde, product daarna. Niet "Onze bijenhotels zijn perfect voor ..." → wel "Wilde bijen hebben diepe, gladde nestgangen nodig. Daarom zijn onze bijenhotels daarop ontworpen." Niet "Koop nu" → wel "Bekijk via ons profiel welk hotel past bij jouw tuin of balkon."
+• CTA (één, specifiek, bij voorkeur save/share/profile, niet algemene like): "Sla deze checklist op voor je tuin", "Stuur dit naar iemand met een balkon", "Deel dit met iemand die zijn tuin bijvriendelijker wil maken", "Bewaar dit voordat je een bijenhotel ophangt", "Reageer met 🌼 als jij dit voorjaar meer bloemen plant", "Bekijk in ons profiel ...". DM-doorsturen weegt zwaar voor bereik — richt je CTA vaak op één persoon doorsturen.
+• SAVE-WAARDIG eindigen waar passend: "Bewaar deze post voor het moment dat je je bijenhotel ophangt." Vooral bij checklists, stappenplannen, foutenlijsten, seizoensadvies, onderhoud.
+• INSTAGRAM SEO: verwerk zoekwoorden natuurlijk in de caption (niet alleen in hashtags): bijenhotel, wilde bijen, solitaire bijen, bijvriendelijke tuin, biodiversiteit, bijen helpen, bijenhotel ophangen, bijenhotel onderhouden, bloemen voor bijen, tuin vergroenen, duurzaam bijenhotel. Kies de 2–4 die bij dit onderwerp passen.
+• HASHTAGS: exact 3–5 onderaan, witregel ervoor. Mix: 1 branded (#HappyBeez of #happybeeznl) + max 1 local (#Boekel, #Brabant — alléén bij lokaal/community-onderwerp) + 2–3 niche (#wildebijen, #solitairebijen, #bijenhotel, #biodiversiteit, #bijvriendelijktuin, #bloemenvoorbijen, #ecologischtuinieren, #geveltuin). Geen spam-tags (#nature, #flowers, #love).
+• GEEN ABSOLUTE CLAIMS: vermijd "zonder bijen geen appels", "perfecte aanvulling", "redt de bijen". Zacht formuleren: "veel minder appels, peren en aardbeien", "een waardevolle aanvulling", "help je wilde bijen echt mee". Geen verzonnen percentages — "meer dan de helft van de wilde bijensoorten in Nederland staat onder druk" mag.
+• Voor carousels (contentType = carousel): geef ipv lopende caption een lijst slides terug, slide 1 = hook, slides 2–6 = één inzicht per slide (max 6 woorden tekstoverlay-suggestie + 1 zin uitleg), laatste slide = CTA + "Bewaar deze post".
+• ZELF-CHECK voor je teruggeeft: (1) stopkracht in eerste zin? (2) één hoofdboodschap? (3) kort genoeg? (4) praktisch inzicht om te bewaren? (5) reden om door te sturen? (6) deskundig zonder hard verkopen? (7) CTA concreet? (8) claims feitelijk en zacht? (9) hashtags beperkt en relevant? Als één antwoord nee is: herschrijf vóór je antwoordt.
 `;
+
 
 
       const prompt = `Je schrijft een ${contentType.replace("_", " ")} post voor ${channel} namens HappyBeez — een Nederlands merk dat handgemaakte, natuurvriendelijke bijenhotels maakt in Boekel en educeert over solitaire bijen en biodiversiteit.
