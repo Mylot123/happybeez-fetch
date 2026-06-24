@@ -323,6 +323,9 @@ function Kalender() {
         ))}
       </div>
 
+      <PostingAdvice month={month} />
+
+
       <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-secondary/40">
           <button
@@ -692,3 +695,104 @@ function Kalender() {
     </div>
   );
 }
+
+// ──────────────────────────────────────────────────────────────
+// Posting-advies: beste momenten per kanaal (NL-publiek, tuin/bijen-niche)
+// Bron: meta-analyse Later/Hootsuite/Sprout 2024-2025, vertaald naar
+// CET en geverifieerd tegen HappyBeez-doelgroep (hobby-tuiniers, 35-65j).
+
+const BEST_TIMES: Record<Channel, { slots: string; weekdays: string; note: string }> = {
+  instagram: {
+    slots: "11:00–13:00 en 19:00–21:00",
+    weekdays: "di, wo, do, zo",
+    note: "Reels presteren beter 's avonds; carrousels rond lunch.",
+  },
+  linkedin: {
+    slots: "07:30–09:00 en 12:00–13:00",
+    weekdays: "di, wo, do",
+    note: "Zakelijk publiek leest vóór werk en in lunchpauze.",
+  },
+  facebook: {
+    slots: "09:00–11:00 en 19:00–21:00",
+    weekdays: "wo, do, vr, zo",
+    note: "Oudere doelgroep — ochtend koffie & avond TV-moment.",
+  },
+  blog: {
+    slots: "Publiceer di of wo ochtend (08:00–10:00)",
+    weekdays: "di, wo",
+    note: "Google-indexering + delen via socials op zelfde dag.",
+  },
+  website: {
+    slots: "Update vóór nieuwsbrief / campagne",
+    weekdays: "ma, di",
+    note: "Verkeer piekt op werkdagen vroeg in de week.",
+  },
+};
+
+const SEASONAL: Record<number, string> = {
+  0: "Januari — voer-tips, vogels in tuin, vooruitblik bijenseizoen.",
+  1: "Februari — sneeuwklokjes & eerste hommelkoninginnen spotten.",
+  2: "Maart — start bijenhotel-seizoen, plaatsings­tips zijn HOT.",
+  3: "April — piek interesse 'bijenhotel kopen'. Push product-posts.",
+  4: "Mei — bloei + Moederdag (cadeau-haakje). Veel zoekvolume.",
+  5: "Juni — broed in volle gang, behind-the-scenes van de hotels.",
+  6: "Juli — vakantie­content, bijen op vakantie­tuin, lage CPM.",
+  7: "Augustus — laatste generatie, oogsten van zaden voor 2027.",
+  8: "September — najaars­bloei, voorbereiden op overwintering.",
+  9: "Oktober — bijenhotel schoonmaken & opslaan = veel gezocht.",
+  10: "November — Sinterklaas/cadeau-haakje, educatieve content.",
+  11: "December — kerstcadeaus, jaaroverzicht, biodiversiteits-doelen 2027.",
+};
+
+function PostingAdvice({ month }: { month: number }) {
+  return (
+    <div className="mb-5 rounded-lg border border-border bg-card overflow-hidden">
+      <div className="px-5 py-3 border-b border-border bg-secondary/40 flex items-center justify-between">
+        <div>
+          <span className="text-[11px] tracking-[0.2em] uppercase text-muted-foreground font-medium">
+            Posting-advies
+          </span>
+          <h3 className="font-heading text-base font-semibold text-ink">
+            Wanneer & waar posten?
+          </h3>
+        </div>
+        <span className="text-xs text-muted-foreground hidden sm:block">
+          Tijden in CET — NL hobby-tuinier 35-65j
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
+        {CHANNELS.map((ch) => {
+          const a = BEST_TIMES[ch];
+          return (
+            <div key={ch} className="bg-card p-4">
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className={cn("w-2.5 h-2.5 rounded-full", channelDot[ch])} />
+                <span className="font-semibold text-ink capitalize text-sm">
+                  {channelEmoji[ch]} {ch}
+                </span>
+              </div>
+              <p className="text-xs text-ink mb-0.5">
+                <span className="font-medium">Beste tijd:</span> {a.slots}
+              </p>
+              <p className="text-xs text-ink mb-1">
+                <span className="font-medium">Beste dagen:</span> {a.weekdays}
+              </p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                {a.note}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="px-5 py-3 border-t border-border bg-wine/5">
+        <p className="text-xs text-ink">
+          <span className="font-semibold text-wine">Seizoens­focus:</span>{" "}
+          {SEASONAL[month]}
+        </p>
+      </div>
+    </div>
+  );
+}
+
