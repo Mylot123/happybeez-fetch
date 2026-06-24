@@ -194,45 +194,9 @@ function Boekbibliotheek() {
 
 
 
-      <div className="grid gap-6 lg:grid-cols-[22rem_1fr]">
-        <section className="bg-card border border-border rounded-lg p-5 shadow-sm h-fit">
-          <h2 className="font-heading text-lg font-semibold text-ink mb-4 flex items-center gap-2">
-            <Plus className="h-4 w-4 text-gold" /> Fragment toevoegen
-          </h2>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="book-title">Titel</Label>
-              <Input id="book-title" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="book-type">Type</Label>
-                <Input id="book-type" value={form.type} onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="book-page">Pagina</Label>
-                <Input id="book-page" type="number" value={form.page_number} onChange={(e) => setForm((p) => ({ ...p, page_number: e.target.value }))} />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="book-chapter">Hoofdstuk</Label>
-              <Input id="book-chapter" value={form.chapter} onChange={(e) => setForm((p) => ({ ...p, chapter: e.target.value }))} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="book-tags">Tags</Label>
-              <Input id="book-tags" value={form.tags} onChange={(e) => setForm((p) => ({ ...p, tags: e.target.value }))} placeholder="bijen, biodiversiteit" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="book-content">Content</Label>
-              <Textarea id="book-content" rows={7} value={form.content} onChange={(e) => setForm((p) => ({ ...p, content: e.target.value }))} />
-            </div>
-            <Button onClick={save} disabled={saving} className="w-full">
-              <Save className="h-4 w-4" /> {saving ? "Opslaan…" : "Opslaan"}
-            </Button>
-          </div>
-        </section>
-
+      <div>
         <section className="grid gap-4 sm:grid-cols-2">
+
           {loading ? (
             <p className="text-sm text-muted-foreground">Bibliotheek laden…</p>
           ) : items.length === 0 ? (
