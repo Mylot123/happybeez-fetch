@@ -14,7 +14,237 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      book_contents: {
+        Row: {
+          chapter: string | null
+          content: string
+          created_at: string
+          id: string
+          page_number: number | null
+          suggested_channels: string[]
+          tags: string[]
+          title: string
+          type: string
+          updated_at: string
+          used_count: number
+          user_id: string
+        }
+        Insert: {
+          chapter?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          page_number?: number | null
+          suggested_channels?: string[]
+          tags?: string[]
+          title: string
+          type: string
+          updated_at?: string
+          used_count?: number
+          user_id: string
+        }
+        Update: {
+          chapter?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          page_number?: number | null
+          suggested_channels?: string[]
+          tags?: string[]
+          title?: string
+          type?: string
+          updated_at?: string
+          used_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      content_calendar_items: {
+        Row: {
+          channel: string
+          content_text: string | null
+          content_type: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          publish_date: string | null
+          source_id: string | null
+          source_type: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel: string
+          content_text?: string | null
+          content_type?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          publish_date?: string | null
+          source_id?: string | null
+          source_type?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          content_text?: string | null
+          content_type?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          publish_date?: string | null
+          source_id?: string | null
+          source_type?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      news_items: {
+        Row: {
+          created_at: string
+          id: string
+          published_at: string | null
+          relevance: number | null
+          source: string | null
+          summary: string | null
+          title: string
+          updated_at: string
+          url: string | null
+          used: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          published_at?: string | null
+          relevance?: number | null
+          source?: string | null
+          summary?: string | null
+          title: string
+          updated_at?: string
+          url?: string | null
+          used?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          published_at?: string | null
+          relevance?: number | null
+          source?: string | null
+          summary?: string | null
+          title?: string
+          updated_at?: string
+          url?: string | null
+          used?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      seo_keywords: {
+        Row: {
+          created_at: string
+          current_rank: number | null
+          difficulty: number | null
+          id: string
+          keyword: string
+          notes: string | null
+          search_volume: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_rank?: number | null
+          difficulty?: number | null
+          id?: string
+          keyword: string
+          notes?: string | null
+          search_volume?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_rank?: number | null
+          difficulty?: number | null
+          id?: string
+          keyword?: string
+          notes?: string | null
+          search_volume?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      social_profiles: {
+        Row: {
+          active: boolean
+          channel: string
+          created_at: string
+          description: string | null
+          handle: string
+          id: string
+          updated_at: string
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          channel: string
+          created_at?: string
+          description?: string | null
+          handle: string
+          id?: string
+          updated_at?: string
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          channel?: string
+          created_at?: string
+          description?: string | null
+          handle?: string
+          id?: string
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
