@@ -657,16 +657,24 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
             </div>
           </div>
 
-          {/* Instagram phone mockup column */}
-          {isInstagram && (
+          {/* Phone mockup column */}
+          {hasPreview && (
             <div className="flex flex-col items-center">
               <span className="text-xs uppercase tracking-wider mb-3" style={{ color: "var(--hb-dark)", opacity: 0.6 }}>
                 Preview op telefoon
               </span>
-              <PhoneMockup
-                image={selectedPhoto?.image_url ?? null}
-                caption={generated}
-              />
+              {channel === "instagram" && (
+                <PhoneMockup image={selectedPhoto?.image_url ?? null} caption={generated} />
+              )}
+              {channel === "linkedin" && (
+                <LinkedInMockup image={selectedPhoto?.image_url ?? null} caption={generated} />
+              )}
+              {channel === "facebook" && (
+                <FacebookMockup image={selectedPhoto?.image_url ?? null} caption={generated} />
+              )}
+              {channel === "blog" && (
+                <BlogMockup image={selectedPhoto?.image_url ?? null} caption={generated} title={topic} />
+              )}
             </div>
           )}
         </div>
