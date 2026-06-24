@@ -13,6 +13,7 @@ type NewsResult = {
   url: string | null;
   summary: string;
   relevance: number;
+  published_at: string | null;
 };
 
 type PplxResponse = {
@@ -34,8 +35,8 @@ export const fetchBeeNews = createServerFn({ method: "POST" })
     const recency = data.recency ?? "week";
 
     const system = `Je bent een nieuwsredacteur voor HappyBeez, een merk voor natuurvriendelijke bijenhotels. Vind 6 tot 8 recente, relevante nieuwsartikelen. Antwoord ALLEEN met geldig JSON in dit formaat:
-{"items":[{"title":"...","source":"domeinnaam","url":"https://...","summary":"2-3 zinnen in het Nederlands","relevance":1-10}]}
-Geen markdown, geen uitleg, alleen JSON.`;
+{"items":[{"title":"...","source":"domeinnaam","url":"https://...","summary":"2-3 zinnen in het Nederlands","relevance":1-10,"published_at":"YYYY-MM-DD"}]}
+Gebruik de werkelijke publicatiedatum van het artikel. Geen markdown, geen uitleg, alleen JSON.`;
 
     const res = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
