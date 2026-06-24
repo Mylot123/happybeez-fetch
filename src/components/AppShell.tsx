@@ -11,6 +11,7 @@ import {
   Menu,
   LogOut,
   Images,
+  Mic,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/auth";
@@ -24,6 +25,7 @@ const navItems = [
   { path: "/content-studio", label: "Content Studio", icon: Wand2 },
   { path: "/social-profielen", label: "Social Profielen", icon: Users },
   { path: "/seo", label: "SEO & Ranking", icon: Search },
+  { path: "/agent", label: "Josef (AI)", icon: Mic },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
