@@ -215,12 +215,12 @@ function Kennisbank() {
   );
 }
 
-function PhotoCard({ photo }: { photo: Photo }) {
+function PhotoCard({ photo, displayUrl }: { photo: Photo; displayUrl: string }) {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
 
   async function copyUrl() {
-    await navigator.clipboard.writeText(photo.image_url);
+    await navigator.clipboard.writeText(displayUrl);
     toast.success("URL gekopieerd.");
   }
 
@@ -233,7 +233,7 @@ function PhotoCard({ photo }: { photo: Photo }) {
       channel: "instagram",
       content_type: "foto",
       status: "idee",
-      notes: `Foto: ${photo.image_url}\nBron: ${photo.credit ?? ""}`,
+      notes: `Foto: ${displayUrl}\nBron: ${photo.credit ?? ""}`,
     });
     setSaving(false);
     if (error) return toast.error(error.message);
@@ -243,13 +243,13 @@ function PhotoCard({ photo }: { photo: Photo }) {
   return (
     <article className="bg-card border border-border rounded-lg overflow-hidden shadow-sm flex flex-col">
       <a
-        href={photo.image_url}
+        href={displayUrl}
         target="_blank"
         rel="noopener noreferrer"
         className="block aspect-[4/3] bg-muted overflow-hidden"
       >
         <img
-          src={photo.image_url}
+          src={displayUrl}
           alt={photo.title}
           loading="lazy"
           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
