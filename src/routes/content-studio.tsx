@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -16,6 +16,9 @@ import {
   Send,
   Bookmark,
   MoreHorizontal,
+  ThumbsUp,
+  Globe,
+  Share2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -396,7 +399,7 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
     toast.success("Opgeslagen in kalender.");
   }
 
-  const isInstagram = channel === "instagram";
+  const hasPreview = channel === "instagram" || channel === "linkedin" || channel === "facebook" || channel === "blog";
 
   return (
     <div
@@ -441,7 +444,7 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
           </div>
         </div>
 
-        <div className={isInstagram ? "grid lg:grid-cols-3 gap-6" : "grid lg:grid-cols-2 gap-6"}>
+        <div className={hasPreview ? "grid lg:grid-cols-3 gap-6" : "grid lg:grid-cols-2 gap-6"}>
           {/* Settings column */}
           <div className="space-y-5">
             <div className="rounded-2xl p-6 shadow-sm" style={{ background: "#fff", border: "1px solid var(--hb-border)" }}>
@@ -562,7 +565,7 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
                     {generated}
                   </div>
 
-                  {isInstagram && (
+                  {hasPreview && (
                     <div className="p-4 border-t" style={{ borderColor: "var(--hb-border)" }}>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--hb-dark)", opacity: 0.7 }}>
@@ -657,16 +660,24 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
             </div>
           </div>
 
-          {/* Instagram phone mockup column */}
-          {isInstagram && (
+          {/* Phone mockup column */}
+          {hasPreview && (
             <div className="flex flex-col items-center">
               <span className="text-xs uppercase tracking-wider mb-3" style={{ color: "var(--hb-dark)", opacity: 0.6 }}>
                 Preview op telefoon
               </span>
-              <PhoneMockup
-                image={selectedPhoto?.image_url ?? null}
-                caption={generated}
-              />
+              {channel === "instagram" && (
+                <PhoneMockup image={selectedPhoto?.image_url ?? null} caption={generated} />
+              )}
+              {channel === "linkedin" && (
+                <LinkedInMockup image={selectedPhoto?.image_url ?? null} caption={generated} />
+              )}
+              {channel === "facebook" && (
+                <FacebookMockup image={selectedPhoto?.image_url ?? null} caption={generated} />
+              )}
+              {channel === "blog" && (
+                <BlogMockup image={selectedPhoto?.image_url ?? null} caption={generated} title={topic} />
+              )}
             </div>
           )}
         </div>
@@ -739,5 +750,132 @@ function PhoneMockup({ image, caption }: { image: string | null; caption: string
         </div>
       </div>
     </div>
+  );
+}
+
+function PhoneFrame({ children }: { children: ReactNode }) {
+  return (
+    <div className="relative w-[300px] rounded-[44px] p-3 shadow-2xl" style={{ background: "#0f0f10" }}>
+      <div className="absolute top-2 left-1/2 -translate-x-1/2 h-5 w-24 rounded-full" style={{ background: "#0f0f10" }} />
+      <div className="rounded-[34px] overflow-hidden bg-white" style={{ height: 620 }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function cleanText(t: string) {
+  return t.replace(/\*\*/g, "").replace(/^\* /gm, "• ");
+}
+
+function LinkedInMockup({ image, caption }: { image: string | null; caption: string }) {
+  const cleaned = cleanText(caption);
+  return (
+    <PhoneFrame>
+      <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-200" style={{ background: "#fff" }}>
+        <span className="text-[15px] font-bold" style={{ color: "#0a66c2" }}>in</span>
+        <span className="text-[11px] text-neutral-500">Startpagina</span>
+      </div>
+      <div className="px-3 py-2 flex items-start gap-2">
+        <div className="w-10 h-10 rounded-full shrink-0" style={{ background: "var(--hb-green)" }} />
+        <div className="flex flex-col leading-tight">
+          <span className="text-[12px] font-semibold">HappyBeez</span>
+          <span className="text-[10px] text-neutral-500">Handgemaakte bijenhotels · Boekel</span>
+          <span className="text-[10px] text-neutral-500">2 u · 🌍</span>
+        </div>
+      </div>
+      <div className="px-3 pb-2 text-[12px] leading-snug max-h-[230px] overflow-y-auto whitespace-pre-wrap text-neutral-800">
+        {cleaned || "Je post verschijnt hier…"}
+      </div>
+      {image && (
+        <div className="w-full bg-neutral-100" style={{ aspectRatio: "1.91 / 1" }}>
+          <img src={image} alt="" className="w-full h-full object-cover" />
+        </div>
+      )}
+      <div className="px-3 py-2 flex items-center justify-between text-[11px] text-neutral-500 border-t border-neutral-200">
+        <div className="flex items-center gap-1">
+          <span className="w-4 h-4 rounded-full inline-flex items-center justify-center text-white text-[9px]" style={{ background: "#0a66c2" }}>👍</span>
+          <span>42</span>
+        </div>
+        <span>6 reacties · 3 reposts</span>
+      </div>
+      <div className="px-3 py-2 grid grid-cols-4 gap-1 text-[10px] text-neutral-600 border-t border-neutral-200">
+        <div className="flex flex-col items-center gap-0.5"><ThumbsUp className="w-4 h-4" />Vind ik</div>
+        <div className="flex flex-col items-center gap-0.5"><MessageCircle className="w-4 h-4" />Reageer</div>
+        <div className="flex flex-col items-center gap-0.5"><Share2 className="w-4 h-4" />Repost</div>
+        <div className="flex flex-col items-center gap-0.5"><Send className="w-4 h-4" />Verstuur</div>
+      </div>
+    </PhoneFrame>
+  );
+}
+
+function FacebookMockup({ image, caption }: { image: string | null; caption: string }) {
+  const cleaned = cleanText(caption);
+  return (
+    <PhoneFrame>
+      <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-200" style={{ background: "#fff" }}>
+        <span className="text-[16px] font-extrabold" style={{ color: "#1877f2" }}>facebook</span>
+        <Send className="w-4 h-4 text-neutral-700" />
+      </div>
+      <div className="px-3 py-2 flex items-center gap-2">
+        <div className="w-10 h-10 rounded-full shrink-0" style={{ background: "var(--hb-green)" }} />
+        <div className="flex flex-col leading-tight">
+          <span className="text-[12px] font-semibold">HappyBeez</span>
+          <span className="text-[10px] text-neutral-500">2 u · 🌍</span>
+        </div>
+      </div>
+      <div className="px-3 pb-2 text-[12px] leading-snug max-h-[200px] overflow-y-auto whitespace-pre-wrap text-neutral-800">
+        {cleaned || "Je post verschijnt hier…"}
+      </div>
+      {image && (
+        <div className="w-full bg-neutral-100" style={{ aspectRatio: "1 / 1" }}>
+          <img src={image} alt="" className="w-full h-full object-cover" />
+        </div>
+      )}
+      <div className="px-3 py-2 flex items-center justify-between text-[11px] text-neutral-500 border-t border-neutral-200">
+        <div className="flex items-center gap-1">
+          <span className="w-4 h-4 rounded-full inline-flex items-center justify-center text-white text-[9px]" style={{ background: "#1877f2" }}>👍</span>
+          <span>128 · Anna en 12 anderen</span>
+        </div>
+      </div>
+      <div className="px-3 py-2 grid grid-cols-3 gap-1 text-[11px] text-neutral-600 border-t border-neutral-200">
+        <div className="flex items-center justify-center gap-1"><ThumbsUp className="w-4 h-4" />Vind ik leuk</div>
+        <div className="flex items-center justify-center gap-1"><MessageCircle className="w-4 h-4" />Reageer</div>
+        <div className="flex items-center justify-center gap-1"><Share2 className="w-4 h-4" />Delen</div>
+      </div>
+    </PhoneFrame>
+  );
+}
+
+function BlogMockup({ image, caption, title }: { image: string | null; caption: string; title: string }) {
+  const cleaned = cleanText(caption);
+  return (
+    <PhoneFrame>
+      <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-200 bg-neutral-50">
+        <Globe className="w-4 h-4 text-neutral-500" />
+        <span className="text-[11px] text-neutral-600 truncate">happybeez.nl/blog</span>
+        <MoreHorizontal className="w-4 h-4 text-neutral-500" />
+      </div>
+      <div className="overflow-y-auto" style={{ height: 580 }}>
+        {image && (
+          <div className="w-full bg-neutral-100" style={{ aspectRatio: "16 / 9" }}>
+            <img src={image} alt="" className="w-full h-full object-cover" />
+          </div>
+        )}
+        <div className="px-4 py-3">
+          <span className="text-[10px] uppercase tracking-wider" style={{ color: "var(--hb-green-dark)" }}>HappyBeez · Blog</span>
+          <h3 className="text-[16px] font-bold leading-tight mt-1 mb-2" style={{ color: "var(--hb-dark)" }}>
+            {title || "Titel van je artikel"}
+          </h3>
+          <div className="flex items-center gap-2 text-[10px] text-neutral-500 mb-3">
+            <div className="w-5 h-5 rounded-full" style={{ background: "var(--hb-green)" }} />
+            <span>HappyBeez · 4 min lezen</span>
+          </div>
+          <div className="text-[12px] leading-relaxed whitespace-pre-wrap text-neutral-800">
+            {cleaned || "Je artikel verschijnt hier…"}
+          </div>
+        </div>
+      </div>
+    </PhoneFrame>
   );
 }
