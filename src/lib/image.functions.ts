@@ -29,12 +29,12 @@ BELANGRIJK over bijen: toon WILDE/SOLITAIRE bijen waar mogelijk (metselbijen, be
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "openai/gpt-image-2",
+        model: "google/gemini-2.5-flash-image",
         prompt: styledPrompt,
         size: "1024x1024",
-        quality: "low",
         n: 1,
       }),
+
     });
 
     if (res.status === 429) throw new Error("Limiet bereikt — probeer het zo nog eens.");
