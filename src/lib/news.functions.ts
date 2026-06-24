@@ -13,6 +13,7 @@ type NewsResult = {
   url: string | null;
   summary: string;
   relevance: number;
+  published_at: string | null;
 };
 
 type PplxResponse = {
@@ -34,8 +35,8 @@ export const fetchBeeNews = createServerFn({ method: "POST" })
     const recency = data.recency ?? "week";
 
     const system = `Je bent een nieuwsredacteur voor HappyBeez, een merk voor natuurvriendelijke bijenhotels. Vind 6 tot 8 recente, relevante nieuwsartikelen. Antwoord ALLEEN met geldig JSON in dit formaat:
-{"items":[{"title":"...","source":"domeinnaam","url":"https://...","summary":"2-3 zinnen in het Nederlands","relevance":1-10}]}
-Geen markdown, geen uitleg, alleen JSON.`;
+{"items":[{"title":"...","source":"domeinnaam","url":"https://...","summary":"2-3 zinnen in het Nederlands","relevance":1-10,"published_at":"YYYY-MM-DD"}]}
+Gebruik de werkelijke publicatiedatum van het artikel. Geen markdown, geen uitleg, alleen JSON.`;
 
     const res = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
@@ -68,6 +69,7 @@ Geen markdown, geen uitleg, alleen JSON.`;
                       url: { type: "string" },
                       summary: { type: "string" },
                       relevance: { type: "number" },
+                      published_at: { type: "string" },
                     },
                     required: ["title", "summary"],
                   },
@@ -95,13 +97,21 @@ Geen markdown, geen uitleg, alleen JSON.`;
       if (m) parsed = JSON.parse(m[0]);
     }
 
-    const items = (parsed.items ?? []).map((it) => ({
-      title: String(it.title ?? "").slice(0, 300),
-      source: it.source ? String(it.source).slice(0, 120) : null,
-      url: it.url ? String(it.url).slice(0, 500) : null,
-      summary: String(it.summary ?? "").slice(0, 1200),
-      relevance: Math.max(1, Math.min(10, Math.round(Number(it.relevance) || 7))),
-    }));
+    const items = (parsed.items ?? []).map((it) => {
+      let publishedAt: string | null = null;
+      if (it.published_at) {
+        const d = new Date(it.published_at);
+        if (!isNaN(d.getTime())) publishedAt = d.toISOString();
+      }
+      return {
+        title: String(it.title ?? "").slice(0, 300),
+        source: it.source ? String(it.source).slice(0, 120) : null,
+        url: it.url ? String(it.url).slice(0, 500) : null,
+        summary: String(it.summary ?? "").slice(0, 1200),
+        relevance: Math.max(1, Math.min(10, Math.round(Number(it.relevance) || 7))),
+        published_at: publishedAt,
+      };
+    });
 
     return { items, citations: json.citations ?? [] };
   });
