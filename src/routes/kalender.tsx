@@ -401,13 +401,15 @@ function Kalender() {
               today.getDate() === day;
             const col = (firstDay + i) % 7;
             const weekend = col === 5 || col === 6;
+            const plan = WEEKLY_PLAN[col]!;
+            const planRoute = plan.rest ? null : routeForType(plan.content_type);
 
             return (
               <div
                 key={day}
                 onClick={() => openNew(dateStr)}
                 className={cn(
-                  "min-h-[90px] border-b border-r border-border/50 p-1.5 cursor-pointer transition-colors group",
+                  "min-h-[110px] border-b border-r border-border/50 p-1.5 cursor-pointer transition-colors group",
                   weekend ? "bg-muted/40" : "hover:bg-secondary/40",
                   isToday && "bg-wine/5 ring-1 ring-inset ring-wine/30",
                 )}
@@ -423,21 +425,86 @@ function Kalender() {
                   >
                     {day}
                   </span>
-                </div>
-                <div className="space-y-0.5">
-                  {dayItems.slice(0, 3).map((item) => (
-                    <div
-                      key={item.id}
-                      onClick={(e) => openEdit(item, e)}
+                  {plan.channel && (
+                    <span
                       className={cn(
-                        "text-xs px-1.5 py-0.5 rounded border-l-2 truncate cursor-pointer hover:opacity-80 transition-opacity bg-card text-ink",
-                        statusBorder[(item.status as Status) ?? "idee"],
+                        "w-1.5 h-1.5 rounded-full",
+                        channelDot[plan.channel],
                       )}
-                    >
-                      <span>{channelEmoji[(item.channel as Channel) ?? "instagram"]}</span>{" "}
-                      {item.title}
+                      title={plan.label}
+                    />
+                  )}
+                </div>
+
+                {/* Dagtip: klik → ga direct naar de juiste tool */}
+                {dayItems.length === 0 && (
+                  plan.rest ? (
+                    <div className="text-[10px] text-muted-foreground/80 px-1 py-0.5 flex items-center gap-1">
+                      <Coffee className="w-3 h-3" /> Rustdag
                     </div>
-                  ))}
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void navigate({
+                          to: planRoute!,
+                          search: {
+                            date: dateStr,
+                            channel: plan.channel,
+                            type: plan.content_type,
+                          } as never,
+                        });
+                      }}
+                      className="w-full text-left text-[10px] leading-tight px-1.5 py-1 rounded border border-dashed border-border hover:border-wine/50 hover:bg-wine/5 text-muted-foreground hover:text-ink transition-colors flex items-center justify-between gap-1 group/tip"
+                      title={`Ga naar ${planRoute === "/nieuws" ? "Nieuws" : "Content Studio"}`}
+                    >
+                      <span className="truncate">
+                        {plan.channel && channelEmoji[plan.channel]} {plan.label}
+                      </span>
+                      <ArrowRight className="w-3 h-3 opacity-0 group-hover/tip:opacity-100 shrink-0" />
+                    </button>
+                  )
+                )}
+
+                <div className="space-y-0.5 mt-0.5">
+                  {dayItems.slice(0, 3).map((item) => {
+                    const itemType = (item.content_type as ContentType) ?? "tip";
+                    const itemRoute = routeForType(itemType);
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void navigate({
+                            to: itemRoute,
+                            search: {
+                              date: item.publish_date ?? dateStr,
+                              channel: item.channel,
+                              type: itemType,
+                              item: item.id,
+                            } as never,
+                          });
+                        }}
+                        className={cn(
+                          "text-xs px-1.5 py-0.5 rounded border-l-2 flex items-center gap-1 cursor-pointer hover:bg-secondary/60 transition-colors bg-card text-ink group/item",
+                          statusBorder[(item.status as Status) ?? "idee"],
+                        )}
+                        title={`Ga naar ${itemRoute === "/nieuws" ? "Nieuws" : "Content Studio"}`}
+                      >
+                        <span>{channelEmoji[(item.channel as Channel) ?? "instagram"]}</span>
+                        <span className="truncate flex-1">{item.title}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => openEdit(item, e)}
+                          className="opacity-0 group-hover/item:opacity-100 hover:text-wine transition-opacity"
+                          title="Bewerken"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
                   {dayItems.length > 3 && (
                     <div className="text-xs text-muted-foreground px-1.5">
                       +{dayItems.length - 3} meer
