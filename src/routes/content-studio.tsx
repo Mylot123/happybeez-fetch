@@ -172,6 +172,7 @@ function ContentStudio() {
 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
+  const [generatingImage, setGeneratingImage] = useState(false);
 
   useEffect(() => {
     void loadPhotos();
