@@ -110,6 +110,136 @@ export type Database = {
         }
         Relationships: []
       }
+      library_book_sections: {
+        Row: {
+          book_id: string
+          content: string
+          created_at: string
+          id: string
+          page_start: number | null
+          section_number: number
+          tags: string[]
+          title: string
+        }
+        Insert: {
+          book_id: string
+          content: string
+          created_at?: string
+          id?: string
+          page_start?: number | null
+          section_number: number
+          tags?: string[]
+          title: string
+        }
+        Update: {
+          book_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          page_start?: number | null
+          section_number?: number
+          tags?: string[]
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_book_sections_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "library_books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      library_books: {
+        Row: {
+          author: string | null
+          cover_url: string | null
+          created_at: string
+          description: string | null
+          id: string
+          source_url: string | null
+          title: string
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          author?: string | null
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          source_url?: string | null
+          title: string
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          author?: string | null
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          source_url?: string | null
+          title?: string
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
+      library_photos: {
+        Row: {
+          book_id: string | null
+          caption: string | null
+          created_at: string
+          credit: string | null
+          height: number | null
+          id: string
+          image_url: string
+          storage_path: string | null
+          suggested_channels: string[]
+          tags: string[]
+          title: string
+          width: number | null
+        }
+        Insert: {
+          book_id?: string | null
+          caption?: string | null
+          created_at?: string
+          credit?: string | null
+          height?: number | null
+          id?: string
+          image_url: string
+          storage_path?: string | null
+          suggested_channels?: string[]
+          tags?: string[]
+          title: string
+          width?: number | null
+        }
+        Update: {
+          book_id?: string | null
+          caption?: string | null
+          created_at?: string
+          credit?: string | null
+          height?: number | null
+          id?: string
+          image_url?: string
+          storage_path?: string | null
+          suggested_channels?: string[]
+          tags?: string[]
+          title?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_photos_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "library_books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       news_items: {
         Row: {
           created_at: string
