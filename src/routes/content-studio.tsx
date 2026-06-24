@@ -155,6 +155,7 @@ function ContentStudioPage() {
 function ContentStudio() {
   const { user } = useAuth();
   const generate = useServerFn(generateText);
+  const generateImage = useServerFn(generatePostImage);
   const search = Route.useSearch();
 
   const [channel, setChannel] = useState<Channel>("instagram");
