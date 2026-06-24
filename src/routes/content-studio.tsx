@@ -73,6 +73,11 @@ const TONES: { value: Tone; label: string }[] = [
 ];
 
 export const Route = createFileRoute("/content-studio")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    topic: typeof search.topic === "string" ? search.topic : "",
+    keywords: typeof search.keywords === "string" ? search.keywords : "",
+    source: typeof search.source === "string" ? search.source : "",
+  }),
   head: () => ({
     meta: [
       { title: "Content Studio — HappyBeez" },
