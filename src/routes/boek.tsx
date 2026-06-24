@@ -169,6 +169,23 @@ function Boekbibliotheek() {
               <div className="rounded-xl bg-secondary/50 border border-border p-4">
                 <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Antwoord</div>
                 <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">{answer}</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      const keywords = sources.slice(0, 3).map((s) => s.title).join(", ");
+                      const source = `Boekbibliotheek — vraag: ${question}\n\n${answer}\n\nBronnen:\n${sources
+                        .map((s, i) => `[${i + 1}] ${s.title}${s.page ? ` (p. ${s.page})` : ""}: ${s.snippet.slice(0, 240)}`)
+                        .join("\n")}`;
+                      navigate({
+                        to: "/content-studio",
+                        search: { topic: question, keywords, source },
+                      });
+                    }}
+                  >
+                    <Sparkles className="h-4 w-4" /> Maak post van dit antwoord
+                  </Button>
+                </div>
               </div>
             )}
             {sources.length > 0 && (
