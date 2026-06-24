@@ -441,7 +441,7 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
           </div>
         </div>
 
-        <div className={isInstagram ? "grid lg:grid-cols-3 gap-6" : "grid lg:grid-cols-2 gap-6"}>
+        <div className={hasPreview ? "grid lg:grid-cols-3 gap-6" : "grid lg:grid-cols-2 gap-6"}>
           {/* Settings column */}
           <div className="space-y-5">
             <div className="rounded-2xl p-6 shadow-sm" style={{ background: "#fff", border: "1px solid var(--hb-border)" }}>
