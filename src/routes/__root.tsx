@@ -84,6 +84,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:description", content: "Bijenhotel social media en content suite." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "HappyBeez — Social Studio" },
+      { name: "twitter:description", content: "Bijenhotel social media en content suite." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8eb19321-caa5-4743-9502-303904173483/id-preview-96f08462--8a918da0-0d6f-4221-93cc-d8cc4a75303c.lovable.app-1782317459622.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8eb19321-caa5-4743-9502-303904173483/id-preview-96f08462--8a918da0-0d6f-4221-93cc-d8cc4a75303c.lovable.app-1782317459622.png" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
