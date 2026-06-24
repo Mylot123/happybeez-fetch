@@ -596,6 +596,80 @@ function Kalender() {
                 />
               </div>
 
+              {editing && (
+                <div className="space-y-2 rounded-md border border-border bg-secondary/30 p-3">
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                    Publiceren
+                  </Label>
+                  {editing.image_url && (
+                    <img
+                      src={editing.image_url}
+                      alt=""
+                      className="w-full max-h-48 object-cover rounded-md border border-border"
+                    />
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(form.content_text ?? "");
+                        toast.success("Tekst gekopieerd — plak in Instagram.");
+                      }}
+                      disabled={!form.content_text}
+                    >
+                      <Copy className="w-3.5 h-3.5" /> Kopieer tekst
+                    </Button>
+                    {editing.image_url && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          try {
+                            const res = await fetch(editing.image_url!);
+                            const blob = await res.blob();
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = `${editing.title || "post"}.jpg`;
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            URL.revokeObjectURL(url);
+                            toast.success("Afbeelding gedownload.");
+                          } catch {
+                            toast.error("Download mislukt.");
+                          }
+                        }}
+                      >
+                        <Download className="w-3.5 h-3.5" /> Download foto
+                      </Button>
+                    )}
+                    {editing.channel === "instagram" && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="bg-wine text-primary-foreground hover:bg-wine/90"
+                        onClick={async () => {
+                          await navigator.clipboard.writeText(form.content_text ?? "");
+                          toast.success("Tekst gekopieerd. Plak in Instagram.");
+                          window.open("https://www.instagram.com/", "_blank");
+                        }}
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" /> Kopieer & open Instagram
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Instagram staat geen directe upload via een externe site toe.
+                    Klik op "Kopieer & open Instagram", download de foto en plak
+                    de tekst in de Instagram-app of op desktop.
+                  </p>
+                </div>
+              )}
+
               <div className="flex gap-3 pt-2">
                 <Button
                   variant="outline"
