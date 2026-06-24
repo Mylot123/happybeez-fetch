@@ -47,10 +47,46 @@ async function callSemrush(path: string, params: Record<string, string | number 
   return j.data ?? { columnNames: [], rows: [] };
 }
 
+// Semrush returns human column names, not codes. Map both → code.
+const COLUMN_ALIASES: Record<string, string> = {
+  // codes (identity)
+  Ph: "Ph", Po: "Po", Nq: "Nq", Cp: "Cp", Co: "Co", Tr: "Tr", Ur: "Ur", Kd: "Kd",
+  Db: "Db", Dn: "Dn", Rk: "Rk", Or: "Or", Ot: "Ot", Oc: "Oc", Ad: "Ad", At: "At", Ac: "Ac",
+  Cr: "Cr", Np: "Np",
+  // human names → codes
+  Keyword: "Ph",
+  Position: "Po",
+  "Search Volume": "Nq",
+  CPC: "Cp",
+  Competition: "Co",
+  "Traffic (%)": "Tr",
+  Traffic: "Tr",
+  Url: "Ur",
+  URL: "Ur",
+  "Keyword Difficulty": "Kd",
+  "Keyword Difficulty Index": "Kd",
+  Database: "Db",
+  Domain: "Dn",
+  Rank: "Rk",
+  "Organic Keywords": "Or",
+  "Organic Traffic": "Ot",
+  "Organic Cost": "Oc",
+  "Adwords Keywords": "Ad",
+  "Adwords Traffic": "At",
+  "Adwords Cost": "Ac",
+  "Common Keywords": "Cr",
+  "SE Keywords": "Or",
+};
+
 function rowsToObjects(d: SemRow): Array<Record<string, string>> {
   return d.rows.map((r) => {
     const o: Record<string, string> = {};
-    d.columnNames.forEach((c, i) => (o[c] = String(r[i] ?? "")));
+    d.columnNames.forEach((c, i) => {
+      const val = String(r[i] ?? "");
+      o[c] = val;
+      const code = COLUMN_ALIASES[c];
+      if (code) o[code] = val;
+    });
     return o;
   });
 }
@@ -95,19 +131,20 @@ export const analyzeDomain = createServerFn({ method: "POST" })
       ),
     );
 
-    // 3 Top 10 competitors (by common keywords)
+    // 3 Top 10 organic competitors
     const compsRaw = rowsToObjects(
       await callSemrush(
-        "/domains/domain_domains",
+        "/domains/domain_organic_organic",
         {
-          domains: `*|or|${domain}`,
+          domain,
           database: db,
-          export_columns: "Dn,Cr,Np,Or,Ot,Oc",
+          export_columns: "Dn,Cr,Np,Or,Ot",
           display_limit: 10,
         },
         true,
       ),
     ).filter((c) => (c.Dn ?? "").toLowerCase() !== domain);
+
 
     const topKeywords = organic.map((r) => ({
       keyword: r.Ph,
