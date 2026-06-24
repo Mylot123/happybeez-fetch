@@ -97,13 +97,21 @@ Gebruik de werkelijke publicatiedatum van het artikel. Geen markdown, geen uitle
       if (m) parsed = JSON.parse(m[0]);
     }
 
-    const items = (parsed.items ?? []).map((it) => ({
-      title: String(it.title ?? "").slice(0, 300),
-      source: it.source ? String(it.source).slice(0, 120) : null,
-      url: it.url ? String(it.url).slice(0, 500) : null,
-      summary: String(it.summary ?? "").slice(0, 1200),
-      relevance: Math.max(1, Math.min(10, Math.round(Number(it.relevance) || 7))),
-    }));
+    const items = (parsed.items ?? []).map((it) => {
+      let publishedAt: string | null = null;
+      if (it.published_at) {
+        const d = new Date(it.published_at);
+        if (!isNaN(d.getTime())) publishedAt = d.toISOString();
+      }
+      return {
+        title: String(it.title ?? "").slice(0, 300),
+        source: it.source ? String(it.source).slice(0, 120) : null,
+        url: it.url ? String(it.url).slice(0, 500) : null,
+        summary: String(it.summary ?? "").slice(0, 1200),
+        relevance: Math.max(1, Math.min(10, Math.round(Number(it.relevance) || 7))),
+        published_at: publishedAt,
+      };
+    });
 
     return { items, citations: json.citations ?? [] };
   });
