@@ -1,0 +1,1 @@
+DELETE FROM public.seo_domain_snapshots WHERE domain='happybeez.nl';
