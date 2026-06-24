@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { LayoutDashboard, BookOpen, CalendarDays, Newspaper } from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/lib/auth";
@@ -33,23 +33,27 @@ function Dashboard() {
       icon: LayoutDashboard,
       title: "Welkom",
       body: `Fijn dat je er bent, ${name}. Dit is je Social Studio.`,
+      to: "/content-studio",
     },
     {
       icon: CalendarDays,
       title: "Kalender",
       body: "Plan en publiceer je posts in één overzicht.",
+      to: "/kalender",
     },
     {
       icon: BookOpen,
       title: "Boekbibliotheek",
       body: "Hergebruik citaten en hoofdstukken uit je boek.",
+      to: "/boek",
     },
     {
       icon: Newspaper,
       title: "Nieuws",
       body: "Volg relevante nieuwsberichten om op in te haken.",
+      to: "/nieuws",
     },
-  ];
+  ] as const;
 
   return (
     <div className="px-4 sm:px-8 py-8 max-w-6xl mx-auto">
@@ -63,9 +67,10 @@ function Dashboard() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        {cards.map(({ icon: Icon, title, body }) => (
-          <div
+        {cards.map(({ icon: Icon, title, body, to }) => (
+          <Link
             key={title}
+            to={to}
             className="bg-card border border-border rounded-lg p-6 shadow-sm"
           >
             <div className="flex items-center gap-3 mb-3">
@@ -77,14 +82,9 @@ function Dashboard() {
               </h2>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">{body}</p>
-          </div>
+          </Link>
         ))}
       </div>
-
-      <p className="mt-10 text-xs text-muted-foreground">
-        De overige pagina's (Nieuws, Kalender, Boekbibliotheek, Content Studio, SEO,
-        Social Profielen) volgen in de volgende fasen.
-      </p>
     </div>
   );
 }
