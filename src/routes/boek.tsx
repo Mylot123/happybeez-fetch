@@ -45,6 +45,7 @@ function BoekPage() {
 function Boekbibliotheek() {
   const { user } = useAuth();
   const ask = useServerFn(askBook);
+  const navigate = useNavigate();
   const [items, setItems] = useState<BookRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
