@@ -177,12 +177,15 @@ function ContentStudio() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   // Per-channel selection so switching channel doesn't reuse the same image
   const [photoByChannel, setPhotoByChannel] = useState<Record<string, string>>({});
+  // Recently used photo IDs per channel — so successive generations rotate
+  const [recentByChannel, setRecentByChannel] = useState<Record<string, string[]>>({});
   const selectedPhotoId = photoByChannel[channel] ?? null;
   const [generatingImage, setGeneratingImage] = useState(false);
 
   function setSelectedPhotoId(id: string) {
     setPhotoByChannel((prev) => ({ ...prev, [channel]: id }));
   }
+
 
   useEffect(() => {
     void loadPhotos();
