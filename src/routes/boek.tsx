@@ -44,9 +44,14 @@ function BoekPage() {
 
 function Boekbibliotheek() {
   const { user } = useAuth();
+  const ask = useServerFn(askBook);
   const [items, setItems] = useState<BookRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [question, setQuestion] = useState("");
+  const [asking, setAsking] = useState(false);
+  const [answer, setAnswer] = useState<string>("");
+  const [sources, setSources] = useState<AskSource[]>([]);
   const [form, setForm] = useState({
     title: "",
     type: "citaat",
@@ -59,6 +64,23 @@ function Boekbibliotheek() {
   useEffect(() => {
     void load();
   }, []);
+
+  async function runAsk() {
+    if (!question.trim() || asking) return;
+    setAsking(true);
+    setAnswer("");
+    setSources([]);
+    try {
+      const res = await ask({ data: { question: question.trim() } });
+      setAnswer(res.answer);
+      setSources(res.sources);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Zoekfout");
+    } finally {
+      setAsking(false);
+    }
+  }
+
 
   async function load() {
     setLoading(true);
