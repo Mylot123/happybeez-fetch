@@ -131,19 +131,20 @@ export const analyzeDomain = createServerFn({ method: "POST" })
       ),
     );
 
-    // 3 Top 10 competitors (by common keywords)
+    // 3 Top 10 organic competitors
     const compsRaw = rowsToObjects(
       await callSemrush(
-        "/domains/domain_domains",
+        "/domains/domain_organic_organic",
         {
-          domains: `*|or|${domain}`,
+          domain,
           database: db,
-          export_columns: "Dn,Cr,Np,Or,Ot,Oc",
+          export_columns: "Dn,Cr,Np,Or,Ot",
           display_limit: 10,
         },
         true,
       ),
     ).filter((c) => (c.Dn ?? "").toLowerCase() !== domain);
+
 
     const topKeywords = organic.map((r) => ({
       keyword: r.Ph,
