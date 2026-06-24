@@ -27,7 +27,13 @@ export const Route = createFileRoute("/agent")({
   ),
 });
 
-type Msg = { role: "user" | "agent" | "system"; content: string; ts: number };
+type Msg = {
+  role: "user" | "agent" | "system" | "navigation";
+  content: string;
+  ts: number;
+  url?: string;
+  label?: string;
+};
 type Conv = {
   id: string;
   title: string | null;
