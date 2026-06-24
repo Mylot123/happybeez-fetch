@@ -35,9 +35,13 @@ function NieuwsPage() {
 
 function Nieuws() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const runFetchNews = useServerFn(fetchBeeNews);
   const [items, setItems] = useState<NewsRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [fetchingNews, setFetchingNews] = useState(false);
+  const [recency, setRecency] = useState<"day" | "week" | "month">("week");
   const [form, setForm] = useState({
     title: "",
     source: "",
