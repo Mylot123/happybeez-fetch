@@ -190,6 +190,67 @@ function ContentStudio() {
   }, []);
 
   async function loadPhotos() {
+    const { data, error } = await supabase
+      .from("library_photos")
+      .select("id,title,caption,tags,storage_path,image_url");
+    if (error) return;
+    const rows = (data ?? []) as Photo[];
+    const paths = rows
+      .map((r) => r.storage_path)
+      .filter((p): p is string => Boolean(p));
+    const urlMap: Record<string, string> = {};
+    if (paths.length > 0) {
+      const { data: signed } = await supabase.storage
+        .from("library-photos")
+        .createSignedUrls(paths, 60 * 60 * 8);
+      signed?.forEach((entry, i) => {
+        const path = paths[i];
+        if (path && entry.signedUrl) urlMap[path] = entry.signedUrl;
+      });
+    }
+    setPhotos(
+      rows.map((r) => ({
+        ...r,
+        image_url: (r.storage_path && urlMap[r.storage_path]) || r.image_url,
+      })),
+    );
+  }
+
+  const rankedPhotos = useMemo(() => {
+    const contextText = [topic, keywords, generated, channel].filter(Boolean).join(" ");
+    const tokens = new Set(tokenize(contextText));
+    if (photos.length === 0) return [];
+    if (tokens.size === 0) return photos.slice(0, 6);
+    // Photos already used by other channels — push to the back so each channel gets variety
+    const usedElsewhere = new Set(
+      Object.entries(photoByChannel)
+        .filter(([ch]) => ch !== channel)
+        .map(([, id]) => id),
+    );
+    return [...photos]
+      .map((p) => {
+        let s = scorePhoto(p, tokens);
+        if (usedElsewhere.has(p.id)) s -= 3;
+        return { p, s };
+      })
+      .sort((a, b) => b.s - a.s)
+      .filter((x) => x.s > -2)
+      .slice(0, 6)
+      .map((x) => x.p);
+  }, [photos, topic, keywords, generated, channel, photoByChannel]);
+
+  // auto-select top-ranked when ranking changes and nothing selected for this channel
+  useEffect(() => {
+    if (rankedPhotos.length === 0) return;
+    if (!selectedPhotoId || !rankedPhotos.some((p) => p.id === selectedPhotoId)) {
+      setPhotoByChannel((prev) => ({ ...prev, [channel]: rankedPhotos[0]!.id }));
+    }
+  }, [rankedPhotos, selectedPhotoId, channel]);
+
+  const selectedPhoto =
+    photos.find((p) => p.id === selectedPhotoId) ?? rankedPhotos[0] ?? null;
+
+
 
 
   async function runGenerateImage() {
