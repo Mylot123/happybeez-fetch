@@ -177,12 +177,15 @@ function ContentStudio() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   // Per-channel selection so switching channel doesn't reuse the same image
   const [photoByChannel, setPhotoByChannel] = useState<Record<string, string>>({});
+  // Recently used photo IDs per channel — so successive generations rotate
+  const [recentByChannel, setRecentByChannel] = useState<Record<string, string[]>>({});
   const selectedPhotoId = photoByChannel[channel] ?? null;
   const [generatingImage, setGeneratingImage] = useState(false);
 
   function setSelectedPhotoId(id: string) {
     setPhotoByChannel((prev) => ({ ...prev, [channel]: id }));
   }
+
 
   useEffect(() => {
     void loadPhotos();
@@ -221,23 +224,27 @@ function ContentStudio() {
     const tokens = new Set(tokenize(contextText));
     if (photos.length === 0) return [];
     if (tokens.size === 0) return photos.slice(0, 6);
-    // Photos already used by other channels — push to the back so each channel gets variety
     const usedElsewhere = new Set(
       Object.entries(photoByChannel)
         .filter(([ch]) => ch !== channel)
         .map(([, id]) => id),
     );
+    const recent = recentByChannel[channel] ?? [];
     return [...photos]
       .map((p) => {
         let s = scorePhoto(p, tokens);
         if (usedElsewhere.has(p.id)) s -= 3;
+        // Recent posts in THIS channel get penalised, so each new post rotates
+        const recentIdx = recent.indexOf(p.id);
+        if (recentIdx >= 0) s -= 5 - recentIdx; // most recent = biggest penalty
         return { p, s };
       })
       .sort((a, b) => b.s - a.s)
-      .filter((x) => x.s > -2)
+      .filter((x) => x.s > -5)
       .slice(0, 6)
       .map((x) => x.p);
-  }, [photos, topic, keywords, generated, channel, photoByChannel]);
+  }, [photos, topic, keywords, generated, channel, photoByChannel, recentByChannel]);
+
 
   // auto-select top-ranked when ranking changes and nothing selected for this channel
   useEffect(() => {
@@ -317,7 +324,22 @@ function ContentStudio() {
   async function runGenerate() {
     if (generating) return;
     setGenerating(true);
+    // Rotate: remember currently selected photo as "recent" for this channel,
+    // and clear selection so the next ranking picks a different one.
+    if (selectedPhotoId) {
+      setRecentByChannel((prev) => {
+        const list = prev[channel] ?? [];
+        const next = [selectedPhotoId, ...list.filter((id) => id !== selectedPhotoId)].slice(0, 5);
+        return { ...prev, [channel]: next };
+      });
+      setPhotoByChannel((prev) => {
+        const copy = { ...prev };
+        delete copy[channel];
+        return copy;
+      });
+    }
     setGenerated("");
+
 
     try {
       const toneLabel = TONES.find((t) => t.value === tone)?.label ?? "warm en educatief";
