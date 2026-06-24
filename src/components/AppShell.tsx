@@ -95,7 +95,28 @@ export function AppShell({ children }: { children: ReactNode }) {
           })}
         </nav>
 
-        <div className="px-4 py-4 border-t border-sidebar-border">
+        <div className="px-4 py-4 border-t border-sidebar-border space-y-2">
+          <div className="px-3 pb-1">
+            <p className="text-[10px] tracking-[0.18em] uppercase text-muted-foreground font-semibold">
+              Klantpresentatie
+            </p>
+            <div className="mt-1 flex flex-col gap-0.5">
+              <a
+                href={pdfAsset.url}
+                download="HappyBeez-Social-Studio.pdf"
+                className="flex items-center gap-2 text-xs text-foreground/70 hover:text-wine transition-colors"
+              >
+                <FileDown className="w-3 h-3" /> PDF downloaden
+              </a>
+              <a
+                href={pptxAsset.url}
+                download="HappyBeez-Social-Studio.pptx"
+                className="flex items-center gap-2 text-xs text-foreground/50 hover:text-wine transition-colors"
+              >
+                <FileDown className="w-3 h-3" /> PowerPoint (.pptx)
+              </a>
+            </div>
+          </div>
           <button
             onClick={handleSignOut}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm text-foreground/60 hover:bg-muted hover:text-foreground transition-colors"
@@ -104,12 +125,6 @@ export function AppShell({ children }: { children: ReactNode }) {
             Uitloggen
           </button>
           <div className="mt-3 px-3">
-            <p className="text-xs font-semibold text-ink">Team Bijenhotel</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Social Media &amp; Content
-            </p>
-          </div>
-        </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
