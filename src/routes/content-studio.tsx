@@ -562,7 +562,7 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
                     {generated}
                   </div>
 
-                  {isInstagram && (
+                  {hasPreview && (
                     <div className="p-4 border-t" style={{ borderColor: "var(--hb-border)" }}>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--hb-dark)", opacity: 0.7 }}>
