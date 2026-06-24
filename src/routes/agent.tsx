@@ -314,26 +314,46 @@ function AgentPage() {
             </p>
           ) : (
             <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-              {messages.map((m, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "flex",
-                    m.role === "user" ? "justify-end" : "justify-start",
-                  )}
-                >
+              {messages.map((m, i) => {
+                if (m.role === "navigation" && m.url) {
+                  return (
+                    <div key={i} className="flex justify-start">
+                      <a
+                        href={m.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="max-w-[80%] flex items-center gap-3 rounded-lg border border-forest/30 bg-forest/10 px-4 py-3 text-sm hover:bg-forest/15 transition-colors"
+                      >
+                        <ExternalLink className="w-4 h-4 text-forest shrink-0" />
+                        <div className="min-w-0">
+                          <p className="font-medium text-ink">Josef opent: {m.label ?? m.content}</p>
+                          <p className="text-xs text-muted-foreground truncate">{m.url}</p>
+                        </div>
+                      </a>
+                    </div>
+                  );
+                }
+                return (
                   <div
+                    key={i}
                     className={cn(
-                      "max-w-[80%] rounded-lg px-4 py-2 text-sm",
-                      m.role === "user"
-                        ? "bg-wine text-primary-foreground"
-                        : "bg-secondary text-ink",
+                      "flex",
+                      m.role === "user" ? "justify-end" : "justify-start",
                     )}
                   >
-                    {m.content}
+                    <div
+                      className={cn(
+                        "max-w-[80%] rounded-lg px-4 py-2 text-sm",
+                        m.role === "user"
+                          ? "bg-wine text-primary-foreground"
+                          : "bg-secondary text-ink",
+                      )}
+                    >
+                      {m.content}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
