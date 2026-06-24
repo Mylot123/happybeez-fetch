@@ -108,28 +108,30 @@ export const analyzeDomain = createServerFn({ method: "POST" })
     const domain = data.domain.replace(/^https?:\/\//, "").replace(/\/.*$/, "").toLowerCase();
     const db = data.database;
 
-    // 1 Rank + traffic
-    const ranks = rowsToObjects(
-      await callSemrush("/domains/domain_ranks", {
-        domain,
-        database: db,
-        export_columns: "Db,Dn,Rk,Or,Ot,Oc,Ad,At,Ac",
-      }),
-    )[0];
-
-    // 2 Top 25 organic keywords (position, volume, traffic share, URL, KD)
-    const organic = rowsToObjects(
-      await callSemrush(
-        "/domains/domain_organic",
-        {
+    try {
+      // 1 Rank + traffic
+      const ranks = rowsToObjects(
+        await callSemrush("/domains/domain_ranks", {
           domain,
           database: db,
-          export_columns: "Ph,Po,Nq,Cp,Co,Tr,Ur,Kd",
-          display_limit: 25,
-        },
-        true,
-      ),
-    );
+          export_columns: "Db,Dn,Rk,Or,Ot,Oc,Ad,At,Ac",
+        }),
+      )[0];
+
+      // 2 Top 25 organic keywords (position, volume, traffic share, URL, KD)
+      const organic = rowsToObjects(
+        await callSemrush(
+          "/domains/domain_organic",
+          {
+            domain,
+            database: db,
+            export_columns: "Ph,Po,Nq,Cp,Co,Tr,Ur,Kd",
+            display_limit: 25,
+          },
+          true,
+        ),
+      );
+
 
     // 3 Top 10 organic competitors
     const compsRaw = rowsToObjects(
