@@ -574,30 +574,56 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
                         </span>
                       </div>
                       {rankedPhotos.length === 0 ? (
-                        <p className="text-xs" style={{ color: "var(--hb-dark)", opacity: 0.6 }}>
-                          Geen relevante foto's gevonden.
-                        </p>
-                      ) : (
-                        <div className="grid grid-cols-6 gap-2">
-                          {rankedPhotos.map((p) => {
-                            const active = p.id === selectedPhotoId;
-                            return (
-                              <button
-                                key={p.id}
-                                type="button"
-                                onClick={() => setSelectedPhotoId(p.id)}
-                                title={p.title}
-                                className="aspect-square rounded-lg overflow-hidden transition-all"
-                                style={{
-                                  outline: active ? "3px solid var(--hb-green)" : "1px solid var(--hb-border)",
-                                  outlineOffset: active ? "1px" : "0",
-                                }}
-                              >
-                                <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" />
-                              </button>
-                            );
-                          })}
+                        <div className="space-y-3">
+                          <p className="text-xs" style={{ color: "var(--hb-dark)", opacity: 0.6 }}>
+                            Geen relevante foto's in je bibliotheek. Laat de AI er één maken in HappyBeez-stijl.
+                          </p>
+                          <Button
+                            type="button"
+                            onClick={runGenerateImage}
+                            disabled={generatingImage}
+                            className="w-full rounded-full font-semibold hover:brightness-110"
+                            style={{ background: "var(--hb-honey)", color: "var(--hb-dark)" }}
+                          >
+                            {generatingImage ? (
+                              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Beeld maken…</>
+                            ) : (
+                              <><Sparkles className="w-4 h-4 mr-2" /> Genereer beeld met AI</>
+                            )}
+                          </Button>
                         </div>
+                      ) : (
+                        <>
+                          <div className="grid grid-cols-6 gap-2">
+                            {rankedPhotos.map((p) => {
+                              const active = p.id === selectedPhotoId;
+                              return (
+                                <button
+                                  key={p.id}
+                                  type="button"
+                                  onClick={() => setSelectedPhotoId(p.id)}
+                                  title={p.title}
+                                  className="aspect-square rounded-lg overflow-hidden transition-all"
+                                  style={{
+                                    outline: active ? "3px solid var(--hb-green)" : "1px solid var(--hb-border)",
+                                    outlineOffset: active ? "1px" : "0",
+                                  }}
+                                >
+                                  <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" />
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={runGenerateImage}
+                            disabled={generatingImage}
+                            className="mt-2 text-[11px] underline disabled:opacity-50"
+                            style={{ color: "var(--hb-green-dark)" }}
+                          >
+                            {generatingImage ? "Beeld maken…" : "Niets past? Genereer AI-beeld"}
+                          </button>
+                        </>
                       )}
                     </div>
                   )}
