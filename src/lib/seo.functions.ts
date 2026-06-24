@@ -108,28 +108,30 @@ export const analyzeDomain = createServerFn({ method: "POST" })
     const domain = data.domain.replace(/^https?:\/\//, "").replace(/\/.*$/, "").toLowerCase();
     const db = data.database;
 
-    // 1 Rank + traffic
-    const ranks = rowsToObjects(
-      await callSemrush("/domains/domain_ranks", {
-        domain,
-        database: db,
-        export_columns: "Db,Dn,Rk,Or,Ot,Oc,Ad,At,Ac",
-      }),
-    )[0];
-
-    // 2 Top 25 organic keywords (position, volume, traffic share, URL, KD)
-    const organic = rowsToObjects(
-      await callSemrush(
-        "/domains/domain_organic",
-        {
+    try {
+      // 1 Rank + traffic
+      const ranks = rowsToObjects(
+        await callSemrush("/domains/domain_ranks", {
           domain,
           database: db,
-          export_columns: "Ph,Po,Nq,Cp,Co,Tr,Ur,Kd",
-          display_limit: 25,
-        },
-        true,
-      ),
-    );
+          export_columns: "Db,Dn,Rk,Or,Ot,Oc,Ad,At,Ac",
+        }),
+      )[0];
+
+      // 2 Top 25 organic keywords (position, volume, traffic share, URL, KD)
+      const organic = rowsToObjects(
+        await callSemrush(
+          "/domains/domain_organic",
+          {
+            domain,
+            database: db,
+            export_columns: "Ph,Po,Nq,Cp,Co,Tr,Ur,Kd",
+            display_limit: 25,
+          },
+          true,
+        ),
+      );
+
 
     // 3 Top 10 organic competitors
     const compsRaw = rowsToObjects(
@@ -190,8 +192,18 @@ export const analyzeDomain = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
-    return { id: inserted.id, created_at: inserted.created_at, ...snapshot };
+    return { id: inserted.id, created_at: inserted.created_at, ...snapshot, soft_error: null as string | null };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Onbekende fout";
+      return {
+        id: null, created_at: null, domain, database_code: db,
+        rank_global: null, organic_keywords: null, organic_traffic: null, organic_cost: null,
+        top_keywords: [] as never[], competitors: [] as never[], quick_wins: [] as never[],
+        soft_error: msg,
+      };
+    }
   });
+
 
 // ──────────────────────────────────────────────────────────────────
 // Keyword research: related + question phrases for a seed
