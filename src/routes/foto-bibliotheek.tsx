@@ -275,7 +275,7 @@ function PhotoCard({ photo, displayUrl }: { photo: Photo; displayUrl: string }) 
             <Copy className="h-3 w-3" /> URL
           </Button>
           <Button size="sm" variant="outline" asChild>
-            <a href={photo.image_url} download>
+            <a href={displayUrl} download>
               <Download className="h-3 w-3" />
             </a>
           </Button>
