@@ -248,19 +248,24 @@ INSTAGRAM VIRAL-PLAYBOOK (verplicht volgen voor Instagram):
 • HASHTAGS: 3–5 onderaan, mix branded + niche.
 • Vermijd absolute claims, generieke "bijen" (gebruik "wilde bijen").
 `;
+      const facebookPlaybook = `
+FACEBOOK PLAYBOOK (verplicht volgen voor Facebook):
+• Doel: reacties + delen + community-gevoel. Niet "stoppen met scrollen" maar "meedoen met gesprek".
+• Persoonlijker dan Instagram. Open met een herkenbare vraag of observatie ("Heb jij vroeger ook meer bijen in de tuin gezien dan nu?").
+• EÉN HOOFDBOODSCHAP per post.
+• STRUCTUUR: herkenbare opening → kort probleem → praktische uitleg → HappyBeez-koppeling (zacht, pas ná de educatieve waarde) → één concrete vraag of deel-CTA.
+• LENGTE: 120–220 woorden. Mag iets langer en persoonlijker dan Instagram, maar nooit wollig. B1, "je/jij".
+• GEEN MARKDOWN. Geen sterretjes/bullets met * of -. Korte alinea's, witregels tussen blokken.
+• TOON: rustig, deskundig, natuurvriendelijk, menselijk. Lokale trots ("handgemaakt in Boekel") werkt hier sterker dan op Instagram.
+• WAARDEN die delen uitlokken: zorg voor natuur, tegen verstening, kinderen iets leren, ambacht, biodiversiteit dichtbij huis, kleine actie groot effect.
+• CTA: reactievraag of deel-CTA — NOOIT "sla op". Voorbeelden: "Deel dit met iemand met een tuin.", "Herken jij dit in jouw tuin?", "Welke bloemen doen het goed bij jou?", "Tag iemand die zijn tuin bijvriendelijker wil maken."
+• Vermijd te algemene vragen ("Wat vind jij hiervan?") — die leveren zwakke reacties.
+• Vermijd harde verkoop. Educatie eerst, product als oplossing.
+• HASHTAGS: maximaal 2–4 onderaan, of helemaal geen. Geen lijst van 10 hashtags — dat oogt als marketing.
+• Vermijd absolute claims, generieke "bijen" (gebruik "wilde bijen" / "solitaire bijen").
+`;
 
-      const prompt = `Je schrijft een ${contentType.replace("_", " ")} post voor ${channel} namens HappyBeez — handgemaakte natuurvriendelijke bijenhotels uit Boekel.
-
-Toon: ${toneLabel}
-Platform: ${channelHint}
-${topic ? `Onderwerp: ${topic}` : ""}
-${keywords ? `Kernwoorden: ${keywords}` : ""}
-
-MERKSTIJL: rustig, deskundig, natuurvriendelijk. Gebruik termen: solitaire/wilde bijen, nestelgelegenheid, biodiversiteit, onbehandeld beukenhout/Douglas, diepe gladde nestgangen, handgemaakt in Boekel.
-
-VERMIJD: absolute claims, generiek "bijen", suggestie dat een hotel voedsel biedt, garanties.
-
-${channel === "instagram" ? instagramPlaybook : `CTA kort en neutraal. Geen hashtags.`}
+${channel === "instagram" ? instagramPlaybook : channel === "facebook" ? facebookPlaybook : `CTA kort en neutraal. Geen hashtags.`}
 
 Geef ALLEEN de posttekst terug, in het Nederlands.`;
       const { text } = await generate({ data: { prompt } });
