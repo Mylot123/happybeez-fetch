@@ -235,6 +235,9 @@ function Nieuws() {
                   </button>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
+                  <Button size="sm" onClick={() => makeContent(item)}>
+                    <Wand2 className="h-4 w-4" /> Maak post
+                  </Button>
                   <Button size="sm" variant={item.used ? "secondary" : "outline"} onClick={() => toggleUsed(item)}>
                     {item.used ? "Gebruikt" : "Markeer gebruikt"}
                   </Button>
