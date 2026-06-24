@@ -101,12 +101,13 @@ function ContentStudioPage() {
 function ContentStudio() {
   const { user } = useAuth();
   const generate = useServerFn(generateText);
+  const search = Route.useSearch();
 
   const [channel, setChannel] = useState<Channel>("instagram");
   const [contentType, setContentType] = useState<ContentType>("tip");
   const [tone, setTone] = useState<Tone>("warm_educatief");
-  const [topic, setTopic] = useState("");
-  const [keywords, setKeywords] = useState("");
+  const [topic, setTopic] = useState(search.topic ?? "");
+  const [keywords, setKeywords] = useState(search.keywords ?? "");
   const [generated, setGenerated] = useState("");
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
