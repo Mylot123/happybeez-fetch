@@ -265,6 +265,17 @@ FACEBOOK PLAYBOOK (verplicht volgen voor Facebook):
 • Vermijd absolute claims, generieke "bijen" (gebruik "wilde bijen" / "solitaire bijen").
 `;
 
+      const prompt = `Je schrijft een ${contentType.replace("_", " ")} post voor ${channel} namens HappyBeez — handgemaakte natuurvriendelijke bijenhotels uit Boekel.
+
+Toon: ${toneLabel}
+Platform: ${channelHint}
+${topic ? `Onderwerp: ${topic}` : ""}
+${keywords ? `Kernwoorden: ${keywords}` : ""}
+
+MERKSTIJL: rustig, deskundig, natuurvriendelijk. Gebruik termen: solitaire/wilde bijen, nestelgelegenheid, biodiversiteit, onbehandeld beukenhout/Douglas, diepe gladde nestgangen, handgemaakt in Boekel.
+
+VERMIJD: absolute claims, generiek "bijen", suggestie dat een hotel voedsel biedt, garanties.
+
 ${channel === "instagram" ? instagramPlaybook : channel === "facebook" ? facebookPlaybook : `CTA kort en neutraal. Geen hashtags.`}
 
 Geef ALLEEN de posttekst terug, in het Nederlands.`;
