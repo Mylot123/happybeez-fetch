@@ -396,7 +396,7 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
     toast.success("Opgeslagen in kalender.");
   }
 
-  const isInstagram = channel === "instagram";
+  const hasPreview = channel === "instagram" || channel === "linkedin" || channel === "facebook" || channel === "blog";
 
   return (
     <div
