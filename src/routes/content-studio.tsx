@@ -324,7 +324,22 @@ function ContentStudio() {
   async function runGenerate() {
     if (generating) return;
     setGenerating(true);
+    // Rotate: remember currently selected photo as "recent" for this channel,
+    // and clear selection so the next ranking picks a different one.
+    if (selectedPhotoId) {
+      setRecentByChannel((prev) => {
+        const list = prev[channel] ?? [];
+        const next = [selectedPhotoId, ...list.filter((id) => id !== selectedPhotoId)].slice(0, 5);
+        return { ...prev, [channel]: next };
+      });
+      setPhotoByChannel((prev) => {
+        const copy = { ...prev };
+        delete copy[channel];
+        return copy;
+      });
+    }
     setGenerated("");
+
 
     try {
       const toneLabel = TONES.find((t) => t.value === tone)?.label ?? "warm en educatief";
