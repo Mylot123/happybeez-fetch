@@ -124,17 +124,19 @@ function ContentStudio() {
       const channelHint = CHANNELS.find((c) => c.value === channel)?.hint ?? "";
       const instagramPlaybook = `
 INSTAGRAM VIRAL-PLAYBOOK (verplicht volgen voor Instagram):
-• Doel: saves + shares + profielbezoeken. Niet schreeuwerig viraal, maar "slow virality" via educatie en herkenning.
-• HOOK: eerste regel = sterke hook binnen 125 tekens, boven de "meer"-grens. Kies één hooktype passend bij ${contentType}: vraag, mythe/feit, verrassend feit, how-to belofte, microstory, benefit-first, mythbuster, checklist of lokale trots.
-• STRUCTUUR caption: hook (1 regel) → herkenning/inzicht (2–4 korte alinea's van 1–3 zinnen) → 1 duidelijke CTA.
-• LENGTE: 90–180 woorden totaal. Gemiddeld 9–14 woorden per zin. B1-niveau, actieve zinnen, "je/jij".
-• ALINEA'S: 1–3 zinnen per alinea, witregels ertussen, scanbaar op mobiel.
-• EMOJI: 1–4 stuks, functioneel (🐝 🌼 ☀️ 🌿 🌬️ 🔒 🧭), nooit decoratief gestapeld.
+• Doel: saves + shares + profielbezoeken. "Slow virality" via educatie en herkenning, niet schreeuwerig.
+• HOOK: eerste regel = sterke hook binnen 125 tekens, vaak een persoonlijke vraag of verrassend feit dat raakt aan eten, tuin of dagelijks leven. Kies één hooktype passend bij ${contentType}: vraag, mythe/feit, verrassend feit, how-to belofte, microstory, benefit-first, mythbuster, checklist of lokale trots.
+• LENGTE: MAX 150 woorden totaal (liever 100–140). Compacter = meer bereik. Gemiddeld 9–14 woorden per zin. B1-niveau, actieve zinnen, "je/jij".
+• STRUCTUUR: hook (1 regel) → 2–3 korte alinea's herkenning/inzicht (1–3 zinnen elk, witregel ertussen) → optioneel bullet-lijstje → 1 duidelijke CTA → witregel → hashtags.
+• GEEN MARKDOWN: NOOIT **vet**, *cursief*, of "* " als bullet-prefix. Instagram rendert dit niet. Gebruik in plaats van bullets een emoji vooraan de regel: "🌼 Plant bijvriendelijke bloemen ...".
+• EMOJI: 1–4 stuks totaal in lopende tekst, functioneel (🐝 🌼 ☀️ 🌿 🍎 🚫 🔒). Bullet-emoji's tellen apart en mogen per regel één zijn. Nooit decoratief stapelen.
 • CTA: kies één — "Sla deze post op", "Stuur door naar iemand met een tuin", "Reageer met ...", "Tag iemand die ...", "Bekijk in ons profiel". Match CTA aan contenttype (carousel/checklist → save; story/microstory → share/comment).
-• HASHTAGS: exact 3–5 stuks onderaan, witregel ervoor. Mix: 1 branded (#HappyBeez of #happybeeznl) + max 1 local (#Boekel, #Brabant) + 2–3 niche (#wildebijen, #solitairebijen, #bijenhotel, #biodiversiteit, #bijvriendelijktuin, #inheemseplanten, #bloemenvoorbijen, #ecologischtuinieren, #geveltuin). Geen generieke spam (#nature, #flowers, #love).
+• HASHTAGS: exact 3–5 stuks onderaan, witregel ervoor. Mix: 1 branded (#HappyBeez of #happybeeznl) + max 1 local (#Boekel, #Brabant) + 2–3 niche (#wildebijen, #solitairebijen, #bijenhotel, #biodiversiteit, #bijvriendelijktuin, #bloemenvoorbijen, #ecologischtuinieren, #geveltuin). Geen spam-tags (#nature, #flowers, #love).
 • LOCAL tag alleen bij lokaal/community-onderwerp, NIET bij nationaal-educatieve posts.
-• Vermijd absolute getallen of percentages tenzij ze in onderwerp/kernwoorden staan. Bij bijenachteruitgang: "meer dan de helft van de wilde bijensoorten staat onder druk" mag, geen verzonnen cijfers.
+• GEEN ABSOLUTE CLAIMS: vermijd "zonder bijen geen appels", "perfecte aanvulling", "redt de bijen". Schrijf zacht: "veel minder appels, peren en aardbeien", "een waardevolle aanvulling", "help je wilde bijen echt mee".
+• Vermijd verzonnen percentages. "Meer dan de helft van de wilde bijensoorten in Nederland staat onder druk" mag.
 `;
+
 
       const prompt = `Je schrijft een ${contentType.replace("_", " ")} post voor ${channel} namens HappyBeez — een Nederlands merk dat handgemaakte, natuurvriendelijke bijenhotels maakt in Boekel en educeert over solitaire bijen en biodiversiteit.
 
