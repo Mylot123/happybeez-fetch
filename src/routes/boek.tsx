@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { BookOpen, Copy, Plus, Save, Trash2 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { BookOpen, Copy, Plus, Save, Trash2, Search, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,8 +11,18 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
+import { askBook } from "@/lib/book.functions";
 
 type BookRow = Database["public"]["Tables"]["book_contents"]["Row"];
+type AskSource = {
+  id: string;
+  title: string;
+  snippet: string;
+  page: number | null;
+  chapter: string | null;
+  origin: string;
+};
+
 
 export const Route = createFileRoute("/boek")({
   head: () => ({
