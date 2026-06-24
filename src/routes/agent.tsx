@@ -11,6 +11,34 @@ import { cn } from "@/lib/utils";
 
 const AGENT_ID = "agent_9401kvw93hayexdrbs6z367s52m9";
 
+const PAGE_LABELS: Record<string, string> = {
+  "https://happybeez.nl/": "Homepage",
+  "https://happybeez.nl/bijenhotels/": "Bijenhotels overzicht",
+  "https://happybeez.nl/bijenhotels/#studio": "Model Studio (€34,95)",
+  "https://happybeez.nl/bijenhotels/#penthouse": "Model Penthouse",
+  "https://happybeez.nl/bijenhotels/#chalet": "Model Chalet",
+  "https://happybeez.nl/bijenhotels/#lodge": "Model Lodge",
+  "https://happybeez.nl/bijenhotels/#tower": "Model Tower",
+  "https://happybeez.nl/bijenhotels/#kleinecassette": "Kleine Cassette",
+  "https://happybeez.nl/bijenhotels/#grotecassette": "Grote Cassette",
+  "https://happybeez.nl/hoe-het-werkt/": "Hoe het werkt",
+  "https://happybeez.nl/waarom-biodiversiteit-telt/": "Biodiversiteit",
+  "https://happybeez.nl/bloemen-en-voedsel/": "Bloemen en voedsel",
+  "https://happybeez.nl/partners/": "Partners",
+  "https://happybeez.nl/over-ons/": "Over ons",
+  "https://happybeez-2.myshopify.com/": "Webshop",
+};
+
+function pageLabelFor(url: string): string {
+  if (PAGE_LABELS[url]) return PAGE_LABELS[url];
+  try {
+    const u = new URL(url);
+    return (u.pathname.replace(/\/$/, "") || u.hostname) + (u.hash || "");
+  } catch {
+    return url;
+  }
+}
+
 export const Route = createFileRoute("/agent")({
   head: () => ({
     meta: [
