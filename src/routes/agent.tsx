@@ -58,6 +58,20 @@ function AgentPage() {
     onDisconnect: () => toast.info("Gesprek beëindigd"),
     onError: (e: unknown) => toast.error(typeof e === "string" ? e : "Verbindingsfout"),
     clientTools: {
+      navigate_to_page: ({ url, label }: { url: string; label?: string }) => {
+        if (!url || !/^https?:\/\//i.test(url)) {
+          return "Ongeldige URL";
+        }
+        const pageLabel = label ?? pageLabelFor(url);
+        toast.info("Ik open de pagina voor je…");
+        window.open(url, "_blank", "noopener,noreferrer");
+        setMessages((prev) => [
+          ...prev,
+          { role: "navigation", content: pageLabel, url, label: pageLabel, ts: Date.now() },
+        ]);
+        void persistMessage("agent", `[navigatie] ${pageLabel} — ${url}`);
+        return `Pagina geopend: ${pageLabel}`;
+      },
       navigateToHappybeez: (params: { path?: string; url?: string }) => {
         const base = "https://happybeez.nl";
         let target: string;
@@ -76,9 +90,14 @@ function AgentPage() {
           const normalized = path.startsWith("/") ? path : `/${path}`;
           target = `${base}${normalized}`;
         }
-        toast.info(`Josef opent ${target}`);
+        const pageLabel = pageLabelFor(target);
+        toast.info("Ik open de pagina voor je…");
         window.open(target, "_blank", "noopener,noreferrer");
-        void persistMessage("agent", `[navigatie] ${target}`);
+        setMessages((prev) => [
+          ...prev,
+          { role: "navigation", content: pageLabel, url: target, label: pageLabel, ts: Date.now() },
+        ]);
+        void persistMessage("agent", `[navigatie] ${pageLabel} — ${target}`);
         return `Geopend: ${target}`;
       },
     },
