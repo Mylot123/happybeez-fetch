@@ -12,6 +12,9 @@ import {
   Copy,
   Download,
   ExternalLink,
+  Pencil,
+  Coffee,
+  ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
