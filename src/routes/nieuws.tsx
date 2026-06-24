@@ -99,6 +99,50 @@ function Nieuws() {
     void load();
   }
 
+  async function fetchFromPerplexity() {
+    if (!user) return;
+    setFetchingNews(true);
+    try {
+      const { items: newItems } = await runFetchNews({ data: { recency } });
+      if (!newItems.length) {
+        toast.info("Geen nieuws gevonden.");
+        return;
+      }
+      const existingUrls = new Set(items.map((i) => i.url).filter(Boolean));
+      const fresh = newItems.filter((i) => !i.url || !existingUrls.has(i.url));
+      if (!fresh.length) {
+        toast.info("Niets nieuws — alles staat er al.");
+        return;
+      }
+      const { error } = await supabase.from("news_items").insert(
+        fresh.map((i) => ({
+          user_id: user.id,
+          title: i.title,
+          source: i.source,
+          url: i.url,
+          summary: i.summary,
+          relevance: i.relevance,
+        })),
+      );
+      if (error) throw error;
+      toast.success(`${fresh.length} nieuwsitems opgehaald.`);
+      void load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Ophalen mislukt.");
+    } finally {
+      setFetchingNews(false);
+    }
+  }
+
+  function makeContent(item: NewsRow) {
+    const topic = item.title;
+    const keywords = item.summary?.slice(0, 200) ?? "";
+    void navigate({
+      to: "/content-studio",
+      search: { topic, keywords, source: item.url ?? "" } as never,
+    });
+  }
+
   return (
     <div className="px-4 py-8 sm:px-8 max-w-6xl mx-auto">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -110,7 +154,27 @@ function Nieuws() {
             Nieuws
           </h1>
         </div>
+        <div className="flex items-end gap-2">
+          <div className="space-y-1">
+            <Label htmlFor="recency" className="text-xs">Periode</Label>
+            <select
+              id="recency"
+              value={recency}
+              onChange={(e) => setRecency(e.target.value as "day" | "week" | "month")}
+              className="h-9 rounded-md border border-border bg-background px-2 text-sm"
+            >
+              <option value="day">Laatste 24u</option>
+              <option value="week">Afgelopen week</option>
+              <option value="month">Afgelopen maand</option>
+            </select>
+          </div>
+          <Button onClick={fetchFromPerplexity} disabled={fetchingNews}>
+            {fetchingNews ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            {fetchingNews ? "Ophalen…" : "Haal bijennieuws op"}
+          </Button>
+        </div>
       </div>
+
 
       <div className="grid gap-6 lg:grid-cols-[22rem_1fr]">
         <section className="bg-card border border-border rounded-lg p-5 shadow-sm h-fit">
