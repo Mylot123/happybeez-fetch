@@ -69,6 +69,7 @@ Gebruik de werkelijke publicatiedatum van het artikel. Geen markdown, geen uitle
                       url: { type: "string" },
                       summary: { type: "string" },
                       relevance: { type: "number" },
+                      published_at: { type: "string" },
                     },
                     required: ["title", "summary"],
                   },
