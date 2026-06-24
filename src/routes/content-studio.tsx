@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { generateText } from "@/lib/ai.functions";
+import { generatePostImage } from "@/lib/image.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 
