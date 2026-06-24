@@ -173,6 +173,7 @@ function KalenderPage() {
 
 function Kalender() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const today = useMemo(() => new Date(), []);
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
