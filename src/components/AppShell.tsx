@@ -12,7 +12,10 @@ import {
   LogOut,
   Images,
   Mic,
+  FileDown,
 } from "lucide-react";
+import pdfAsset from "@/assets/HappyBeez-Social-Studio.pdf.asset.json";
+import pptxAsset from "@/assets/HappyBeez-Social-Studio.pptx.asset.json";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/auth";
 
