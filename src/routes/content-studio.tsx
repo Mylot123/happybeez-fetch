@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { generateText } from "@/lib/ai.functions";
+import { generatePostImage } from "@/lib/image.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 
@@ -154,6 +155,7 @@ function ContentStudioPage() {
 function ContentStudio() {
   const { user } = useAuth();
   const generate = useServerFn(generateText);
+  const generateImage = useServerFn(generatePostImage);
   const search = Route.useSearch();
 
   const [channel, setChannel] = useState<Channel>("instagram");
@@ -171,6 +173,7 @@ function ContentStudio() {
 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
+  const [generatingImage, setGeneratingImage] = useState(false);
 
   useEffect(() => {
     void loadPhotos();
@@ -228,8 +231,68 @@ function ContentStudio() {
   const selectedPhoto =
     photos.find((p) => p.id === selectedPhotoId) ?? rankedPhotos[0] ?? null;
 
+  async function runGenerateImage() {
+    if (!user) return;
+    const subject = [topic, keywords].filter(Boolean).join(", ");
+    if (!subject && !generated) {
+      toast.error("Vul eerst een onderwerp in of genereer eerst de tekst.");
+      return;
+    }
+    setGeneratingImage(true);
+    try {
+      const prompt = subject
+        ? `Een natuurfoto die past bij: ${subject}.`
+        : `Een natuurfoto die past bij deze post: ${generated.slice(0, 400)}`;
+      const { b64 } = await generateImage({ data: { prompt } });
+
+      // upload to library bucket
+      const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+      const blob = new Blob([bin], { type: "image/png" });
+      const filename = `generated/${user.id}/${Date.now()}.png`;
+      const { error: upErr } = await supabase.storage
+        .from("library-photos")
+        .upload(filename, blob, { contentType: "image/png" });
+      if (upErr) throw upErr;
+
+      const { data: signed } = await supabase.storage
+        .from("library-photos")
+        .createSignedUrl(filename, 60 * 60 * 8);
+      const signedUrl = signed?.signedUrl ?? "";
+
+      // save to library so it's reusable later
+      const title = (topic || subject || "AI-beeld").slice(0, 120);
+      const { data: inserted, error: insErr } = await supabase
+        .from("library_photos")
+        .insert({
+          title,
+          caption: subject || null,
+          tags: ["ai-gegenereerd", channel],
+          storage_path: filename,
+          image_url: signedUrl,
+        })
+        .select("id,title,caption,tags,storage_path,image_url")
+        .single();
+      if (insErr) throw insErr;
+
+      const newPhoto: Photo = {
+        id: inserted.id,
+        title: inserted.title,
+        caption: inserted.caption,
+        tags: (inserted.tags as string[] | null) ?? [],
+        storage_path: inserted.storage_path,
+        image_url: signedUrl,
+      };
+      setPhotos((prev) => [newPhoto, ...prev]);
+      setSelectedPhotoId(newPhoto.id);
+      toast.success("Beeld gegenereerd en toegevoegd aan bibliotheek.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Beeldgeneratie mislukt.");
+    } finally {
+      setGeneratingImage(false);
+    }
+  }
+
   async function runGenerate() {
-    setGenerating(true);
     setGenerated("");
     try {
       const toneLabel = TONES.find((t) => t.value === tone)?.label ?? "warm en educatief";
@@ -511,30 +574,56 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
                         </span>
                       </div>
                       {rankedPhotos.length === 0 ? (
-                        <p className="text-xs" style={{ color: "var(--hb-dark)", opacity: 0.6 }}>
-                          Geen relevante foto's gevonden.
-                        </p>
-                      ) : (
-                        <div className="grid grid-cols-6 gap-2">
-                          {rankedPhotos.map((p) => {
-                            const active = p.id === selectedPhotoId;
-                            return (
-                              <button
-                                key={p.id}
-                                type="button"
-                                onClick={() => setSelectedPhotoId(p.id)}
-                                title={p.title}
-                                className="aspect-square rounded-lg overflow-hidden transition-all"
-                                style={{
-                                  outline: active ? "3px solid var(--hb-green)" : "1px solid var(--hb-border)",
-                                  outlineOffset: active ? "1px" : "0",
-                                }}
-                              >
-                                <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" />
-                              </button>
-                            );
-                          })}
+                        <div className="space-y-3">
+                          <p className="text-xs" style={{ color: "var(--hb-dark)", opacity: 0.6 }}>
+                            Geen relevante foto's in je bibliotheek. Laat de AI er één maken in HappyBeez-stijl.
+                          </p>
+                          <Button
+                            type="button"
+                            onClick={runGenerateImage}
+                            disabled={generatingImage}
+                            className="w-full rounded-full font-semibold hover:brightness-110"
+                            style={{ background: "var(--hb-honey)", color: "var(--hb-dark)" }}
+                          >
+                            {generatingImage ? (
+                              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Beeld maken…</>
+                            ) : (
+                              <><Sparkles className="w-4 h-4 mr-2" /> Genereer beeld met AI</>
+                            )}
+                          </Button>
                         </div>
+                      ) : (
+                        <>
+                          <div className="grid grid-cols-6 gap-2">
+                            {rankedPhotos.map((p) => {
+                              const active = p.id === selectedPhotoId;
+                              return (
+                                <button
+                                  key={p.id}
+                                  type="button"
+                                  onClick={() => setSelectedPhotoId(p.id)}
+                                  title={p.title}
+                                  className="aspect-square rounded-lg overflow-hidden transition-all"
+                                  style={{
+                                    outline: active ? "3px solid var(--hb-green)" : "1px solid var(--hb-border)",
+                                    outlineOffset: active ? "1px" : "0",
+                                  }}
+                                >
+                                  <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" />
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={runGenerateImage}
+                            disabled={generatingImage}
+                            className="mt-2 text-[11px] underline disabled:opacity-50"
+                            style={{ color: "var(--hb-green-dark)" }}
+                          >
+                            {generatingImage ? "Beeld maken…" : "Niets past? Genereer AI-beeld"}
+                          </button>
+                        </>
                       )}
                     </div>
                   )}
