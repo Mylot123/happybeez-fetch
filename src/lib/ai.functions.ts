@@ -21,7 +21,7 @@ export const generateText = createServerFn({ method: "POST" })
       throw new Error("LOVABLE_API_KEY is niet beschikbaar.");
     }
 
-    const model = data.model ?? "google/gemini-2.5-flash";
+    const model = data.model ?? "openai/gpt-5";
 
     const messages: Array<{ role: "system" | "user"; content: string }> = [];
     if (data.system) messages.push({ role: "system", content: data.system });
