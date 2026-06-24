@@ -9,11 +9,30 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SocialProfielenRouteImport } from './routes/social-profielen'
+import { Route as SeoRouteImport } from './routes/seo'
+import { Route as NieuwsRouteImport } from './routes/nieuws'
 import { Route as KalenderRouteImport } from './routes/kalender'
 import { Route as ContentStudioRouteImport } from './routes/content-studio'
+import { Route as BoekRouteImport } from './routes/boek'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 
+const SocialProfielenRoute = SocialProfielenRouteImport.update({
+  id: '/social-profielen',
+  path: '/social-profielen',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SeoRoute = SeoRouteImport.update({
+  id: '/seo',
+  path: '/seo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NieuwsRoute = NieuwsRouteImport.update({
+  id: '/nieuws',
+  path: '/nieuws',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const KalenderRoute = KalenderRouteImport.update({
   id: '/kalender',
   path: '/kalender',
@@ -22,6 +41,11 @@ const KalenderRoute = KalenderRouteImport.update({
 const ContentStudioRoute = ContentStudioRouteImport.update({
   id: '/content-studio',
   path: '/content-studio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BoekRoute = BoekRouteImport.update({
+  id: '/boek',
+  path: '/boek',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -38,39 +62,101 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/boek': typeof BoekRoute
   '/content-studio': typeof ContentStudioRoute
   '/kalender': typeof KalenderRoute
+  '/nieuws': typeof NieuwsRoute
+  '/seo': typeof SeoRoute
+  '/social-profielen': typeof SocialProfielenRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/boek': typeof BoekRoute
   '/content-studio': typeof ContentStudioRoute
   '/kalender': typeof KalenderRoute
+  '/nieuws': typeof NieuwsRoute
+  '/seo': typeof SeoRoute
+  '/social-profielen': typeof SocialProfielenRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/boek': typeof BoekRoute
   '/content-studio': typeof ContentStudioRoute
   '/kalender': typeof KalenderRoute
+  '/nieuws': typeof NieuwsRoute
+  '/seo': typeof SeoRoute
+  '/social-profielen': typeof SocialProfielenRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/content-studio' | '/kalender'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/boek'
+    | '/content-studio'
+    | '/kalender'
+    | '/nieuws'
+    | '/seo'
+    | '/social-profielen'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/content-studio' | '/kalender'
-  id: '__root__' | '/' | '/auth' | '/content-studio' | '/kalender'
+  to:
+    | '/'
+    | '/auth'
+    | '/boek'
+    | '/content-studio'
+    | '/kalender'
+    | '/nieuws'
+    | '/seo'
+    | '/social-profielen'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/boek'
+    | '/content-studio'
+    | '/kalender'
+    | '/nieuws'
+    | '/seo'
+    | '/social-profielen'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  BoekRoute: typeof BoekRoute
   ContentStudioRoute: typeof ContentStudioRoute
   KalenderRoute: typeof KalenderRoute
+  NieuwsRoute: typeof NieuwsRoute
+  SeoRoute: typeof SeoRoute
+  SocialProfielenRoute: typeof SocialProfielenRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/social-profielen': {
+      id: '/social-profielen'
+      path: '/social-profielen'
+      fullPath: '/social-profielen'
+      preLoaderRoute: typeof SocialProfielenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/seo': {
+      id: '/seo'
+      path: '/seo'
+      fullPath: '/seo'
+      preLoaderRoute: typeof SeoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nieuws': {
+      id: '/nieuws'
+      path: '/nieuws'
+      fullPath: '/nieuws'
+      preLoaderRoute: typeof NieuwsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/kalender': {
       id: '/kalender'
       path: '/kalender'
@@ -83,6 +169,13 @@ declare module '@tanstack/react-router' {
       path: '/content-studio'
       fullPath: '/content-studio'
       preLoaderRoute: typeof ContentStudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/boek': {
+      id: '/boek'
+      path: '/boek'
+      fullPath: '/boek'
+      preLoaderRoute: typeof BoekRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -105,8 +198,12 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  BoekRoute: BoekRoute,
   ContentStudioRoute: ContentStudioRoute,
   KalenderRoute: KalenderRoute,
+  NieuwsRoute: NieuwsRoute,
+  SeoRoute: SeoRoute,
+  SocialProfielenRoute: SocialProfielenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
