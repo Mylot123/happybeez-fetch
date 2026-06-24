@@ -383,39 +383,198 @@ export type Database = {
         }
         Relationships: []
       }
-      seo_keywords: {
+      seo_domain_snapshots: {
         Row: {
+          competitors: Json | null
           created_at: string
-          current_rank: number | null
+          database_code: string
+          domain: string
+          id: string
+          organic_cost: number | null
+          organic_keywords: number | null
+          organic_traffic: number | null
+          quick_wins: Json | null
+          rank_global: number | null
+          top_keywords: Json | null
+          user_id: string
+        }
+        Insert: {
+          competitors?: Json | null
+          created_at?: string
+          database_code?: string
+          domain: string
+          id?: string
+          organic_cost?: number | null
+          organic_keywords?: number | null
+          organic_traffic?: number | null
+          quick_wins?: Json | null
+          rank_global?: number | null
+          top_keywords?: Json | null
+          user_id: string
+        }
+        Update: {
+          competitors?: Json | null
+          created_at?: string
+          database_code?: string
+          domain?: string
+          id?: string
+          organic_cost?: number | null
+          organic_keywords?: number | null
+          organic_traffic?: number | null
+          quick_wins?: Json | null
+          rank_global?: number | null
+          top_keywords?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      seo_keyword_ideas: {
+        Row: {
+          competition: number | null
+          cpc: number | null
+          created_at: string
+          database_code: string
           difficulty: number | null
           id: string
           keyword: string
+          kind: string
+          search_volume: number | null
+          seed: string
+          user_id: string
+        }
+        Insert: {
+          competition?: number | null
+          cpc?: number | null
+          created_at?: string
+          database_code?: string
+          difficulty?: number | null
+          id?: string
+          keyword: string
+          kind?: string
+          search_volume?: number | null
+          seed: string
+          user_id: string
+        }
+        Update: {
+          competition?: number | null
+          cpc?: number | null
+          created_at?: string
+          database_code?: string
+          difficulty?: number | null
+          id?: string
+          keyword?: string
+          kind?: string
+          search_volume?: number | null
+          seed?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      seo_keywords: {
+        Row: {
+          competition: number | null
+          cpc: number | null
+          created_at: string
+          current_rank: number | null
+          database_code: string | null
+          difficulty: number | null
+          domain: string | null
+          id: string
+          intent: string | null
+          keyword: string
+          last_checked_at: string | null
           notes: string | null
+          position_url: string | null
           search_volume: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          competition?: number | null
+          cpc?: number | null
           created_at?: string
           current_rank?: number | null
+          database_code?: string | null
           difficulty?: number | null
+          domain?: string | null
           id?: string
+          intent?: string | null
           keyword: string
+          last_checked_at?: string | null
           notes?: string | null
+          position_url?: string | null
           search_volume?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          competition?: number | null
+          cpc?: number | null
           created_at?: string
           current_rank?: number | null
+          database_code?: string | null
           difficulty?: number | null
+          domain?: string | null
           id?: string
+          intent?: string | null
           keyword?: string
+          last_checked_at?: string | null
           notes?: string | null
+          position_url?: string | null
           search_volume?: number | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      seo_page_audits: {
+        Row: {
+          ai_summary: string | null
+          created_at: string
+          goal: string | null
+          h1: string | null
+          id: string
+          issues: Json | null
+          meta_description: string | null
+          recommendations: Json | null
+          score: number | null
+          target_keyword: string | null
+          title: string | null
+          url: string
+          user_id: string
+          word_count: number | null
+        }
+        Insert: {
+          ai_summary?: string | null
+          created_at?: string
+          goal?: string | null
+          h1?: string | null
+          id?: string
+          issues?: Json | null
+          meta_description?: string | null
+          recommendations?: Json | null
+          score?: number | null
+          target_keyword?: string | null
+          title?: string | null
+          url: string
+          user_id: string
+          word_count?: number | null
+        }
+        Update: {
+          ai_summary?: string | null
+          created_at?: string
+          goal?: string | null
+          h1?: string | null
+          id?: string
+          issues?: Json | null
+          meta_description?: string | null
+          recommendations?: Json | null
+          score?: number | null
+          target_keyword?: string | null
+          title?: string | null
+          url?: string
+          user_id?: string
+          word_count?: number | null
         }
         Relationships: []
       }
