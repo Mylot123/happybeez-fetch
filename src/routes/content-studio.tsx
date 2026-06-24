@@ -231,8 +231,69 @@ function ContentStudio() {
   const selectedPhoto =
     photos.find((p) => p.id === selectedPhotoId) ?? rankedPhotos[0] ?? null;
 
+  async function runGenerateImage() {
+    if (!user) return;
+    const subject = [topic, keywords].filter(Boolean).join(", ");
+    if (!subject && !generated) {
+      toast.error("Vul eerst een onderwerp in of genereer eerst de tekst.");
+      return;
+    }
+    setGeneratingImage(true);
+    try {
+      const prompt = subject
+        ? `Een natuurfoto die past bij: ${subject}.`
+        : `Een natuurfoto die past bij deze post: ${generated.slice(0, 400)}`;
+      const { b64 } = await generateImage({ data: { prompt } });
+
+      // upload to library bucket
+      const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+      const blob = new Blob([bin], { type: "image/png" });
+      const filename = `generated/${user.id}/${Date.now()}.png`;
+      const { error: upErr } = await supabase.storage
+        .from("library-photos")
+        .upload(filename, blob, { contentType: "image/png" });
+      if (upErr) throw upErr;
+
+      const { data: signed } = await supabase.storage
+        .from("library-photos")
+        .createSignedUrl(filename, 60 * 60 * 8);
+      const signedUrl = signed?.signedUrl ?? "";
+
+      // save to library so it's reusable later
+      const title = (topic || subject || "AI-beeld").slice(0, 120);
+      const { data: inserted, error: insErr } = await supabase
+        .from("library_photos")
+        .insert({
+          user_id: user.id,
+          title,
+          caption: subject || null,
+          tags: ["ai-gegenereerd", channel],
+          storage_path: filename,
+          image_url: signedUrl,
+        })
+        .select("id,title,caption,tags,storage_path,image_url")
+        .single();
+      if (insErr) throw insErr;
+
+      const newPhoto: Photo = {
+        id: inserted.id,
+        title: inserted.title,
+        caption: inserted.caption,
+        tags: (inserted.tags as string[] | null) ?? [],
+        storage_path: inserted.storage_path,
+        image_url: signedUrl,
+      };
+      setPhotos((prev) => [newPhoto, ...prev]);
+      setSelectedPhotoId(newPhoto.id);
+      toast.success("Beeld gegenereerd en toegevoegd aan bibliotheek.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Beeldgeneratie mislukt.");
+    } finally {
+      setGeneratingImage(false);
+    }
+  }
+
   async function runGenerate() {
-    setGenerating(true);
     setGenerated("");
     try {
       const toneLabel = TONES.find((t) => t.value === tone)?.label ?? "warm en educatief";
