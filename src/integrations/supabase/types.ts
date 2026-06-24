@@ -14,6 +14,77 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_conversations: {
+        Row: {
+          agent_id: string
+          created_at: string
+          elevenlabs_conversation_id: string | null
+          ended_at: string | null
+          id: string
+          started_at: string
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          elevenlabs_conversation_id?: string | null
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          elevenlabs_conversation_id?: string | null
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          title?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      agent_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+          seq: number
+          user_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+          seq?: number
+          user_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          seq?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "agent_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       book_contents: {
         Row: {
           chapter: string | null
