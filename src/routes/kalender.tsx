@@ -95,6 +95,28 @@ const MONTHS_NL = [
   "December",
 ];
 
+// Weekly content-plan, afgestemd op beste posting-momenten + HappyBeez-niche.
+// Index = ma(0) .. zo(6). rest=true betekent: geen post deze dag.
+type DailyPlan = {
+  channel?: Channel;
+  content_type?: ContentType;
+  label: string;
+  rest?: boolean;
+};
+const WEEKLY_PLAN: DailyPlan[] = [
+  { rest: true, label: "Rustdag — laat algoritme ademen" },
+  { channel: "instagram", content_type: "tip", label: "IG tip / educatief" },
+  { channel: "linkedin", content_type: "educatief", label: "LinkedIn kennis" },
+  { channel: "instagram", content_type: "behind_scenes", label: "IG behind-the-scenes" },
+  { channel: "facebook", content_type: "seizoen", label: "FB seizoens-post" },
+  { rest: true, label: "Rustdag — engagement laag" },
+  { channel: "instagram", content_type: "nieuws", label: "IG nieuws-haakje" },
+];
+
+function routeForType(content_type?: ContentType): "/nieuws" | "/content-studio" {
+  return content_type === "nieuws" ? "/nieuws" : "/content-studio";
+}
+
 function daysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
 }
