@@ -166,29 +166,70 @@ function Boekbibliotheek() {
 
         {(answer || sources.length > 0) && (
           <div className="mt-5 space-y-4">
-            {answer && (
-              <div className="rounded-xl bg-secondary/50 border border-border p-4">
-                <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Antwoord</div>
-                <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">{answer}</p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      const keywords = sources.slice(0, 3).map((s) => s.title).join(", ");
-                      const source = `Boekbibliotheek — vraag: ${question}\n\n${answer}\n\nBronnen:\n${sources
-                        .map((s, i) => `[${i + 1}] ${s.title}${s.page ? ` (p. ${s.page})` : ""}: ${s.snippet.slice(0, 240)}`)
-                        .join("\n")}`;
-                      navigate({
-                        to: "/content-studio",
-                        search: { topic: question, keywords, source },
-                      });
-                    }}
-                  >
-                    <Sparkles className="h-4 w-4" /> Maak post van dit antwoord
-                  </Button>
+            {answer && (() => {
+              const lines = answer.split("\n").map((l) => l.trim()).filter(Boolean);
+              const bulletRe = /^[-•*]\s+(.*)$/;
+              const bullets = lines
+                .map((l) => {
+                  const m = l.match(bulletRe);
+                  return m ? m[1] : null;
+                })
+                .filter((x): x is string => !!x);
+              const intro = lines.filter((l) => !bulletRe.test(l)).join("\n");
+              const baseKeywords = sources.slice(0, 3).map((s) => s.title).join(", ");
+              const sourceBlock = sources.length
+                ? `\n\nBronnen:\n${sources
+                    .map((s, i) => `[${i + 1}] ${s.title}${s.page ? ` (p. ${s.page})` : ""}: ${s.snippet.slice(0, 240)}`)
+                    .join("\n")}`
+                : "";
+              const goToStudio = (topic: string, ctx: string) => {
+                navigate({
+                  to: "/content-studio",
+                  search: {
+                    topic,
+                    keywords: baseKeywords,
+                    source: `Boekbibliotheek — vraag: ${question}\n\n${ctx}${sourceBlock}`,
+                  },
+                });
+              };
+              return (
+                <div className="rounded-xl bg-secondary/50 border border-border p-4">
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Antwoord</div>
+                  {intro && (
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground mb-3">{intro}</p>
+                  )}
+                  {bullets.length > 0 ? (
+                    <ul className="space-y-2">
+                      {bullets.map((b, i) => {
+                        const topic = b.split(":")[0].replace(/["""]/g, "").slice(0, 120);
+                        return (
+                          <li
+                            key={i}
+                            className="flex items-start justify-between gap-3 rounded-lg bg-background border border-border p-3"
+                          >
+                            <p className="text-sm leading-relaxed text-foreground flex-1">{b}</p>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="shrink-0"
+                              onClick={() => goToStudio(topic || question, b)}
+                            >
+                              <Sparkles className="h-4 w-4" /> Maak post
+                            </Button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <div className="mt-2">
+                      <Button size="sm" onClick={() => goToStudio(question, answer)}>
+                        <Sparkles className="h-4 w-4" /> Maak post van dit antwoord
+                      </Button>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
+              );
+            })()}
             {sources.length > 0 && (
               <div>
                 <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Bronnen</div>
