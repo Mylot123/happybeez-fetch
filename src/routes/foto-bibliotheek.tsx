@@ -40,6 +40,7 @@ function Kennisbank() {
   const [books, setBooks] = useState<Book[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
 
@@ -67,9 +68,29 @@ function Kennisbank() {
       );
       return;
     }
+    const photoRows = (p.data ?? []) as Photo[];
     setBooks((b.data ?? []) as Book[]);
     setSections((s.data ?? []) as Section[]);
-    setPhotos((p.data ?? []) as Photo[]);
+    setPhotos(photoRows);
+
+    const paths = photoRows
+      .map((row) => row.storage_path)
+      .filter((path): path is string => Boolean(path));
+    if (paths.length > 0) {
+      const { data: signed, error: signErr } = await supabase.storage
+        .from("library-photos")
+        .createSignedUrls(paths, 60 * 60 * 8);
+      if (signErr) {
+        toast.error(`Foto-URL's konden niet worden opgehaald: ${signErr.message}`);
+      } else if (signed) {
+        const map: Record<string, string> = {};
+        signed.forEach((entry, i) => {
+          const path = paths[i];
+          if (path && entry.signedUrl) map[path] = entry.signedUrl;
+        });
+        setSignedUrls(map);
+      }
+    }
   }
 
   const filteredPhotos = useMemo(() => {
