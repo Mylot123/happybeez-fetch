@@ -175,8 +175,14 @@ function ContentStudio() {
   );
 
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
+  // Per-channel selection so switching channel doesn't reuse the same image
+  const [photoByChannel, setPhotoByChannel] = useState<Record<string, string>>({});
+  const selectedPhotoId = photoByChannel[channel] ?? null;
   const [generatingImage, setGeneratingImage] = useState(false);
+
+  function setSelectedPhotoId(id: string) {
+    setPhotoByChannel((prev) => ({ ...prev, [channel]: id }));
+  }
 
   useEffect(() => {
     void loadPhotos();
@@ -184,55 +190,7 @@ function ContentStudio() {
   }, []);
 
   async function loadPhotos() {
-    const { data, error } = await supabase
-      .from("library_photos")
-      .select("id,title,caption,tags,storage_path,image_url");
-    if (error) return;
-    const rows = (data ?? []) as Photo[];
-    const paths = rows
-      .map((r) => r.storage_path)
-      .filter((p): p is string => Boolean(p));
-    const urlMap: Record<string, string> = {};
-    if (paths.length > 0) {
-      const { data: signed } = await supabase.storage
-        .from("library-photos")
-        .createSignedUrls(paths, 60 * 60 * 8);
-      signed?.forEach((entry, i) => {
-        const path = paths[i];
-        if (path && entry.signedUrl) urlMap[path] = entry.signedUrl;
-      });
-    }
-    setPhotos(
-      rows.map((r) => ({
-        ...r,
-        image_url: (r.storage_path && urlMap[r.storage_path]) || r.image_url,
-      })),
-    );
-  }
 
-  const rankedPhotos = useMemo(() => {
-    const contextText = [topic, keywords, generated].filter(Boolean).join(" ");
-    const tokens = new Set(tokenize(contextText));
-    if (photos.length === 0) return [];
-    if (tokens.size === 0) return photos.slice(0, 6);
-    return [...photos]
-      .map((p) => ({ p, s: scorePhoto(p, tokens) }))
-      .sort((a, b) => b.s - a.s)
-      .filter((x) => x.s > 0)
-      .slice(0, 6)
-      .map((x) => x.p);
-  }, [photos, topic, keywords, generated]);
-
-  // auto-select top-ranked when ranking changes and nothing selected (or selection no longer in top)
-  useEffect(() => {
-    if (rankedPhotos.length === 0) return;
-    if (!selectedPhotoId || !rankedPhotos.some((p) => p.id === selectedPhotoId)) {
-      setSelectedPhotoId(rankedPhotos[0]!.id);
-    }
-  }, [rankedPhotos, selectedPhotoId]);
-
-  const selectedPhoto =
-    photos.find((p) => p.id === selectedPhotoId) ?? rankedPhotos[0] ?? null;
 
   async function runGenerateImage() {
     if (!user) return;
