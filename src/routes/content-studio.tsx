@@ -122,6 +122,20 @@ function ContentStudio() {
     try {
       const toneLabel = TONES.find((t) => t.value === tone)?.label ?? "warm en educatief";
       const channelHint = CHANNELS.find((c) => c.value === channel)?.hint ?? "";
+      const instagramPlaybook = `
+INSTAGRAM VIRAL-PLAYBOOK (verplicht volgen voor Instagram):
+• Doel: saves + shares + profielbezoeken. Niet schreeuwerig viraal, maar "slow virality" via educatie en herkenning.
+• HOOK: eerste regel = sterke hook binnen 125 tekens, boven de "meer"-grens. Kies één hooktype passend bij ${contentType}: vraag, mythe/feit, verrassend feit, how-to belofte, microstory, benefit-first, mythbuster, checklist of lokale trots.
+• STRUCTUUR caption: hook (1 regel) → herkenning/inzicht (2–4 korte alinea's van 1–3 zinnen) → 1 duidelijke CTA.
+• LENGTE: 90–180 woorden totaal. Gemiddeld 9–14 woorden per zin. B1-niveau, actieve zinnen, "je/jij".
+• ALINEA'S: 1–3 zinnen per alinea, witregels ertussen, scanbaar op mobiel.
+• EMOJI: 1–4 stuks, functioneel (🐝 🌼 ☀️ 🌿 🌬️ 🔒 🧭), nooit decoratief gestapeld.
+• CTA: kies één — "Sla deze post op", "Stuur door naar iemand met een tuin", "Reageer met ...", "Tag iemand die ...", "Bekijk in ons profiel". Match CTA aan contenttype (carousel/checklist → save; story/microstory → share/comment).
+• HASHTAGS: exact 3–5 stuks onderaan, witregel ervoor. Mix: 1 branded (#HappyBeez of #happybeeznl) + max 1 local (#Boekel, #Brabant) + 2–3 niche (#wildebijen, #solitairebijen, #bijenhotel, #biodiversiteit, #bijvriendelijktuin, #inheemseplanten, #bloemenvoorbijen, #ecologischtuinieren, #geveltuin). Geen generieke spam (#nature, #flowers, #love).
+• LOCAL tag alleen bij lokaal/community-onderwerp, NIET bij nationaal-educatieve posts.
+• Vermijd absolute getallen of percentages tenzij ze in onderwerp/kernwoorden staan. Bij bijenachteruitgang: "meer dan de helft van de wilde bijensoorten staat onder druk" mag, geen verzonnen cijfers.
+`;
+
       const prompt = `Je schrijft een ${contentType.replace("_", " ")} post voor ${channel} namens HappyBeez — een Nederlands merk dat handgemaakte, natuurvriendelijke bijenhotels maakt in Boekel en educeert over solitaire bijen en biodiversiteit.
 
 Toon: ${toneLabel}
@@ -131,22 +145,23 @@ ${keywords ? `Kernwoorden: ${keywords}` : ""}
 
 MERKSTIJL (verplicht volgen):
 • Rustig, deskundig, natuurvriendelijk — eerst helpen, daarna pas verkopen. Geen schreeuwerige urgentie of kortingsdruk.
-• Perspectief: "we / onze" namens HappyBeez, "je" voor praktisch advies.
-• Zinsbouw: kort tot middellang. Vaak probleem → oplossing → onderbouwing.
+• Perspectief: "we / onze" namens HappyBeez, "je" voor praktisch advies. "u" alleen voor B2B/ESG.
+• Zinsbouw: kort tot middellang (9–14 woorden gem.). Vaak probleem → oplossing → onderbouwing.
 • Structuur waar passend: 1 korte conclusie + 2–4 praktische bullets.
 
-GEBRUIK DEZE TERMEN waar relevant: natuurvriendelijke bijenhotels, solitaire bijen, veilige nestelplaats, geschikte nestgangen, verwisselbare cassettes, onbehandeld beukenhout, Douglas hout, geborsteld RVS, diepe gladde nestgangen, verschillende diameters en dieptes, bestuiving, bloemen en voedsel, biodiversiteit, handgemaakt in Boekel.
+GEBRUIK DEZE TERMEN waar relevant: natuurvriendelijke bijenhotels, solitaire bijen, wilde bijen, veilige nestelplaats, geschikte nestgangen, verwisselbare cassettes, onbehandeld beukenhout, Douglas hout, geborsteld RVS, diepe gladde nestgangen, verschillende diameters en dieptes, bestuiving, bloemen en voedsel, biodiversiteit, handgemaakt in Boekel.
 
 VERMIJD STRIKT:
 • Absolute claims als "dit redt de bijen" of "alle bijensoorten gebruiken dit hotel".
+• Het woord "bijen" generiek — gebruik "wilde bijen" of "solitaire bijen". Honingbijen gebruiken geen bijenhotel.
 • De suggestie dat een bijenhotel voedsel biedt — het biedt nestelgelegenheid; bloemen leveren het voedsel.
 • Garanties dat er bijen komen (locatie, zon, beschutting en bloemen bepalen het resultaat).
+• Het woord "inheems" tenzij je zeker weet dat de plant in NL inheems is — anders "bijvriendelijk".
 • Generieke marketingtaal en clichés.
 
-CTA-stijl: kort en neutraal ("bekijken", "lees meer", "naar de webshop") — alleen toevoegen als er een logische koopintentie is.
-${channel === "instagram" ? "Voeg onderaan 5–10 relevante, niet-spammy hashtags toe." : "Geen hashtags."}
+${channel === "instagram" ? instagramPlaybook : `CTA-stijl: kort en neutraal ("bekijken", "lees meer", "naar de webshop") — alleen toevoegen als er een logische koopintentie is.\nGeen hashtags.`}
 
-Geef ALLEEN de posttekst terug, in het Nederlands.`;
+Geef ALLEEN de posttekst terug, in het Nederlands. Geen uitleg of meta-commentaar.`;
       const { text } = await generate({ data: { prompt } });
       setGenerated(text);
       toast.success("Content gegenereerd.");
