@@ -125,6 +125,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             Uitloggen
           </button>
           <div className="mt-3 px-3">
+            <p className="text-xs font-semibold text-ink">Team Bijenhotel</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Social Media &amp; Content
+            </p>
+          </div>
+        </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
