@@ -1,51 +1,61 @@
 ## Doel
 
-De bestaande `happybeez` repo (een social-tracking app, momenteel op Base44) overzetten naar dit Lovable-project, zodat we hier verder kunnen bouwen met two-way sync naar GitHub.
+De volledige Buzzybee Social Suite overzetten van Base44 naar dit Lovable-project, met **alle 7 pagina's** en hun functies werkend, op TanStack Start + Tailwind v4 + Lovable Cloud. Login via e-mail/wachtwoord én Google.
 
-## Belangrijk om vooraf te weten
+## Aanpak in fases
 
-Lovable kan **geen bestaande GitHub-repo importeren** als startpunt. De koppeling werkt alleen door vanuit dit Lovable-project een **nieuwe** repo aan te maken. Daarna is sync wel twee kanten op.
+Een grote-bang-conversie gaat onvermijdelijk breken. Daarom in 5 fases, elke fase eindigt met een werkende app die ik direct kan testen.
 
-Daarnaast: Base44 gebruikt een andere structuur en eigen SDK. Dit project draait op **TanStack Start + Vite + React 19 + Tailwind v4** met file-based routing in `src/routes/`. De code uit happybeez gaat dus niet 1-op-1 werken — pagina's, data-calls en auth moeten aangepast worden.
+### Fase 1 — Fundering (deze plan-goedkeuring → 1 ronde)
+- Lovable Cloud aanzetten (database + auth + storage).
+- Tailwind v4 design tokens overnemen uit Buzzybee's `index.css` (forest-groen, honing-accenten, "bee" thema).
+- Datamodel aanmaken in Cloud — tabellen met RLS (per gebruiker):
+  - `profiles` (auto via trigger op signup)
+  - `book_contents` (citaten/hoofdstukken)
+  - `content_calendar_items` (geplande posts)
+  - `news_items` (nieuwsartikelen)
+  - `seo_keywords`
+  - `social_profiles`
+- Auth-pagina's: `/auth` (login + register tabs) en `/reset-password`. E-mail/wachtwoord + Google.
+- `_authenticated/` layout-gate (managed). App-shell met sidebar-navigatie zoals in `Layout.jsx` van Buzzybee.
+- Dashboard-pagina als plek-houder met echte tellingen uit Cloud.
 
-## Stappen
+### Fase 2 — Kernworkflow content (1 ronde)
+- **Content Studio** (`/content-studio`): editor met react-quill, status (idee/bewerking/gepland/gepubliceerd), kanaal-keuze, opslaan in `content_calendar_items`.
+- **Kalender** (`/kalender`): maand-view met posts, drag-and-drop voor herplannen (`@hello-pangea/dnd`), filters op kanaal/status.
 
-### 1. Dit project aan GitHub koppelen (doe jij)
-- Klik linksonder op **+** → **GitHub** → **Connect project**.
-- Autoriseer de Lovable GitHub App.
-- Kies het account/organisatie waar de nieuwe repo moet komen.
-- Lovable maakt een nieuwe repo aan (bijv. `happybeez-lovable`).
+### Fase 3 — Input-bronnen (1 ronde)
+- **Boekbibliotheek** (`/boek`): CRUD voor citaten en hoofdstukken; knop "Maak post hiervan" → opent Content Studio met inhoud voorgevuld.
+- **Nieuws** (`/nieuws`): nieuws-items lijst + `NewsToPostModal` om een artikel naar geplande post om te zetten.
 
-### 2. Code uit happybeez naar de nieuwe repo kopiëren (doe jij lokaal)
-- Clone de nieuwe Lovable-repo lokaal.
-- Kopieer uit `happybeez` alleen de **inhoudelijke** delen:
-  - React-componenten (`src/components/...`)
-  - Stijlen / assets (afbeeldingen, iconen)
-  - Eventuele utility-functies die niet Base44-specifiek zijn
-- **Niet** kopiëren: Base44 SDK-configuratie, routing-opzet, build-config, `package.json` van Base44 — die conflicteren met de Lovable-stack.
-- Commit en push naar GitHub → synct automatisch naar dit Lovable-project.
+### Fase 4 — Marketing-tools (1 ronde)
+- **SEO** (`/seo`): keywords beheren, SEO-resultaten renderen (`SEOResultRenderer`).
+- **Social Profielen** (`/social-profielen`): accounts/handles per kanaal beheren.
 
-### 3. Hier in Lovable de structuur omzetten (doe ik)
-Zodra de bestanden binnen zijn:
-- Pagina's omzetten naar TanStack Start route-bestanden in `src/routes/` (bijv. `feed.tsx`, `profile.tsx`).
-- Base44 SDK-calls vervangen door Lovable Cloud (database, auth, storage).
-- Data-modellen (posts, gebruikers, follows, etc.) opzetten in Lovable Cloud met de juiste RLS-policies.
-- Login/auth opnieuw bedraden via Lovable Cloud auth.
-- Styling controleren onder Tailwind v4 (kan kleine aanpassingen nodig hebben).
+### Fase 5 — Dashboard finaal + polish (1 ronde)
+- Dashboard met echte statistieken (komende posts, recente content, keyword-overzicht).
+- 404-pagina, error-boundaries, loading-states.
+- Doorloop alle pagina's, fix kleine bugs.
 
-### 4. Verifiëren
-- Routes laden zonder 404.
-- Auth flow werkt (signup, login, logout).
-- Data lezen/schrijven werkt.
-- Two-way sync getest: een wijziging hier verschijnt in GitHub, en omgekeerd.
+## Wat niet meekomt (en waarom)
 
-## Wat ik nog van je nodig heb
+- **Base44 SDK** — vervangen door Lovable Cloud client.
+- **react-router-dom** — vervangen door TanStack file-based routing.
+- **Stripe** — niet meegenomen tenzij je dit echt nodig hebt (vraag ik in fase 4).
+- **Three.js, Leaflet** — alleen meenemen als ik zie dat een pagina ze écht gebruikt; anders weglaten om de bundel klein te houden.
+- **`base44/` map** — alleen als referentie gebruikt voor het datamodel, niet in de repo.
 
-Om stap 3 goed te doen, deel na het koppelen graag:
-- Welke pagina's/schermen happybeez heeft (bijv. feed, profiel, post-aanmaken).
-- Welke data je opslaat (welke "tabellen" of entiteiten).
-- Of er login is, en zo ja welke methode (email/wachtwoord, Google, etc.).
+## Wat ik nodig heb van jou
 
-## Alternatief als stap 2 te omslachtig is
+Niets extra's nu. Na elke fase laat ik weten wat klaar is en wat te testen. Als iets net anders moet (kleur, label, gedrag), zeg het dan en pas ik het aan vóór de volgende fase.
 
-Als lokaal werken met git lastig is, kunnen we ook from scratch bouwen in Lovable op basis van een korte beschrijving + screenshots van happybeez. Dan slaan we de kopie-stap over en bouwen het hier direct in de juiste stack.
+## Technisch (voor de logs)
+
+- Stack: TanStack Start v1, React 19, Vite 7, Tailwind v4 (CSS-first via `src/styles.css`, geen `tailwind.config.js`), shadcn-ui (al aanwezig).
+- Cloud-clients per regel: browser-client in componenten, `requireSupabaseAuth` server-fns voor user-data, `supabaseAdmin` alleen voor privileged/seed.
+- Routes onder `src/routes/_authenticated/` voor app-pagina's; `/auth` en `/reset-password` blijven publiek.
+- Google login via `lovable.auth.signInWithOAuth("google", ...)` + `supabase--configure_social_auth`.
+- Alle `.jsx` wordt herschreven naar `.tsx` met strict types.
+- Pagina-data via TanStack Query (`ensureQueryData` in loader + `useSuspenseQuery` in component).
+
+Akkoord? Dan start ik direct met Fase 1.
