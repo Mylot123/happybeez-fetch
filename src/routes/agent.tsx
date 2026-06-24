@@ -51,6 +51,31 @@ function AgentPage() {
     onConnect: () => toast.success("Verbonden met Josef"),
     onDisconnect: () => toast.info("Gesprek beëindigd"),
     onError: (e: unknown) => toast.error(typeof e === "string" ? e : "Verbindingsfout"),
+    clientTools: {
+      navigateToHappybeez: (params: { path?: string; url?: string }) => {
+        const base = "https://happybeez.nl";
+        let target: string;
+        if (params.url && /^https?:\/\//i.test(params.url)) {
+          try {
+            const u = new URL(params.url);
+            if (!u.hostname.endsWith("happybeez.nl")) {
+              return `Geweigerd: ${u.hostname} valt buiten happybeez.nl`;
+            }
+            target = u.toString();
+          } catch {
+            return "Ongeldige URL";
+          }
+        } else {
+          const path = (params.path ?? "/").trim();
+          const normalized = path.startsWith("/") ? path : `/${path}`;
+          target = `${base}${normalized}`;
+        }
+        toast.info(`Josef opent ${target}`);
+        window.open(target, "_blank", "noopener,noreferrer");
+        void persistMessage("agent", `[navigatie] ${target}`);
+        return `Geopend: ${target}`;
+      },
+    },
     onMessage: (m: { message?: string; source?: string }) => {
       const role: "user" | "agent" = m.source === "user" ? "user" : "agent";
       const content = m.message ?? "";
