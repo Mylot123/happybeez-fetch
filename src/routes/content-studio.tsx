@@ -315,7 +315,10 @@ function ContentStudio() {
   }
 
   async function runGenerate() {
+    if (generating) return;
+    setGenerating(true);
     setGenerated("");
+
     try {
       const toneLabel = TONES.find((t) => t.value === tone)?.label ?? "warm en educatief";
       const channelHint = CHANNELS.find((c) => c.value === channel)?.hint ?? "";
