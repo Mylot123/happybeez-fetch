@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useConversation, ConversationProvider } from "@elevenlabs/react";
-import { Mic, MicOff, Loader2, MessageSquare, Trash2, ChevronDown, ChevronRight } from "lucide-react";
+import { Mic, MicOff, Loader2, MessageSquare, Trash2, ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -10,6 +10,34 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 const AGENT_ID = "agent_9401kvw93hayexdrbs6z367s52m9";
+
+const PAGE_LABELS: Record<string, string> = {
+  "https://happybeez.nl/": "Homepage",
+  "https://happybeez.nl/bijenhotels/": "Bijenhotels overzicht",
+  "https://happybeez.nl/bijenhotels/#studio": "Model Studio (€34,95)",
+  "https://happybeez.nl/bijenhotels/#penthouse": "Model Penthouse",
+  "https://happybeez.nl/bijenhotels/#chalet": "Model Chalet",
+  "https://happybeez.nl/bijenhotels/#lodge": "Model Lodge",
+  "https://happybeez.nl/bijenhotels/#tower": "Model Tower",
+  "https://happybeez.nl/bijenhotels/#kleinecassette": "Kleine Cassette",
+  "https://happybeez.nl/bijenhotels/#grotecassette": "Grote Cassette",
+  "https://happybeez.nl/hoe-het-werkt/": "Hoe het werkt",
+  "https://happybeez.nl/waarom-biodiversiteit-telt/": "Biodiversiteit",
+  "https://happybeez.nl/bloemen-en-voedsel/": "Bloemen en voedsel",
+  "https://happybeez.nl/partners/": "Partners",
+  "https://happybeez.nl/over-ons/": "Over ons",
+  "https://happybeez-2.myshopify.com/": "Webshop",
+};
+
+function pageLabelFor(url: string): string {
+  if (PAGE_LABELS[url]) return PAGE_LABELS[url];
+  try {
+    const u = new URL(url);
+    return (u.pathname.replace(/\/$/, "") || u.hostname) + (u.hash || "");
+  } catch {
+    return url;
+  }
+}
 
 export const Route = createFileRoute("/agent")({
   head: () => ({
@@ -27,7 +55,13 @@ export const Route = createFileRoute("/agent")({
   ),
 });
 
-type Msg = { role: "user" | "agent" | "system"; content: string; ts: number };
+type Msg = {
+  role: "user" | "agent" | "system" | "navigation";
+  content: string;
+  ts: number;
+  url?: string;
+  label?: string;
+};
 type Conv = {
   id: string;
   title: string | null;
@@ -52,6 +86,20 @@ function AgentPage() {
     onDisconnect: () => toast.info("Gesprek beëindigd"),
     onError: (e: unknown) => toast.error(typeof e === "string" ? e : "Verbindingsfout"),
     clientTools: {
+      navigate_to_page: ({ url, label }: { url: string; label?: string }) => {
+        if (!url || !/^https?:\/\//i.test(url)) {
+          return "Ongeldige URL";
+        }
+        const pageLabel = label ?? pageLabelFor(url);
+        toast.info("Ik open de pagina voor je…");
+        window.open(url, "_blank", "noopener,noreferrer");
+        setMessages((prev) => [
+          ...prev,
+          { role: "navigation", content: pageLabel, url, label: pageLabel, ts: Date.now() },
+        ]);
+        void persistMessage("agent", `[navigatie] ${pageLabel} — ${url}`);
+        return `Pagina geopend: ${pageLabel}`;
+      },
       navigateToHappybeez: (params: { path?: string; url?: string }) => {
         const base = "https://happybeez.nl";
         let target: string;
@@ -70,9 +118,14 @@ function AgentPage() {
           const normalized = path.startsWith("/") ? path : `/${path}`;
           target = `${base}${normalized}`;
         }
-        toast.info(`Josef opent ${target}`);
+        const pageLabel = pageLabelFor(target);
+        toast.info("Ik open de pagina voor je…");
         window.open(target, "_blank", "noopener,noreferrer");
-        void persistMessage("agent", `[navigatie] ${target}`);
+        setMessages((prev) => [
+          ...prev,
+          { role: "navigation", content: pageLabel, url: target, label: pageLabel, ts: Date.now() },
+        ]);
+        void persistMessage("agent", `[navigatie] ${pageLabel} — ${target}`);
         return `Geopend: ${target}`;
       },
     },
@@ -261,26 +314,46 @@ function AgentPage() {
             </p>
           ) : (
             <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-              {messages.map((m, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "flex",
-                    m.role === "user" ? "justify-end" : "justify-start",
-                  )}
-                >
+              {messages.map((m, i) => {
+                if (m.role === "navigation" && m.url) {
+                  return (
+                    <div key={i} className="flex justify-start">
+                      <a
+                        href={m.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="max-w-[80%] flex items-center gap-3 rounded-lg border border-forest/30 bg-forest/10 px-4 py-3 text-sm hover:bg-forest/15 transition-colors"
+                      >
+                        <ExternalLink className="w-4 h-4 text-forest shrink-0" />
+                        <div className="min-w-0">
+                          <p className="font-medium text-ink">Josef opent: {m.label ?? m.content}</p>
+                          <p className="text-xs text-muted-foreground truncate">{m.url}</p>
+                        </div>
+                      </a>
+                    </div>
+                  );
+                }
+                return (
                   <div
+                    key={i}
                     className={cn(
-                      "max-w-[80%] rounded-lg px-4 py-2 text-sm",
-                      m.role === "user"
-                        ? "bg-wine text-primary-foreground"
-                        : "bg-secondary text-ink",
+                      "flex",
+                      m.role === "user" ? "justify-end" : "justify-start",
                     )}
                   >
-                    {m.content}
+                    <div
+                      className={cn(
+                        "max-w-[80%] rounded-lg px-4 py-2 text-sm",
+                        m.role === "user"
+                          ? "bg-wine text-primary-foreground"
+                          : "bg-secondary text-ink",
+                      )}
+                    >
+                      {m.content}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
