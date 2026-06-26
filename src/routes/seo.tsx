@@ -177,8 +177,12 @@ function Seo() {
       await trackKeyword({ data: { keyword, domain: domain.trim(), database } });
       toast.success(`"${keyword}" toegevoegd.`);
       setNewKw("");
-      const { data } = await supabase.from("seo_keywords").select("*").order("created_at", { ascending: false });
+      const [{ data }, { data: h }] = await Promise.all([
+        supabase.from("seo_keywords").select("*").order("created_at", { ascending: false }),
+        supabase.from("seo_keyword_history").select("*").order("checked_at", { ascending: false }).limit(500),
+      ]);
       setTracked((data ?? []) as SeoRow[]);
+      setHistory((h ?? []) as KwHistory[]);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Tracking mislukt.");
     } finally {
