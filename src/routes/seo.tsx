@@ -33,6 +33,7 @@ import { analyzeDomain, auditPage, researchKeyword, trackKeyword } from "@/lib/s
 type SeoRow = Database["public"]["Tables"]["seo_keywords"]["Row"];
 type Snapshot = Database["public"]["Tables"]["seo_domain_snapshots"]["Row"];
 type Audit = Database["public"]["Tables"]["seo_page_audits"]["Row"];
+type KwHistory = Database["public"]["Tables"]["seo_keyword_history"]["Row"];
 
 type TopKw = {
   keyword: string;
@@ -82,6 +83,8 @@ function Seo() {
   const [domain, setDomain] = useState("happybeez.nl");
   const [database, setDatabase] = useState("nl");
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
+  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
+  const [history, setHistory] = useState<KwHistory[]>([]);
   const [loadingSnap, setLoadingSnap] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
 
@@ -111,19 +114,23 @@ function Seo() {
 
   async function loadAll() {
     setLoadingSnap(true);
-    const [snap, kws, aud] = await Promise.all([
-      supabase.from("seo_domain_snapshots").select("*").order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    const [snaps, kws, aud, hist] = await Promise.all([
+      supabase.from("seo_domain_snapshots").select("*").order("created_at", { ascending: false }).limit(30),
       supabase.from("seo_keywords").select("*").order("created_at", { ascending: false }),
       supabase.from("seo_page_audits").select("*").order("created_at", { ascending: false }).limit(10),
+      supabase.from("seo_keyword_history").select("*").order("checked_at", { ascending: false }).limit(500),
     ]);
     setLoadingSnap(false);
-    if (snap.data) {
-      setSnapshot(snap.data);
-      setDomain(snap.data.domain);
-      setDatabase(snap.data.database_code);
+    const snapList = (snaps.data ?? []) as Snapshot[];
+    setSnapshots(snapList);
+    if (snapList[0]) {
+      setSnapshot(snapList[0]);
+      setDomain(snapList[0].domain);
+      setDatabase(snapList[0].database_code);
     }
     setTracked((kws.data ?? []) as SeoRow[]);
     setAudits((aud.data ?? []) as Audit[]);
+    setHistory((hist.data ?? []) as KwHistory[]);
   }
 
   async function runAnalyze() {
@@ -170,8 +177,12 @@ function Seo() {
       await trackKeyword({ data: { keyword, domain: domain.trim(), database } });
       toast.success(`"${keyword}" toegevoegd.`);
       setNewKw("");
-      const { data } = await supabase.from("seo_keywords").select("*").order("created_at", { ascending: false });
+      const [{ data }, { data: h }] = await Promise.all([
+        supabase.from("seo_keywords").select("*").order("created_at", { ascending: false }),
+        supabase.from("seo_keyword_history").select("*").order("checked_at", { ascending: false }).limit(500),
+      ]);
       setTracked((data ?? []) as SeoRow[]);
+      setHistory((h ?? []) as KwHistory[]);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Tracking mislukt.");
     } finally {
@@ -184,8 +195,12 @@ function Seo() {
     setTrackingBusy(true);
     try {
       await trackKeyword({ data: { keyword: row.keyword, domain: row.domain, database: row.database_code ?? "nl" } });
-      const { data } = await supabase.from("seo_keywords").select("*").order("created_at", { ascending: false });
+      const [{ data }, { data: h }] = await Promise.all([
+        supabase.from("seo_keywords").select("*").order("created_at", { ascending: false }),
+        supabase.from("seo_keyword_history").select("*").order("checked_at", { ascending: false }).limit(500),
+      ]);
       setTracked((data ?? []) as SeoRow[]);
+      setHistory((h ?? []) as KwHistory[]);
       toast.success("Rank bijgewerkt.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Update mislukt.");
@@ -310,11 +325,42 @@ function Seo() {
           ) : (
             <>
               <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-                <StatCard icon={Trophy} label="Globale rank" value={fmtNum(snapshot.rank_global)} />
-                <StatCard icon={Search} label="Organische keywords" value={fmtNum(snapshot.organic_keywords)} />
-                <StatCard icon={TrendingUp} label="Organisch verkeer (mnd)" value={fmtNum(snapshot.organic_traffic)} />
-                <StatCard icon={Target} label="Verkeerwaarde" value={`€${fmtNum(snapshot.organic_cost)}`} />
+                <StatCard icon={Trophy} label="Globale rank" value={fmtNum(snapshot.rank_global)} delta={deltaFor(snapshots, "rank_global", true)} />
+                <StatCard icon={Search} label="Organische keywords" value={fmtNum(snapshot.organic_keywords)} delta={deltaFor(snapshots, "organic_keywords")} />
+                <StatCard icon={TrendingUp} label="Organisch verkeer (mnd)" value={fmtNum(snapshot.organic_traffic)} delta={deltaFor(snapshots, "organic_traffic")} />
+                <StatCard icon={Target} label="Verkeerwaarde" value={`€${fmtNum(snapshot.organic_cost)}`} delta={deltaFor(snapshots, "organic_cost")} />
               </div>
+
+              {snapshots.length > 1 ? (
+                <Section title="Verloop domein" subtitle={`${snapshots.length} metingen bewaard — vergelijk hoe je domein zich ontwikkelt.`} icon={TrendingUp}>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
+                          <th className="py-2 pr-4">Datum</th>
+                          <th className="py-2 pr-4 text-right">Globale rank</th>
+                          <th className="py-2 pr-4 text-right">Organische KW</th>
+                          <th className="py-2 pr-4 text-right">Verkeer (mnd)</th>
+                          <th className="py-2 pr-4 text-right">Verkeerwaarde</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {snapshots.map((s) => (
+                          <tr key={s.id} className="hover:bg-secondary/30">
+                            <td className="py-2 pr-4 text-xs text-muted-foreground">{new Date(s.created_at).toLocaleString("nl-NL")}</td>
+                            <td className="py-2 pr-4 text-right tabular-nums">{fmtNum(s.rank_global)}</td>
+                            <td className="py-2 pr-4 text-right tabular-nums">{fmtNum(s.organic_keywords)}</td>
+                            <td className="py-2 pr-4 text-right tabular-nums">{fmtNum(s.organic_traffic)}</td>
+                            <td className="py-2 pr-4 text-right tabular-nums">€{fmtNum(s.organic_cost)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Section>
+              ) : null}
+
+
 
               {quickWins.length > 0 ? (
                 <Section title="Quick wins" subtitle="Keywords op positie 4–20 met goed volume — kleine optimalisatie kan ze de top-3 in duwen." icon={Lightbulb}>
@@ -475,6 +521,7 @@ function Seo() {
                     <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
                       <th className="py-2 pr-4">Keyword</th>
                       <th className="py-2 pr-4 text-right">Positie</th>
+                      <th className="py-2 pr-4 text-right">Trend</th>
                       <th className="py-2 pr-4 text-right">Volume</th>
                       <th className="py-2 pr-4 text-right">KD</th>
                       <th className="py-2 pr-4">URL</th>
@@ -483,41 +530,65 @@ function Seo() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {tracked.map((row) => (
-                      <tr key={row.id} className="hover:bg-secondary/30">
-                        <td className="py-2 pr-4 font-medium text-ink">{row.keyword}</td>
-                        <td className="py-2 pr-4 text-right">{positionBadge(row.current_rank)}</td>
-                        <td className="py-2 pr-4 text-right tabular-nums">{fmtNum(row.search_volume)}</td>
-                        <td className="py-2 pr-4 text-right tabular-nums">{kdBadge(row.difficulty)}</td>
-                        <td className="py-2 pr-4 text-xs text-muted-foreground max-w-[18rem] truncate">
-                          {row.position_url ? (
-                            <a href={row.position_url} target="_blank" rel="noreferrer" className="hover:text-wine">
-                              {row.position_url}
-                            </a>
-                          ) : (
-                            "—"
-                          )}
-                        </td>
-                        <td className="py-2 pr-4 text-xs text-muted-foreground">
-                          {row.last_checked_at ? new Date(row.last_checked_at).toLocaleDateString("nl-NL") : "—"}
-                        </td>
-                        <td className="py-2 pr-4 text-right">
-                          <div className="inline-flex gap-2">
-                            <button
-                              onClick={() => void refreshKeyword(row)}
-                              disabled={trackingBusy}
-                              className="text-muted-foreground hover:text-wine"
-                              title="Ververs"
-                            >
-                              <RefreshCw className="h-4 w-4" />
-                            </button>
-                            <button onClick={() => void removeTracked(row.id)} className="text-muted-foreground hover:text-destructive" title="Verwijder">
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {tracked.map((row) => {
+                      const hist = history
+                        .filter((h) => h.keyword === row.keyword && h.domain === row.domain)
+                        .sort((a, b) => +new Date(b.checked_at) - +new Date(a.checked_at));
+                      const prev = hist[1];
+                      const rankDelta =
+                        prev?.rank != null && row.current_rank != null ? prev.rank - row.current_rank : null;
+                      return (
+                        <tr key={row.id} className="hover:bg-secondary/30">
+                          <td className="py-2 pr-4 font-medium text-ink">{row.keyword}</td>
+                          <td className="py-2 pr-4 text-right">{positionBadge(row.current_rank)}</td>
+                          <td className="py-2 pr-4 text-right">
+                            {rankDelta == null || rankDelta === 0 ? (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            ) : rankDelta > 0 ? (
+                              <span className="text-xs text-green-700 inline-flex items-center gap-0.5">
+                                <TrendingUp className="h-3 w-3" /> +{rankDelta}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-destructive inline-flex items-center gap-0.5">
+                                <TrendingDown className="h-3 w-3" /> {rankDelta}
+                              </span>
+                            )}
+                            {hist.length > 1 ? (
+                              <span className="block text-[10px] text-muted-foreground">{hist.length} metingen</span>
+                            ) : null}
+                          </td>
+                          <td className="py-2 pr-4 text-right tabular-nums">{fmtNum(row.search_volume)}</td>
+                          <td className="py-2 pr-4 text-right tabular-nums">{kdBadge(row.difficulty)}</td>
+                          <td className="py-2 pr-4 text-xs text-muted-foreground max-w-[18rem] truncate">
+                            {row.position_url ? (
+                              <a href={row.position_url} target="_blank" rel="noreferrer" className="hover:text-wine">
+                                {row.position_url}
+                              </a>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                          <td className="py-2 pr-4 text-xs text-muted-foreground">
+                            {row.last_checked_at ? new Date(row.last_checked_at).toLocaleDateString("nl-NL") : "—"}
+                          </td>
+                          <td className="py-2 pr-4 text-right">
+                            <div className="inline-flex gap-2">
+                              <button
+                                onClick={() => void refreshKeyword(row)}
+                                disabled={trackingBusy}
+                                className="text-muted-foreground hover:text-wine"
+                                title="Ververs"
+                              >
+                                <RefreshCw className="h-4 w-4" />
+                              </button>
+                              <button onClick={() => void removeTracked(row.id)} className="text-muted-foreground hover:text-destructive" title="Verwijder">
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -663,11 +734,13 @@ function StatCard({
   label,
   value,
   accent,
+  delta,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: string;
   accent?: "green";
+  delta?: { value: number; positive: boolean } | null;
 }) {
   const ring = accent === "green" ? "bg-green-100 text-green-800" : "bg-wine/10 text-wine";
   return (
@@ -679,11 +752,32 @@ function StatCard({
         <div className="min-w-0">
           <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground truncate">{label}</p>
           <p className="font-heading text-2xl font-semibold text-ink tabular-nums">{value}</p>
+          {delta ? (
+            <p className={`text-xs tabular-nums mt-0.5 ${delta.positive ? "text-green-700" : "text-destructive"}`}>
+              {delta.positive ? "▲" : "▼"} {fmtNum(Math.abs(delta.value))} vs vorige
+            </p>
+          ) : null}
         </div>
       </div>
     </div>
   );
 }
+
+function deltaFor(
+  snaps: Snapshot[],
+  field: "rank_global" | "organic_keywords" | "organic_traffic" | "organic_cost",
+  lowerIsBetter = false,
+): { value: number; positive: boolean } | null {
+  if (snaps.length < 2) return null;
+  const cur = Number(snaps[0][field] ?? 0);
+  const prev = Number(snaps[1][field] ?? 0);
+  if (!cur && !prev) return null;
+  const diff = cur - prev;
+  if (diff === 0) return null;
+  const positive = lowerIsBetter ? diff < 0 : diff > 0;
+  return { value: diff, positive };
+}
+
 
 function Section({
   title,
