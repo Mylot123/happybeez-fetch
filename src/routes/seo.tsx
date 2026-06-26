@@ -114,19 +114,23 @@ function Seo() {
 
   async function loadAll() {
     setLoadingSnap(true);
-    const [snap, kws, aud] = await Promise.all([
-      supabase.from("seo_domain_snapshots").select("*").order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    const [snaps, kws, aud, hist] = await Promise.all([
+      supabase.from("seo_domain_snapshots").select("*").order("created_at", { ascending: false }).limit(30),
       supabase.from("seo_keywords").select("*").order("created_at", { ascending: false }),
       supabase.from("seo_page_audits").select("*").order("created_at", { ascending: false }).limit(10),
+      supabase.from("seo_keyword_history").select("*").order("checked_at", { ascending: false }).limit(500),
     ]);
     setLoadingSnap(false);
-    if (snap.data) {
-      setSnapshot(snap.data);
-      setDomain(snap.data.domain);
-      setDatabase(snap.data.database_code);
+    const snapList = (snaps.data ?? []) as Snapshot[];
+    setSnapshots(snapList);
+    if (snapList[0]) {
+      setSnapshot(snapList[0]);
+      setDomain(snapList[0].domain);
+      setDatabase(snapList[0].database_code);
     }
     setTracked((kws.data ?? []) as SeoRow[]);
     setAudits((aud.data ?? []) as Audit[]);
+    setHistory((hist.data ?? []) as KwHistory[]);
   }
 
   async function runAnalyze() {
