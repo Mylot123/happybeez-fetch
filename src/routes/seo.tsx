@@ -701,11 +701,13 @@ function StatCard({
   label,
   value,
   accent,
+  delta,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: string;
   accent?: "green";
+  delta?: { value: number; positive: boolean } | null;
 }) {
   const ring = accent === "green" ? "bg-green-100 text-green-800" : "bg-wine/10 text-wine";
   return (
@@ -717,11 +719,32 @@ function StatCard({
         <div className="min-w-0">
           <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground truncate">{label}</p>
           <p className="font-heading text-2xl font-semibold text-ink tabular-nums">{value}</p>
+          {delta ? (
+            <p className={`text-xs tabular-nums mt-0.5 ${delta.positive ? "text-green-700" : "text-destructive"}`}>
+              {delta.positive ? "▲" : "▼"} {fmtNum(Math.abs(delta.value))} vs vorige
+            </p>
+          ) : null}
         </div>
       </div>
     </div>
   );
 }
+
+function deltaFor(
+  snaps: Snapshot[],
+  field: "rank_global" | "organic_keywords" | "organic_traffic" | "organic_cost",
+  lowerIsBetter = false,
+): { value: number; positive: boolean } | null {
+  if (snaps.length < 2) return null;
+  const cur = Number(snaps[0][field] ?? 0);
+  const prev = Number(snaps[1][field] ?? 0);
+  if (!cur && !prev) return null;
+  const diff = cur - prev;
+  if (diff === 0) return null;
+  const positive = lowerIsBetter ? diff < 0 : diff > 0;
+  return { value: diff, positive };
+}
+
 
 function Section({
   title,
