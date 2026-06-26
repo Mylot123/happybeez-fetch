@@ -263,7 +263,7 @@ export const analyzeDomain = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    const domain = data.domain.replace(/^https?:\/\//, "").replace(/\/.*$/, "").toLowerCase();
+    const domain = normalizeDomain(data.domain);
     const db = data.database;
 
     try {
@@ -353,12 +353,52 @@ export const analyzeDomain = createServerFn({ method: "POST" })
     return { id: inserted.id, created_at: inserted.created_at, ...snapshot, soft_error: null as string | null };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Onbekende fout";
-      return {
-        id: null, created_at: null, domain, database_code: db,
-        rank_global: null, organic_keywords: null, organic_traffic: null, organic_cost: null,
-        top_keywords: [] as never[], competitors: [] as never[], quick_wins: [] as never[],
-        soft_error: msg,
+      if (!isSemrushLimitError(e)) {
+        return {
+          id: null, created_at: null, domain, database_code: db,
+          rank_global: null, organic_keywords: null, organic_traffic: null, organic_cost: null,
+          top_keywords: [] as never[], competitors: [] as never[], quick_wins: [] as never[],
+          soft_error: msg,
+        };
+      }
+
+      const html = await fetchPageText(`https://${domain}`);
+      const site = html ? extractSiteTerms(html, domain) : { keywords: deterministicKeywordIdeas("bijenhotel").slice(0, 10).map((idea) => ({
+        keyword: idea.keyword,
+        position: null,
+        volume: null,
+        cpc: null,
+        competition: null,
+        traffic_share: null,
+        url: `https://${domain}`,
+        kd: null,
+      })) };
+      const topKeywords = site.keywords;
+      const quickWins = topKeywords.slice(0, 6);
+      const competitors = [
+        { domain: "bestuivers.nl", common_keywords: null, organic_keywords: null, organic_traffic: null },
+        { domain: "vivara.nl", common_keywords: null, organic_keywords: null, organic_traffic: null },
+        { domain: "natuurmonumenten.nl", common_keywords: null, organic_keywords: null, organic_traffic: null },
+        { domain: "bol.com", common_keywords: null, organic_keywords: null, organic_traffic: null },
+      ];
+      const snapshot = {
+        domain,
+        database_code: db,
+        rank_global: null,
+        organic_keywords: topKeywords.length,
+        organic_traffic: null,
+        organic_cost: null,
+        top_keywords: topKeywords,
+        competitors,
+        quick_wins: quickWins,
       };
+      const { supabase, userId } = context;
+      const { data: inserted } = await supabase
+        .from("seo_domain_snapshots")
+        .insert({ user_id: userId, ...snapshot })
+        .select("id, created_at")
+        .single();
+      return { id: inserted?.id ?? null, created_at: inserted?.created_at ?? null, ...snapshot, soft_error: fallbackNotice(e) };
     }
   });
 
@@ -378,41 +418,49 @@ export const researchKeyword = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    const related = rowsToObjects(
-      await callSemrush(
-        "/keywords/phrase_related",
-        {
-          phrase: data.seed,
-          database: data.database,
-          export_columns: "Ph,Nq,Cp,Co,Kd",
-          display_limit: data.limit,
-        },
-        true,
-      ),
-    );
-    const questions = rowsToObjects(
-      await callSemrush(
-        "/keywords/phrase_questions",
-        {
-          phrase: data.seed,
-          database: data.database,
-          export_columns: "Ph,Nq,Cp,Co,Kd",
-          display_limit: data.limit,
-        },
-        true,
-      ),
-    );
+    let all: FallbackIdea[] = [];
+    let soft_error: string | null = null;
 
-    const norm = (kind: "related" | "question") => (r: Record<string, string>) => ({
-      keyword: r.Ph,
-      search_volume: Number(r.Nq) || null,
-      cpc: Number(r.Cp) || null,
-      competition: Number(r.Co) || null,
-      difficulty: Number(r.Kd) || null,
-      kind,
-    });
+    try {
+      const related = rowsToObjects(
+        await callSemrush(
+          "/keywords/phrase_related",
+          {
+            phrase: data.seed,
+            database: data.database,
+            export_columns: "Ph,Nq,Cp,Co,Kd",
+            display_limit: data.limit,
+          },
+          true,
+        ),
+      );
+      const questions = rowsToObjects(
+        await callSemrush(
+          "/keywords/phrase_questions",
+          {
+            phrase: data.seed,
+            database: data.database,
+            export_columns: "Ph,Nq,Cp,Co,Kd",
+            display_limit: data.limit,
+          },
+          true,
+        ),
+      );
 
-    const all = [...related.map(norm("related")), ...questions.map(norm("question"))];
+      const norm = (kind: "related" | "question") => (r: Record<string, string>): FallbackIdea => ({
+        keyword: r.Ph,
+        search_volume: Number(r.Nq) || null,
+        cpc: Number(r.Cp) || null,
+        competition: Number(r.Co) || null,
+        difficulty: Number(r.Kd) || null,
+        kind,
+      });
+
+      all = [...related.map(norm("related")), ...questions.map(norm("question"))];
+    } catch (e) {
+      soft_error = fallbackNotice(e);
+      all = await aiKeywordIdeas(data.seed, data.database);
+    }
 
     const { supabase, userId } = context;
     // Cache (best effort)
@@ -422,12 +470,17 @@ export const researchKeyword = createServerFn({ method: "POST" })
           user_id: userId,
           seed: data.seed,
           database_code: data.database,
-          ...a,
+          keyword: a.keyword,
+          kind: a.kind,
+          search_volume: a.search_volume,
+          cpc: a.cpc,
+          competition: a.competition,
+          difficulty: a.difficulty,
         })),
       );
     }
 
-    return { seed: data.seed, database: data.database, ideas: all };
+    return { seed: data.seed, database: data.database, ideas: all, soft_error };
   });
 
 // ──────────────────────────────────────────────────────────────────
@@ -445,31 +498,38 @@ export const trackKeyword = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    const domain = data.domain.replace(/^https?:\/\//, "").replace(/\/.*$/, "").toLowerCase();
+    const domain = normalizeDomain(data.domain);
+    let metrics: Record<string, string> | undefined;
+    let serpRows: Array<Record<string, string>> = [];
+    let soft_error: string | null = null;
 
-    // Metrics for the keyword
-    const metricsRows = rowsToObjects(
-      await callSemrush("/keywords/phrase_this", {
-        phrase: data.keyword,
-        database: data.database,
-        export_columns: "Ph,Nq,Cp,Co,Kd",
-      }),
-    );
-    const metrics = metricsRows[0];
-
-    // SERP — top 20 domains
-    const serpRows = rowsToObjects(
-      await callSemrush(
-        "/keywords/phrase_organic",
-        {
+    try {
+      // Metrics for the keyword
+      const metricsRows = rowsToObjects(
+        await callSemrush("/keywords/phrase_this", {
           phrase: data.keyword,
           database: data.database,
-          export_columns: "Dn,Ur,Po",
-          display_limit: 20,
-        },
-        true,
-      ),
-    );
+          export_columns: "Ph,Nq,Cp,Co,Kd",
+        }),
+      );
+      metrics = metricsRows[0];
+
+      // SERP — top 20 domains
+      serpRows = rowsToObjects(
+        await callSemrush(
+          "/keywords/phrase_organic",
+          {
+            phrase: data.keyword,
+            database: data.database,
+            export_columns: "Dn,Ur,Po",
+            display_limit: 20,
+          },
+          true,
+        ),
+      );
+    } catch (e) {
+      soft_error = fallbackNotice(e);
+    }
     const hit = serpRows.find((r) => (r.Dn ?? "").toLowerCase().includes(domain));
     const position = hit ? Number(hit.Po) || null : null;
     const url = hit?.Ur ?? null;
@@ -517,7 +577,7 @@ export const trackKeyword = createServerFn({ method: "POST" })
       position_url: url,
     });
 
-    return { ...payload, serp: serpRows.slice(0, 10) };
+    return { ...payload, serp: serpRows.slice(0, 10), soft_error };
   });
 
 // ──────────────────────────────────────────────────────────────────
