@@ -46,7 +46,15 @@ type TopKw = {
   kd: number | null;
 };
 type Competitor = { domain: string; common_keywords: number | null; organic_keywords: number | null; organic_traffic: number | null };
-type Idea = { keyword: string; search_volume: number | null; cpc: number | null; competition: number | null; difficulty: number | null; kind: "related" | "question" };
+type Idea = {
+  keyword: string;
+  search_volume: number | null;
+  cpc: number | null;
+  competition: number | null;
+  difficulty: number | null;
+  kind: "related" | "question" | "commercial" | "content" | "local";
+  source?: "ai" | "fallback";
+};
 
 export const Route = createFileRoute("/seo")({
   head: () => ({
@@ -139,7 +147,8 @@ function Seo() {
     try {
       const data = await analyzeDomain({ data: { domain: domain.trim(), database } });
       if (data.soft_error) {
-        toast.error(data.soft_error);
+        toast.warning(data.soft_error);
+        await loadAll();
       } else {
         toast.success(`Analyse klaar — ${data.organic_keywords ?? 0} organische keywords gevonden.`);
         await loadAll();
@@ -160,7 +169,11 @@ function Seo() {
     try {
       const data = await researchKeyword({ data: { seed: term, database, limit: 20 } });
       setIdeas(data.ideas as Idea[]);
-      toast.success(`${data.ideas.length} ideeën gevonden voor "${term}".`);
+      if (data.soft_error) {
+        toast.warning(data.soft_error);
+      } else {
+        toast.success(`${data.ideas.length} ideeën gevonden voor "${term}".`);
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Onderzoek mislukt.");
     } finally {
@@ -174,8 +187,9 @@ function Seo() {
     if (!keyword) return;
     setTrackingBusy(true);
     try {
-      await trackKeyword({ data: { keyword, domain: domain.trim(), database } });
-      toast.success(`"${keyword}" toegevoegd.`);
+      const result = await trackKeyword({ data: { keyword, domain: domain.trim(), database } });
+      if (result.soft_error) toast.warning(result.soft_error);
+      else toast.success(`"${keyword}" toegevoegd.`);
       setNewKw("");
       const [{ data }, { data: h }] = await Promise.all([
         supabase.from("seo_keywords").select("*").order("created_at", { ascending: false }),
@@ -194,14 +208,15 @@ function Seo() {
     if (!row.domain) return;
     setTrackingBusy(true);
     try {
-      await trackKeyword({ data: { keyword: row.keyword, domain: row.domain, database: row.database_code ?? "nl" } });
+      const result = await trackKeyword({ data: { keyword: row.keyword, domain: row.domain, database: row.database_code ?? "nl" } });
       const [{ data }, { data: h }] = await Promise.all([
         supabase.from("seo_keywords").select("*").order("created_at", { ascending: false }),
         supabase.from("seo_keyword_history").select("*").order("checked_at", { ascending: false }).limit(500),
       ]);
       setTracked((data ?? []) as SeoRow[]);
       setHistory((h ?? []) as KwHistory[]);
-      toast.success("Rank bijgewerkt.");
+      if (result.soft_error) toast.warning(result.soft_error);
+      else toast.success("Rank bijgewerkt.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Update mislukt.");
     } finally {
@@ -254,7 +269,7 @@ function Seo() {
           <span className="text-xs tracking-[0.2em] uppercase text-muted-foreground font-medium">Vindbaarheid</span>
           <h1 className="font-heading font-bold text-ink text-3xl mt-1 ruled-heading">SEO & Ranking</h1>
           <p className="text-sm text-muted-foreground mt-2 max-w-2xl">
-            Volledige SEO-engine op Semrush-data: domeinanalyse, keyword-onderzoek, rank-tracking en pagina-audits met AI-aanbevelingen.
+            SEO-engine met eigen pagina-audits, AI-keywordstrategie en Semrush-data wanneer beschikbaar — zonder stil te vallen bij limieten.
           </p>
         </div>
       </div>
@@ -289,6 +304,15 @@ function Seo() {
             Laatste analyse: {new Date(snapshot.created_at).toLocaleString("nl-NL")}
           </span>
         ) : null}
+      </div>
+
+      <div className="mb-6 rounded-lg border border-honey/40 bg-honey/10 p-4 text-sm text-foreground/85">
+        <div className="flex items-start gap-2">
+          <Lightbulb className="h-4 w-4 text-gold mt-0.5 shrink-0" />
+          <p>
+            Semrush is handig voor exacte volumes en rankings, maar niet verplicht. Bij een limiet maakt deze tool automatisch een bruikbaar SEO-plan op basis van je eigen site, AI en opgeslagen metingen.
+          </p>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -416,7 +440,7 @@ function Seo() {
       {/* ──────────────── Research ──────────────── */}
       {tab === "research" ? (
         <div className="space-y-6">
-          <Section title="Keyword-onderzoek" subtitle="Vind verwante zoekwoorden en vragen die mensen typen — direct uit Semrush." icon={Lightbulb}>
+          <Section title="Keyword-onderzoek" subtitle="Vind koopkeywords, vragen en blogonderwerpen. Exacte volumes komen uit Semrush; bij limiet vult AI het strategisch aan." icon={Lightbulb}>
             <div className="flex flex-wrap gap-2 mb-4">
               <Input
                 value={seed}
@@ -462,8 +486,8 @@ function Seo() {
                       <tr key={`${idea.keyword}-${i}`} className="hover:bg-secondary/30">
                         <td className="py-2 pr-4 font-medium text-ink">{idea.keyword}</td>
                         <td className="py-2 pr-4">
-                          <span className={`text-xs px-2 py-0.5 rounded ${idea.kind === "question" ? "bg-honey/30 text-ink" : "bg-secondary text-muted-foreground"}`}>
-                            {idea.kind === "question" ? "vraag" : "verwant"}
+                          <span className={`text-xs px-2 py-0.5 rounded ${idea.kind === "question" ? "bg-honey/30 text-ink" : idea.kind === "commercial" ? "bg-green-100 text-green-800" : "bg-secondary text-muted-foreground"}`}>
+                            {idea.kind === "question" ? "vraag" : idea.kind === "commercial" ? "koop" : idea.kind === "content" ? "blog" : idea.kind === "local" ? "lokaal" : "verwant"}
                           </span>
                         </td>
                         <td className="py-2 pr-4 text-right tabular-nums">{fmtNum(idea.search_volume)}</td>
@@ -497,7 +521,7 @@ function Seo() {
             <StatCard icon={TrendingUp} label="Gem. positie" value={trackedStats.avg ? `#${trackedStats.avg}` : "—"} />
           </div>
 
-          <Section title="Rank-tracking" subtitle="Voeg keywords toe en zie waar je domein staat in de Google top-20." icon={Target}>
+          <Section title="Rank-tracking" subtitle="Voeg keywords toe en bewaar iedere meting. Als Semrush op limiet zit, blijft het keyword alvast in je SEO-lijst staan." icon={Target}>
             <div className="flex flex-wrap gap-2 mb-4">
               <Input
                 value={newKw}
@@ -692,8 +716,8 @@ function Seo() {
       ) : null}
 
       <p className="mt-8 text-xs text-muted-foreground border-t border-border pt-4">
-        Data van Semrush (NL-database). Gratis Semrush-plan: max 10 API-calls per dag — één domeinanalyse verbruikt er ±3. Resultaten worden in
-        je database gecachet zodat ze beschikbaar blijven.
+        Exacte volumes, posities en concurrentiecijfers komen uit Semrush wanneer beschikbaar. Als die limiet bereikt is, gebruikt HappyBeez eigen audits,
+        AI-keywordplanning en opgeslagen historie zodat je alsnog kunt doorwerken.
       </p>
     </div>
   );
