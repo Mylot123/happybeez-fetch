@@ -428,6 +428,48 @@ export type Database = {
         }
         Relationships: []
       }
+      seo_keyword_history: {
+        Row: {
+          checked_at: string
+          cpc: number | null
+          database_code: string
+          difficulty: number | null
+          domain: string
+          id: string
+          keyword: string
+          position_url: string | null
+          rank: number | null
+          search_volume: number | null
+          user_id: string
+        }
+        Insert: {
+          checked_at?: string
+          cpc?: number | null
+          database_code?: string
+          difficulty?: number | null
+          domain: string
+          id?: string
+          keyword: string
+          position_url?: string | null
+          rank?: number | null
+          search_volume?: number | null
+          user_id: string
+        }
+        Update: {
+          checked_at?: string
+          cpc?: number | null
+          database_code?: string
+          difficulty?: number | null
+          domain?: string
+          id?: string
+          keyword?: string
+          position_url?: string | null
+          rank?: number | null
+          search_volume?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       seo_keyword_ideas: {
         Row: {
           competition: number | null
