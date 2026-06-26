@@ -317,11 +317,42 @@ function Seo() {
           ) : (
             <>
               <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-                <StatCard icon={Trophy} label="Globale rank" value={fmtNum(snapshot.rank_global)} />
-                <StatCard icon={Search} label="Organische keywords" value={fmtNum(snapshot.organic_keywords)} />
-                <StatCard icon={TrendingUp} label="Organisch verkeer (mnd)" value={fmtNum(snapshot.organic_traffic)} />
-                <StatCard icon={Target} label="Verkeerwaarde" value={`€${fmtNum(snapshot.organic_cost)}`} />
+                <StatCard icon={Trophy} label="Globale rank" value={fmtNum(snapshot.rank_global)} delta={deltaFor(snapshots, "rank_global", true)} />
+                <StatCard icon={Search} label="Organische keywords" value={fmtNum(snapshot.organic_keywords)} delta={deltaFor(snapshots, "organic_keywords")} />
+                <StatCard icon={TrendingUp} label="Organisch verkeer (mnd)" value={fmtNum(snapshot.organic_traffic)} delta={deltaFor(snapshots, "organic_traffic")} />
+                <StatCard icon={Target} label="Verkeerwaarde" value={`€${fmtNum(snapshot.organic_cost)}`} delta={deltaFor(snapshots, "organic_cost")} />
               </div>
+
+              {snapshots.length > 1 ? (
+                <Section title="Verloop domein" subtitle={`${snapshots.length} metingen bewaard — vergelijk hoe je domein zich ontwikkelt.`} icon={TrendingUp}>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
+                          <th className="py-2 pr-4">Datum</th>
+                          <th className="py-2 pr-4 text-right">Globale rank</th>
+                          <th className="py-2 pr-4 text-right">Organische KW</th>
+                          <th className="py-2 pr-4 text-right">Verkeer (mnd)</th>
+                          <th className="py-2 pr-4 text-right">Verkeerwaarde</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {snapshots.map((s) => (
+                          <tr key={s.id} className="hover:bg-secondary/30">
+                            <td className="py-2 pr-4 text-xs text-muted-foreground">{new Date(s.created_at).toLocaleString("nl-NL")}</td>
+                            <td className="py-2 pr-4 text-right tabular-nums">{fmtNum(s.rank_global)}</td>
+                            <td className="py-2 pr-4 text-right tabular-nums">{fmtNum(s.organic_keywords)}</td>
+                            <td className="py-2 pr-4 text-right tabular-nums">{fmtNum(s.organic_traffic)}</td>
+                            <td className="py-2 pr-4 text-right tabular-nums">€{fmtNum(s.organic_cost)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Section>
+              ) : null}
+
+
 
               {quickWins.length > 0 ? (
                 <Section title="Quick wins" subtitle="Keywords op positie 4–20 met goed volume — kleine optimalisatie kan ze de top-3 in duwen." icon={Lightbulb}>
