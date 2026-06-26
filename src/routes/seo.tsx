@@ -513,6 +513,7 @@ function Seo() {
                     <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
                       <th className="py-2 pr-4">Keyword</th>
                       <th className="py-2 pr-4 text-right">Positie</th>
+                      <th className="py-2 pr-4 text-right">Trend</th>
                       <th className="py-2 pr-4 text-right">Volume</th>
                       <th className="py-2 pr-4 text-right">KD</th>
                       <th className="py-2 pr-4">URL</th>
@@ -521,41 +522,65 @@ function Seo() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {tracked.map((row) => (
-                      <tr key={row.id} className="hover:bg-secondary/30">
-                        <td className="py-2 pr-4 font-medium text-ink">{row.keyword}</td>
-                        <td className="py-2 pr-4 text-right">{positionBadge(row.current_rank)}</td>
-                        <td className="py-2 pr-4 text-right tabular-nums">{fmtNum(row.search_volume)}</td>
-                        <td className="py-2 pr-4 text-right tabular-nums">{kdBadge(row.difficulty)}</td>
-                        <td className="py-2 pr-4 text-xs text-muted-foreground max-w-[18rem] truncate">
-                          {row.position_url ? (
-                            <a href={row.position_url} target="_blank" rel="noreferrer" className="hover:text-wine">
-                              {row.position_url}
-                            </a>
-                          ) : (
-                            "—"
-                          )}
-                        </td>
-                        <td className="py-2 pr-4 text-xs text-muted-foreground">
-                          {row.last_checked_at ? new Date(row.last_checked_at).toLocaleDateString("nl-NL") : "—"}
-                        </td>
-                        <td className="py-2 pr-4 text-right">
-                          <div className="inline-flex gap-2">
-                            <button
-                              onClick={() => void refreshKeyword(row)}
-                              disabled={trackingBusy}
-                              className="text-muted-foreground hover:text-wine"
-                              title="Ververs"
-                            >
-                              <RefreshCw className="h-4 w-4" />
-                            </button>
-                            <button onClick={() => void removeTracked(row.id)} className="text-muted-foreground hover:text-destructive" title="Verwijder">
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {tracked.map((row) => {
+                      const hist = history
+                        .filter((h) => h.keyword === row.keyword && h.domain === row.domain)
+                        .sort((a, b) => +new Date(b.checked_at) - +new Date(a.checked_at));
+                      const prev = hist[1];
+                      const rankDelta =
+                        prev?.rank != null && row.current_rank != null ? prev.rank - row.current_rank : null;
+                      return (
+                        <tr key={row.id} className="hover:bg-secondary/30">
+                          <td className="py-2 pr-4 font-medium text-ink">{row.keyword}</td>
+                          <td className="py-2 pr-4 text-right">{positionBadge(row.current_rank)}</td>
+                          <td className="py-2 pr-4 text-right">
+                            {rankDelta == null || rankDelta === 0 ? (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            ) : rankDelta > 0 ? (
+                              <span className="text-xs text-green-700 inline-flex items-center gap-0.5">
+                                <TrendingUp className="h-3 w-3" /> +{rankDelta}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-destructive inline-flex items-center gap-0.5">
+                                <TrendingDown className="h-3 w-3" /> {rankDelta}
+                              </span>
+                            )}
+                            {hist.length > 1 ? (
+                              <span className="block text-[10px] text-muted-foreground">{hist.length} metingen</span>
+                            ) : null}
+                          </td>
+                          <td className="py-2 pr-4 text-right tabular-nums">{fmtNum(row.search_volume)}</td>
+                          <td className="py-2 pr-4 text-right tabular-nums">{kdBadge(row.difficulty)}</td>
+                          <td className="py-2 pr-4 text-xs text-muted-foreground max-w-[18rem] truncate">
+                            {row.position_url ? (
+                              <a href={row.position_url} target="_blank" rel="noreferrer" className="hover:text-wine">
+                                {row.position_url}
+                              </a>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                          <td className="py-2 pr-4 text-xs text-muted-foreground">
+                            {row.last_checked_at ? new Date(row.last_checked_at).toLocaleDateString("nl-NL") : "—"}
+                          </td>
+                          <td className="py-2 pr-4 text-right">
+                            <div className="inline-flex gap-2">
+                              <button
+                                onClick={() => void refreshKeyword(row)}
+                                disabled={trackingBusy}
+                                className="text-muted-foreground hover:text-wine"
+                                title="Ververs"
+                              >
+                                <RefreshCw className="h-4 w-4" />
+                              </button>
+                              <button onClick={() => void removeTracked(row.id)} className="text-muted-foreground hover:text-destructive" title="Verwijder">
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
