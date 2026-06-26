@@ -346,6 +346,19 @@ export const trackKeyword = createServerFn({ method: "POST" })
       await supabase.from("seo_keywords").insert(payload);
     }
 
+    // Append to history for trend tracking
+    await supabase.from("seo_keyword_history").insert({
+      user_id: userId,
+      keyword: data.keyword,
+      domain,
+      database_code: data.database,
+      rank: position,
+      search_volume: payload.search_volume,
+      difficulty: payload.difficulty,
+      cpc: payload.cpc,
+      position_url: url,
+    });
+
     return { ...payload, serp: serpRows.slice(0, 10) };
   });
 
