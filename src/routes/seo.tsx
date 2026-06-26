@@ -195,8 +195,12 @@ function Seo() {
     setTrackingBusy(true);
     try {
       await trackKeyword({ data: { keyword: row.keyword, domain: row.domain, database: row.database_code ?? "nl" } });
-      const { data } = await supabase.from("seo_keywords").select("*").order("created_at", { ascending: false });
+      const [{ data }, { data: h }] = await Promise.all([
+        supabase.from("seo_keywords").select("*").order("created_at", { ascending: false }),
+        supabase.from("seo_keyword_history").select("*").order("checked_at", { ascending: false }).limit(500),
+      ]);
       setTracked((data ?? []) as SeoRow[]);
+      setHistory((h ?? []) as KwHistory[]);
       toast.success("Rank bijgewerkt.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Update mislukt.");
