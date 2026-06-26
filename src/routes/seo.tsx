@@ -33,6 +33,7 @@ import { analyzeDomain, auditPage, researchKeyword, trackKeyword } from "@/lib/s
 type SeoRow = Database["public"]["Tables"]["seo_keywords"]["Row"];
 type Snapshot = Database["public"]["Tables"]["seo_domain_snapshots"]["Row"];
 type Audit = Database["public"]["Tables"]["seo_page_audits"]["Row"];
+type KwHistory = Database["public"]["Tables"]["seo_keyword_history"]["Row"];
 
 type TopKw = {
   keyword: string;
