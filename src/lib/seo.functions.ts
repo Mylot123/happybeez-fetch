@@ -17,6 +17,164 @@ function gwHeaders() {
 
 type SemRow = { columnNames: string[]; rows: Array<Array<string | number | null>> };
 
+function normalizeDomain(input: string) {
+  return input.replace(/^https?:\/\//, "").replace(/\/.*$/, "").toLowerCase();
+}
+
+function isSemrushLimitError(e: unknown) {
+  const msg = e instanceof Error ? e.message : String(e);
+  return /semrush|limit|limiet|TOTAL LIMIT EXCEEDED/i.test(msg);
+}
+
+function fallbackNotice(e: unknown) {
+  const msg = e instanceof Error ? e.message : "Semrush is nu niet beschikbaar.";
+  return `${msg} Ik heb daarom een alternatief SEO-plan gemaakt zonder Semrush-data.`;
+}
+
+function cleanKeyword(value: string) {
+  return value.toLowerCase().replace(/[“”"'`]/g, "").replace(/\s+/g, " ").trim();
+}
+
+function dedupeIdeas<T extends { keyword: string }>(rows: T[]) {
+  const seen = new Set<string>();
+  return rows.filter((row) => {
+    const key = cleanKeyword(row.keyword);
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+type FallbackIdea = {
+  keyword: string;
+  search_volume: number | null;
+  cpc: number | null;
+  competition: number | null;
+  difficulty: number | null;
+  kind: "question" | "related" | "commercial" | "content" | "local";
+  source?: "ai" | "fallback";
+};
+
+function deterministicKeywordIdeas(seed: string): FallbackIdea[] {
+  const base = cleanKeyword(seed);
+  const terms = [
+    { keyword: base, kind: "related" as const },
+    { keyword: `${base} kopen`, kind: "commercial" as const },
+    { keyword: `beste ${base}`, kind: "commercial" as const },
+    { keyword: `${base} voor wilde bijen`, kind: "content" as const },
+    { keyword: `${base} voor metselbijen`, kind: "content" as const },
+    { keyword: `${base} in de tuin`, kind: "content" as const },
+    { keyword: `waar ${base} plaatsen`, kind: "question" as const },
+    { keyword: `wanneer ${base} ophangen`, kind: "question" as const },
+    { keyword: `hoe ${base} schoonmaken`, kind: "question" as const },
+    { keyword: `${base} onderhoud`, kind: "content" as const },
+    { keyword: `${base} bamboe of hout`, kind: "question" as const },
+    { keyword: `${base} voor balkon`, kind: "content" as const },
+    { keyword: `${base} nederland`, kind: "local" as const },
+    { keyword: `bijenhotel plaatsen`, kind: "question" as const },
+    { keyword: `wilde bijen helpen`, kind: "content" as const },
+    { keyword: `insectenhotel bijen`, kind: "related" as const },
+  ];
+  return dedupeIdeas(terms).map((t) => ({ ...t, search_volume: null, cpc: null, competition: null, difficulty: null, source: "fallback" }));
+}
+
+async function aiKeywordIdeas(seed: string, database: string): Promise<FallbackIdea[]> {
+  const apiKey = process.env.LOVABLE_API_KEY;
+  if (!apiKey) return deterministicKeywordIdeas(seed);
+  try {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "openai/gpt-5-mini",
+        messages: [
+          {
+            role: "system",
+            content:
+              "Je bent een Nederlandse SEO-strateeg voor HappyBeez: bijenhotels, wilde bijen, biodiversiteit, tuinen en educatie. Geef alleen geldige JSON terug.",
+          },
+          {
+            role: "user",
+            content: `Maak 24 SEO-keywordideeën voor de ${database.toUpperCase()} markt rond: ${seed}. Mix koopintentie, vragen, educatieve blogtopics en lokale varianten. Vermijd verzonnen zoekvolumes. JSON-array met objecten: keyword, kind. kind is één van question, related, commercial, content, local.`,
+          },
+        ],
+      }),
+    });
+    if (!res.ok) return deterministicKeywordIdeas(seed);
+    const j: { choices?: Array<{ message?: { content?: string } }> } = await res.json();
+    const raw = j.choices?.[0]?.message?.content?.trim() ?? "[]";
+    const json = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
+    const parsed = JSON.parse(json) as Array<{ keyword?: string; kind?: string }>;
+    const allowed = new Set(["question", "related", "commercial", "content", "local"]);
+    const ideas = parsed
+      .filter((x) => x.keyword)
+      .map((x) => ({
+        keyword: cleanKeyword(String(x.keyword)),
+        kind: allowed.has(String(x.kind)) ? (String(x.kind) as FallbackIdea["kind"]) : "related",
+        search_volume: null,
+        cpc: null,
+        competition: null,
+        difficulty: null,
+        source: "ai" as const,
+      }));
+    return dedupeIdeas([...ideas, ...deterministicKeywordIdeas(seed)]).slice(0, 30);
+  } catch {
+    return deterministicKeywordIdeas(seed);
+  }
+}
+
+async function fetchPageText(url: string) {
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; HappyBeezSEOBot/1.0)" },
+      redirect: "follow",
+    });
+    if (!res.ok) return "";
+    return await res.text();
+  } catch {
+    return "";
+  }
+}
+
+function extractReadableText(html: string) {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&[a-z]+;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractSiteTerms(html: string, domain: string) {
+  const ex = extract(html);
+  const text = `${ex.title} ${ex.metaDescription} ${ex.h1} ${ex.h2s.join(" ")} ${extractReadableText(html).slice(0, 4000)}`.toLowerCase();
+  const baseTerms = [
+    "bijenhotel",
+    "bijenhotel kopen",
+    "wilde bijen",
+    "metselbijen",
+    "insectenhotel",
+    "bestuivers",
+    "biodiversiteit tuin",
+    "bijvriendelijke tuin",
+    "bijenhotel plaatsen",
+    "bijenhotel onderhoud",
+  ];
+  const fromPage = Array.from(new Set(baseTerms.filter((term) => text.includes(term.split(" ")[0]))));
+  const keywords = (fromPage.length ? fromPage : baseTerms).map((keyword) => ({
+    keyword,
+    position: null,
+    volume: null,
+    cpc: null,
+    competition: null,
+    traffic_share: null,
+    url: `https://${domain}`,
+    kd: null,
+  }));
+  return { extracted: ex, keywords };
+}
+
 async function callSemrush(path: string, params: Record<string, string | number | undefined>, limitOffset = false): Promise<SemRow> {
   const qs = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== "") qs.set(k, String(v));
@@ -105,7 +263,7 @@ export const analyzeDomain = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    const domain = data.domain.replace(/^https?:\/\//, "").replace(/\/.*$/, "").toLowerCase();
+    const domain = normalizeDomain(data.domain);
     const db = data.database;
 
     try {
@@ -195,12 +353,52 @@ export const analyzeDomain = createServerFn({ method: "POST" })
     return { id: inserted.id, created_at: inserted.created_at, ...snapshot, soft_error: null as string | null };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Onbekende fout";
-      return {
-        id: null, created_at: null, domain, database_code: db,
-        rank_global: null, organic_keywords: null, organic_traffic: null, organic_cost: null,
-        top_keywords: [] as never[], competitors: [] as never[], quick_wins: [] as never[],
-        soft_error: msg,
+      if (!isSemrushLimitError(e)) {
+        return {
+          id: null, created_at: null, domain, database_code: db,
+          rank_global: null, organic_keywords: null, organic_traffic: null, organic_cost: null,
+          top_keywords: [] as never[], competitors: [] as never[], quick_wins: [] as never[],
+          soft_error: msg,
+        };
+      }
+
+      const html = await fetchPageText(`https://${domain}`);
+      const site = html ? extractSiteTerms(html, domain) : { keywords: deterministicKeywordIdeas("bijenhotel").slice(0, 10).map((idea) => ({
+        keyword: idea.keyword,
+        position: null,
+        volume: null,
+        cpc: null,
+        competition: null,
+        traffic_share: null,
+        url: `https://${domain}`,
+        kd: null,
+      })) };
+      const topKeywords = site.keywords;
+      const quickWins = topKeywords.slice(0, 6);
+      const competitors = [
+        { domain: "bestuivers.nl", common_keywords: null, organic_keywords: null, organic_traffic: null },
+        { domain: "vivara.nl", common_keywords: null, organic_keywords: null, organic_traffic: null },
+        { domain: "natuurmonumenten.nl", common_keywords: null, organic_keywords: null, organic_traffic: null },
+        { domain: "bol.com", common_keywords: null, organic_keywords: null, organic_traffic: null },
+      ];
+      const snapshot = {
+        domain,
+        database_code: db,
+        rank_global: null,
+        organic_keywords: topKeywords.length,
+        organic_traffic: null,
+        organic_cost: null,
+        top_keywords: topKeywords,
+        competitors,
+        quick_wins: quickWins,
       };
+      const { supabase, userId } = context;
+      const { data: inserted } = await supabase
+        .from("seo_domain_snapshots")
+        .insert({ user_id: userId, ...snapshot })
+        .select("id, created_at")
+        .single();
+      return { id: inserted?.id ?? null, created_at: inserted?.created_at ?? null, ...snapshot, soft_error: fallbackNotice(e) };
     }
   });
 
@@ -220,41 +418,49 @@ export const researchKeyword = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    const related = rowsToObjects(
-      await callSemrush(
-        "/keywords/phrase_related",
-        {
-          phrase: data.seed,
-          database: data.database,
-          export_columns: "Ph,Nq,Cp,Co,Kd",
-          display_limit: data.limit,
-        },
-        true,
-      ),
-    );
-    const questions = rowsToObjects(
-      await callSemrush(
-        "/keywords/phrase_questions",
-        {
-          phrase: data.seed,
-          database: data.database,
-          export_columns: "Ph,Nq,Cp,Co,Kd",
-          display_limit: data.limit,
-        },
-        true,
-      ),
-    );
+    let all: FallbackIdea[] = [];
+    let soft_error: string | null = null;
 
-    const norm = (kind: "related" | "question") => (r: Record<string, string>) => ({
-      keyword: r.Ph,
-      search_volume: Number(r.Nq) || null,
-      cpc: Number(r.Cp) || null,
-      competition: Number(r.Co) || null,
-      difficulty: Number(r.Kd) || null,
-      kind,
-    });
+    try {
+      const related = rowsToObjects(
+        await callSemrush(
+          "/keywords/phrase_related",
+          {
+            phrase: data.seed,
+            database: data.database,
+            export_columns: "Ph,Nq,Cp,Co,Kd",
+            display_limit: data.limit,
+          },
+          true,
+        ),
+      );
+      const questions = rowsToObjects(
+        await callSemrush(
+          "/keywords/phrase_questions",
+          {
+            phrase: data.seed,
+            database: data.database,
+            export_columns: "Ph,Nq,Cp,Co,Kd",
+            display_limit: data.limit,
+          },
+          true,
+        ),
+      );
 
-    const all = [...related.map(norm("related")), ...questions.map(norm("question"))];
+      const norm = (kind: "related" | "question") => (r: Record<string, string>): FallbackIdea => ({
+        keyword: r.Ph,
+        search_volume: Number(r.Nq) || null,
+        cpc: Number(r.Cp) || null,
+        competition: Number(r.Co) || null,
+        difficulty: Number(r.Kd) || null,
+        kind,
+      });
+
+      all = [...related.map(norm("related")), ...questions.map(norm("question"))];
+    } catch (e) {
+      soft_error = fallbackNotice(e);
+      all = await aiKeywordIdeas(data.seed, data.database);
+    }
 
     const { supabase, userId } = context;
     // Cache (best effort)
@@ -264,12 +470,17 @@ export const researchKeyword = createServerFn({ method: "POST" })
           user_id: userId,
           seed: data.seed,
           database_code: data.database,
-          ...a,
+          keyword: a.keyword,
+          kind: a.kind,
+          search_volume: a.search_volume,
+          cpc: a.cpc,
+          competition: a.competition,
+          difficulty: a.difficulty,
         })),
       );
     }
 
-    return { seed: data.seed, database: data.database, ideas: all };
+    return { seed: data.seed, database: data.database, ideas: all, soft_error };
   });
 
 // ──────────────────────────────────────────────────────────────────
@@ -287,31 +498,38 @@ export const trackKeyword = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    const domain = data.domain.replace(/^https?:\/\//, "").replace(/\/.*$/, "").toLowerCase();
+    const domain = normalizeDomain(data.domain);
+    let metrics: Record<string, string> | undefined;
+    let serpRows: Array<Record<string, string>> = [];
+    let soft_error: string | null = null;
 
-    // Metrics for the keyword
-    const metricsRows = rowsToObjects(
-      await callSemrush("/keywords/phrase_this", {
-        phrase: data.keyword,
-        database: data.database,
-        export_columns: "Ph,Nq,Cp,Co,Kd",
-      }),
-    );
-    const metrics = metricsRows[0];
-
-    // SERP — top 20 domains
-    const serpRows = rowsToObjects(
-      await callSemrush(
-        "/keywords/phrase_organic",
-        {
+    try {
+      // Metrics for the keyword
+      const metricsRows = rowsToObjects(
+        await callSemrush("/keywords/phrase_this", {
           phrase: data.keyword,
           database: data.database,
-          export_columns: "Dn,Ur,Po",
-          display_limit: 20,
-        },
-        true,
-      ),
-    );
+          export_columns: "Ph,Nq,Cp,Co,Kd",
+        }),
+      );
+      metrics = metricsRows[0];
+
+      // SERP — top 20 domains
+      serpRows = rowsToObjects(
+        await callSemrush(
+          "/keywords/phrase_organic",
+          {
+            phrase: data.keyword,
+            database: data.database,
+            export_columns: "Dn,Ur,Po",
+            display_limit: 20,
+          },
+          true,
+        ),
+      );
+    } catch (e) {
+      soft_error = fallbackNotice(e);
+    }
     const hit = serpRows.find((r) => (r.Dn ?? "").toLowerCase().includes(domain));
     const position = hit ? Number(hit.Po) || null : null;
     const url = hit?.Ur ?? null;
@@ -359,7 +577,7 @@ export const trackKeyword = createServerFn({ method: "POST" })
       position_url: url,
     });
 
-    return { ...payload, serp: serpRows.slice(0, 10) };
+    return { ...payload, serp: serpRows.slice(0, 10), soft_error };
   });
 
 // ──────────────────────────────────────────────────────────────────
