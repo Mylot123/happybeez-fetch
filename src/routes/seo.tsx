@@ -83,6 +83,8 @@ function Seo() {
   const [domain, setDomain] = useState("happybeez.nl");
   const [database, setDatabase] = useState("nl");
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
+  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
+  const [history, setHistory] = useState<KwHistory[]>([]);
   const [loadingSnap, setLoadingSnap] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
 
