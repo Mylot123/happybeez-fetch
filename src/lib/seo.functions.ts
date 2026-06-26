@@ -47,10 +47,10 @@ function dedupeIdeas<T extends { keyword: string }>(rows: T[]) {
 
 type FallbackIdea = {
   keyword: string;
-  search_volume: null;
-  cpc: null;
-  competition: null;
-  difficulty: null;
+  search_volume: number | null;
+  cpc: number | null;
+  competition: number | null;
+  difficulty: number | null;
   kind: "question" | "related" | "commercial" | "content" | "local";
   source?: "ai" | "fallback";
 };
