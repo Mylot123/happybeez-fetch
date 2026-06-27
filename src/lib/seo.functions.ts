@@ -358,7 +358,7 @@ export const analyzeDomain = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
-    return { id: inserted.id, created_at: inserted.created_at, ...snapshot, soft_error: null as string | null };
+    return { id: inserted.id, created_at: inserted.created_at, ...snapshot, page_audit: null, ai_actions: [], content_gaps: [], soft_error: null as string | null };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Onbekende fout";
       if (!isSemrushLimitError(e)) {
@@ -366,11 +366,13 @@ export const analyzeDomain = createServerFn({ method: "POST" })
           id: null, created_at: null, domain, database_code: db,
           rank_global: null, organic_keywords: null, organic_traffic: null, organic_cost: null,
           top_keywords: [] as never[], competitors: [] as never[], quick_wins: [] as never[],
+          page_audit: null, ai_actions: [] as never[], content_gaps: [] as never[],
           soft_error: msg,
         };
       }
 
       const html = await fetchPageText(`https://${domain}`);
+      const ex = html ? extract(html) : null;
       const site = html ? extractSiteTerms(html, domain) : { keywords: deterministicKeywordIdeas("bijenhotel").slice(0, 10).map((idea) => ({
         keyword: idea.keyword,
         position: null,
@@ -389,6 +391,61 @@ export const analyzeDomain = createServerFn({ method: "POST" })
         { domain: "natuurmonumenten.nl", common_keywords: null, organic_keywords: null, organic_traffic: null },
         { domain: "bol.com", common_keywords: null, organic_keywords: null, organic_traffic: null },
       ];
+
+      // On-page snapshot + concrete issues
+      const pageIssues: string[] = [];
+      if (ex) {
+        if (!ex.title) pageIssues.push("Geen <title> op homepage");
+        else if (ex.title.length < 30 || ex.title.length > 65) pageIssues.push(`Title ${ex.title.length} tekens (ideaal 50–60)`);
+        if (!ex.metaDescription) pageIssues.push("Geen meta description");
+        else if (ex.metaDescription.length < 110 || ex.metaDescription.length > 170) pageIssues.push(`Meta description ${ex.metaDescription.length} tekens (ideaal 140–160)`);
+        if (!ex.h1) pageIssues.push("Geen H1");
+        if (ex.h2s.length < 2) pageIssues.push("Minder dan 2 H2's");
+        if (ex.wordCount < 300) pageIssues.push(`Weinig tekst (${ex.wordCount} woorden)`);
+        if (!ex.canonical) pageIssues.push("Geen canonical tag");
+        if (!ex.ogTitle || !ex.ogImage) pageIssues.push("Open Graph onvolledig");
+        if (ex.imagesTotal > 0 && ex.imagesWithAlt / ex.imagesTotal < 0.8) pageIssues.push(`${ex.imagesWithAlt}/${ex.imagesTotal} afbeeldingen met alt-tekst`);
+        if (!ex.jsonLd) pageIssues.push("Geen JSON-LD schema");
+      }
+      const page_audit = ex ? {
+        title: ex.title || null,
+        meta_description: ex.metaDescription || null,
+        h1: ex.h1 || null,
+        h2s: ex.h2s,
+        word_count: ex.wordCount,
+        issues: pageIssues,
+      } : null;
+
+      // AI: prioritized action plan + content gaps
+      type Action = { priority: "hoog" | "midden" | "laag"; action: string; why: string; where: string };
+      let ai_actions: Action[] = [];
+      let content_gaps: string[] = [];
+      try {
+        const apiKey = process.env.LOVABLE_API_KEY;
+        if (apiKey) {
+          const ai = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: "openai/gpt-5-mini",
+              messages: [
+                { role: "system", content: "Je bent SEO-strateeg voor HappyBeez (bijenhotels, wilde bijen, biodiversiteit). Antwoord uitsluitend met geldige JSON." },
+                { role: "user", content: `Domein: ${domain}\nTitle: ${ex?.title ?? "—"}\nMeta: ${ex?.metaDescription ?? "—"}\nH1: ${ex?.h1 ?? "—"}\nH2: ${ex?.h2s.join(" | ") ?? "—"}\nWoorden: ${ex?.wordCount ?? 0}\nProblemen: ${pageIssues.join("; ") || "—"}\nKeywords waar we op willen ranken: ${topKeywords.map(k => k.keyword).join(", ")}\n\nGeef JSON: { "actions": [{"priority":"hoog|midden|laag","action":"...","why":"...","where":"homepage|productpagina|blog|technisch"}], "content_gaps": ["...blogonderwerp 1...", "..."] }. Geef 5–7 concrete acties en 6 blogonderwerpen die HappyBeez nog mist en die wel zoekvolume genereren.` },
+              ],
+            }),
+          });
+          if (ai.ok) {
+            const j: { choices?: Array<{ message?: { content?: string } }> } = await ai.json();
+            const raw = (j.choices?.[0]?.message?.content ?? "").trim().replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
+            const parsed = JSON.parse(raw) as { actions?: Action[]; content_gaps?: string[] };
+            ai_actions = (parsed.actions ?? []).slice(0, 8);
+            content_gaps = (parsed.content_gaps ?? []).slice(0, 8);
+          }
+        }
+      } catch {
+        // best effort
+      }
+
       const snapshot = {
         domain,
         database_code: db,
@@ -406,7 +463,7 @@ export const analyzeDomain = createServerFn({ method: "POST" })
         .insert({ user_id: userId, ...snapshot })
         .select("id, created_at")
         .single();
-      return { id: inserted?.id ?? null, created_at: inserted?.created_at ?? null, ...snapshot, soft_error: fallbackNotice(e) };
+      return { id: inserted?.id ?? null, created_at: inserted?.created_at ?? null, ...snapshot, page_audit, ai_actions, content_gaps, soft_error: fallbackNotice(e) };
     }
   });
 
