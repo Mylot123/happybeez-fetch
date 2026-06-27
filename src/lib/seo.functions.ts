@@ -422,6 +422,7 @@ export const researchKeyword = createServerFn({ method: "POST" })
         seed: z.string().min(2).max(150),
         database: z.string().default("nl"),
         limit: z.number().int().min(5).max(25).default(20),
+        skip_semrush: z.boolean().optional().default(false),
       })
       .parse(data),
   )
@@ -430,6 +431,8 @@ export const researchKeyword = createServerFn({ method: "POST" })
     let soft_error: string | null = null;
 
     try {
+      if (data.skip_semrush) throw new Error("Semrush uitgeschakeld.");
+
       const related = rowsToObjects(
         await callSemrush(
           "/keywords/phrase_related",
