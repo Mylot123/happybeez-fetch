@@ -419,11 +419,78 @@ function Seo() {
 
 
 
+              {aiActions.length > 0 ? (
+                <Section title="Concrete actiepunten" subtitle="AI-prioritering op basis van je eigen homepage + keyword-doelen." icon={Lightbulb}>
+                  <ol className="space-y-3">
+                    {aiActions.map((a, i) => {
+                      const tone = a.priority === "hoog" ? "bg-wine/10 text-wine border-wine/30" : a.priority === "midden" ? "bg-amber-100 text-amber-800 border-amber-300" : "bg-secondary text-muted-foreground border-border";
+                      return (
+                        <li key={i} className="border border-border rounded-md p-3 bg-card">
+                          <div className="flex items-start gap-3">
+                            <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border ${tone}`}>{a.priority}</span>
+                            <div className="flex-1">
+                              <p className="font-medium text-ink text-sm">{a.action}</p>
+                              <p className="text-xs text-muted-foreground mt-1"><span className="font-medium text-ink">Waarom:</span> {a.why}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5"><span className="font-medium text-ink">Waar:</span> {a.where}</p>
+                            </div>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </Section>
+              ) : null}
+
+              {pageAudit ? (
+                <Section title="Homepage-audit" subtitle="Wat we direct van je homepage konden lezen." icon={Search}>
+                  <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                    <div className="border border-border rounded-md p-3 bg-card">
+                      <div className="text-xs text-muted-foreground uppercase tracking-wider">Title</div>
+                      <div className="text-ink mt-1">{pageAudit.title ?? "—"}</div>
+                    </div>
+                    <div className="border border-border rounded-md p-3 bg-card">
+                      <div className="text-xs text-muted-foreground uppercase tracking-wider">Meta description</div>
+                      <div className="text-ink mt-1">{pageAudit.meta_description ?? "—"}</div>
+                    </div>
+                    <div className="border border-border rounded-md p-3 bg-card">
+                      <div className="text-xs text-muted-foreground uppercase tracking-wider">H1</div>
+                      <div className="text-ink mt-1">{pageAudit.h1 ?? "—"}</div>
+                    </div>
+                    <div className="border border-border rounded-md p-3 bg-card">
+                      <div className="text-xs text-muted-foreground uppercase tracking-wider">Woorden</div>
+                      <div className="text-ink mt-1">{pageAudit.word_count}</div>
+                    </div>
+                  </div>
+                  {pageAudit.issues.length > 0 ? (
+                    <ul className="mt-4 space-y-1.5 text-sm">
+                      {pageAudit.issues.map((iss, i) => (
+                        <li key={i} className="flex gap-2 text-ink"><span className="text-wine">•</span>{iss}</li>
+                      ))}
+                    </ul>
+                  ) : <p className="text-sm text-muted-foreground mt-3">Geen kritieke on-page problemen gevonden.</p>}
+                </Section>
+              ) : null}
+
+              {contentGaps.length > 0 ? (
+                <Section title="Content-gaten — blogonderwerpen om te schrijven" subtitle="Onderwerpen waar zoekvraag bestaat en je nu nog niet over publiceert." icon={TrendingUp}>
+                  <ul className="grid sm:grid-cols-2 gap-2 text-sm">
+                    {contentGaps.map((g, i) => (
+                      <li key={i} className="border border-border rounded-md p-3 bg-card text-ink">{g}</li>
+                    ))}
+                  </ul>
+                </Section>
+              ) : null}
+
               {quickWins.length > 0 ? (
                 <Section title="Quick wins" subtitle="Keywords op positie 4–20 met goed volume — kleine optimalisatie kan ze de top-3 in duwen." icon={Lightbulb}>
                   <KeywordTable rows={quickWins} highlight />
                 </Section>
               ) : null}
+
+              <Section title="Top organische keywords" subtitle="Waar je nu al op rankt volgens Semrush." icon={TrendingUp}>
+                {topKws.length === 0 ? (
+                  <p className="text-sm text-muted-foreground p-4">Geen keyword-data.</p>
+                ) : (
 
               <Section title="Top organische keywords" subtitle="Waar je nu al op rankt volgens Semrush." icon={TrendingUp}>
                 {topKws.length === 0 ? (
