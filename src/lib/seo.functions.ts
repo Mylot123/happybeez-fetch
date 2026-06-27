@@ -358,7 +358,7 @@ export const analyzeDomain = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
-    return { id: inserted.id, created_at: inserted.created_at, ...snapshot, soft_error: null as string | null };
+    return { id: inserted.id, created_at: inserted.created_at, ...snapshot, page_audit: null, ai_actions: [], content_gaps: [], soft_error: null as string | null };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Onbekende fout";
       if (!isSemrushLimitError(e)) {
@@ -366,6 +366,7 @@ export const analyzeDomain = createServerFn({ method: "POST" })
           id: null, created_at: null, domain, database_code: db,
           rank_global: null, organic_keywords: null, organic_traffic: null, organic_cost: null,
           top_keywords: [] as never[], competitors: [] as never[], quick_wins: [] as never[],
+          page_audit: null, ai_actions: [] as never[], content_gaps: [] as never[],
           soft_error: msg,
         };
       }
