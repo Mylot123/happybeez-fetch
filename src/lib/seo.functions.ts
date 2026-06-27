@@ -505,6 +505,7 @@ export const trackKeyword = createServerFn({ method: "POST" })
         keyword: z.string().min(2).max(150),
         domain: z.string().min(3).max(200),
         database: z.string().default("nl"),
+        skip_semrush: z.boolean().optional().default(false),
       })
       .parse(data),
   )
@@ -515,6 +516,8 @@ export const trackKeyword = createServerFn({ method: "POST" })
     let soft_error: string | null = null;
 
     try {
+      if (data.skip_semrush) throw new Error("Semrush uitgeschakeld.");
+
       // Metrics for the keyword
       const metricsRows = rowsToObjects(
         await callSemrush("/keywords/phrase_this", {
