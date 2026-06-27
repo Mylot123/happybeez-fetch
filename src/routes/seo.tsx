@@ -272,6 +272,9 @@ function Seo() {
   const topKws = (snapshot?.top_keywords ?? []) as TopKw[];
   const quickWins = (snapshot?.quick_wins ?? []) as TopKw[];
   const competitors = (snapshot?.competitors ?? []) as Competitor[];
+  const aiActions = ((snapshot as { ai_actions?: Array<{ priority: string; action: string; why: string; where: string }> } | null)?.ai_actions ?? []);
+  const contentGaps = ((snapshot as { content_gaps?: string[] } | null)?.content_gaps ?? []);
+  const pageAudit = ((snapshot as { page_audit?: { title: string | null; meta_description: string | null; h1: string | null; word_count: number; issues: string[] } | null } | null)?.page_audit) ?? null;
 
   const trackedStats = useMemo(() => {
     const ranked = tracked.filter((t) => t.current_rank != null);
