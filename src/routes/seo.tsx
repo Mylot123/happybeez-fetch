@@ -162,9 +162,10 @@ function Seo() {
     if (!domain.trim()) return toast.error("Vul een domein in.");
     setAnalyzing(true);
     try {
-      const data = await analyzeDomain({ data: { domain: domain.trim(), database } });
+      const data = await analyzeDomain({ data: { domain: domain.trim(), database, skip_semrush: skipSemrush } });
       if (data.soft_error) {
-        toast.warning(data.soft_error);
+        toast.info(data.soft_error);
+        autoDisableOnLimit(data.soft_error);
         await loadAll();
       } else {
         toast.success(`Analyse klaar — ${data.organic_keywords ?? 0} organische keywords gevonden.`);
@@ -184,10 +185,11 @@ function Seo() {
     setSeed(term);
     setResearching(true);
     try {
-      const data = await researchKeyword({ data: { seed: term, database, limit: 20 } });
+      const data = await researchKeyword({ data: { seed: term, database, limit: 20, skip_semrush: skipSemrush } });
       setIdeas(data.ideas as Idea[]);
       if (data.soft_error) {
-        toast.warning(data.soft_error);
+        toast.info(data.soft_error);
+        autoDisableOnLimit(data.soft_error);
       } else {
         toast.success(`${data.ideas.length} ideeën gevonden voor "${term}".`);
       }
@@ -204,8 +206,8 @@ function Seo() {
     if (!keyword) return;
     setTrackingBusy(true);
     try {
-      const result = await trackKeyword({ data: { keyword, domain: domain.trim(), database } });
-      if (result.soft_error) toast.warning(result.soft_error);
+      const result = await trackKeyword({ data: { keyword, domain: domain.trim(), database, skip_semrush: skipSemrush } });
+      if (result.soft_error) { toast.info(result.soft_error); autoDisableOnLimit(result.soft_error); }
       else toast.success(`"${keyword}" toegevoegd.`);
       setNewKw("");
       const [{ data }, { data: h }] = await Promise.all([
@@ -225,14 +227,14 @@ function Seo() {
     if (!row.domain) return;
     setTrackingBusy(true);
     try {
-      const result = await trackKeyword({ data: { keyword: row.keyword, domain: row.domain, database: row.database_code ?? "nl" } });
+      const result = await trackKeyword({ data: { keyword: row.keyword, domain: row.domain, database: row.database_code ?? "nl", skip_semrush: skipSemrush } });
       const [{ data }, { data: h }] = await Promise.all([
         supabase.from("seo_keywords").select("*").order("created_at", { ascending: false }),
         supabase.from("seo_keyword_history").select("*").order("checked_at", { ascending: false }).limit(500),
       ]);
       setTracked((data ?? []) as SeoRow[]);
       setHistory((h ?? []) as KwHistory[]);
-      if (result.soft_error) toast.warning(result.soft_error);
+      if (result.soft_error) { toast.info(result.soft_error); autoDisableOnLimit(result.soft_error); }
       else toast.success("Rank bijgewerkt.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Update mislukt.");
@@ -240,6 +242,7 @@ function Seo() {
       setTrackingBusy(false);
     }
   }
+
 
   async function removeTracked(id: string) {
     const { error } = await supabase.from("seo_keywords").delete().eq("id", id);
