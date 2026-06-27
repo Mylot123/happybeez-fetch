@@ -55,6 +55,14 @@ type Idea = {
   kind: "related" | "question" | "commercial" | "content" | "local";
   source?: "ai" | "fallback";
 };
+type SeoAction = { priority: "hoog" | "midden" | "laag"; action: string; why: string; where: string };
+type SeoPageAudit = { title: string | null; meta_description: string | null; h1: string | null; word_count: number; issues: string[] };
+type ExtendedSnapshot = Snapshot & {
+  ai_actions?: SeoAction[];
+  content_gaps?: string[];
+  page_audit?: SeoPageAudit | null;
+  soft_error?: string | null;
+};
 
 export const Route = createFileRoute("/seo")({
   head: () => ({
@@ -90,8 +98,8 @@ function Seo() {
   // Domain & snapshot
   const [domain, setDomain] = useState("happybeez.nl");
   const [database, setDatabase] = useState("nl");
-  const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
-  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
+  const [snapshot, setSnapshot] = useState<ExtendedSnapshot | null>(null);
+  const [snapshots, setSnapshots] = useState<ExtendedSnapshot[]>([]);
   const [history, setHistory] = useState<KwHistory[]>([]);
   const [loadingSnap, setLoadingSnap] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
@@ -146,7 +154,7 @@ function Seo() {
       supabase.from("seo_keyword_history").select("*").order("checked_at", { ascending: false }).limit(500),
     ]);
     setLoadingSnap(false);
-    const snapList = (snaps.data ?? []) as Snapshot[];
+    const snapList = (snaps.data ?? []) as ExtendedSnapshot[];
     setSnapshots(snapList);
     if (snapList[0]) {
       setSnapshot(snapList[0]);
@@ -163,13 +171,18 @@ function Seo() {
     setAnalyzing(true);
     try {
       const data = await analyzeDomain({ data: { domain: domain.trim(), database, skip_semrush: skipSemrush } });
+      const freshSnapshot = data as unknown as ExtendedSnapshot;
+      if (freshSnapshot.id) {
+        setSnapshot(freshSnapshot);
+        setSnapshots((prev) => [freshSnapshot, ...prev.filter((s) => s.id !== freshSnapshot.id)].slice(0, 30));
+      }
       if (data.soft_error) {
         toast.info(data.soft_error);
         autoDisableOnLimit(data.soft_error);
-        await loadAll();
+        void loadAll();
       } else {
         toast.success(`Analyse klaar — ${data.organic_keywords ?? 0} organische keywords gevonden.`);
-        await loadAll();
+        void loadAll();
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Analyse mislukt.");
@@ -272,9 +285,11 @@ function Seo() {
   const topKws = (snapshot?.top_keywords ?? []) as TopKw[];
   const quickWins = (snapshot?.quick_wins ?? []) as TopKw[];
   const competitors = (snapshot?.competitors ?? []) as Competitor[];
-  const aiActions = ((snapshot as { ai_actions?: Array<{ priority: string; action: string; why: string; where: string }> } | null)?.ai_actions ?? []);
-  const contentGaps = ((snapshot as { content_gaps?: string[] } | null)?.content_gaps ?? []);
-  const pageAudit = ((snapshot as { page_audit?: { title: string | null; meta_description: string | null; h1: string | null; word_count: number; issues: string[] } | null } | null)?.page_audit) ?? null;
+  const fallbackPlan = useMemo(() => buildFallbackSeoPlan(domain, topKws), [domain, topKws]);
+  const aiActions = snapshot?.ai_actions?.length ? snapshot.ai_actions : fallbackPlan.actions;
+  const contentGaps = snapshot?.content_gaps?.length ? snapshot.content_gaps : fallbackPlan.contentGaps;
+  const pageAudit = snapshot?.page_audit ?? null;
+  const analysisSource = snapshot?.ai_actions?.length || snapshot?.page_audit ? "live" : "fallback";
 
   const trackedStats = useMemo(() => {
     const ranked = tracked.filter((t) => t.current_rank != null);
@@ -388,6 +403,18 @@ function Seo() {
                 <StatCard icon={Target} label="Verkeerwaarde" value={`€${fmtNum(snapshot.organic_cost)}`} delta={deltaFor(snapshots, "organic_cost")} />
               </div>
 
+              <div className="rounded-lg border border-wine/20 bg-wine/5 p-4 text-sm text-foreground/85 flex items-start gap-3">
+                <Sparkles className="h-5 w-5 text-wine mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-heading font-semibold text-ink">SEO-analyse actief</p>
+                  <p className="mt-1">
+                    {analysisSource === "live"
+                      ? "Deze analyse bevat live site-audit en AI-actiepunten van de laatste vernieuwing."
+                      : "Semrush geeft weinig of geen bruikbare data; daarom toont de engine nu direct een praktisch HappyBeez SEO-plan op basis van je domein en relevante bijenhotel-keywords."}
+                  </p>
+                </div>
+              </div>
+
               {snapshots.length > 1 ? (
                 <Section title="Verloop domein" subtitle={`${snapshots.length} metingen bewaard — vergelijk hoe je domein zich ontwikkelt.`} icon={TrendingUp}>
                   <div className="overflow-x-auto">
@@ -420,7 +447,7 @@ function Seo() {
 
 
               {aiActions.length > 0 ? (
-                <Section title="Concrete actiepunten" subtitle="AI-prioritering op basis van je eigen homepage + keyword-doelen." icon={Lightbulb}>
+                <Section title="Concrete actiepunten" subtitle={analysisSource === "live" ? "AI-prioritering op basis van je eigen homepage + keyword-doelen." : "Direct toepasbaar SEO-plan voor HappyBeez wanneer externe rankingdata leeg blijft."} icon={Lightbulb}>
                   <ol className="space-y-3">
                     {aiActions.map((a, i) => {
                       const tone = a.priority === "hoog" ? "bg-wine/10 text-wine border-wine/30" : a.priority === "midden" ? "bg-amber-100 text-amber-800 border-amber-300" : "bg-secondary text-muted-foreground border-border";
@@ -887,7 +914,7 @@ function StatCard({
 }
 
 function deltaFor(
-  snaps: Snapshot[],
+  snaps: ExtendedSnapshot[],
   field: "rank_global" | "organic_keywords" | "organic_traffic" | "organic_cost",
   lowerIsBetter = false,
 ): { value: number; positive: boolean } | null {
@@ -899,6 +926,66 @@ function deltaFor(
   if (diff === 0) return null;
   const positive = lowerIsBetter ? diff < 0 : diff > 0;
   return { value: diff, positive };
+}
+
+function buildFallbackSeoPlan(domain: string, rows: TopKw[]): { actions: SeoAction[]; contentGaps: string[] } {
+  const keywords = rows.map((r) => r.keyword).filter(Boolean);
+  const primary = keywords[0] ?? "bijenhotel";
+  const domainLabel = normalizeDomainLabel(domain);
+  return {
+    actions: [
+      {
+        priority: "hoog",
+        action: `Maak één sterke hoofdpagina rond “${primary} kopen” met duidelijke keuzehulp, voordelen en plaatsingsadvies.`,
+        why: "Dit vangt bezoekers met koopintentie en geeft Google één duidelijke pagina om op commerciële zoekwoorden te ranken.",
+        where: "productpagina",
+      },
+      {
+        priority: "hoog",
+        action: "Schrijf een complete gids: waar hang je een bijenhotel op, welke richting, welke hoogte en welk onderhoud?",
+        why: "Veel klanten zoeken eerst praktische zekerheid. Die informatieve zoekvraag kun je later doorsturen naar aankoop of nieuwsbrief.",
+        where: "blog",
+      },
+      {
+        priority: "hoog",
+        action: "Voeg op de homepage een korte SEO-sectie toe met wilde bijen, metselbijen, biodiversiteit en bijvriendelijke tuin. ",
+        why: "De huidige Semrush-data is beperkt; extra context helpt Google beter begrijpen waarvoor HappyBeez relevant is.",
+        where: "homepage",
+      },
+      {
+        priority: "midden",
+        action: "Maak vergelijkingscontent: bijenhotel vs insectenhotel, bamboe vs hout, goedkoop vs duurzaam.",
+        why: "Vergelijkingen scoren vaak goed omdat bezoekers vlak voor een keuze zitten.",
+        where: "blog",
+      },
+      {
+        priority: "midden",
+        action: `Gebruik interne links vanaf ${domainLabel} naar elke gids met ankerteksten zoals “bijenhotel plaatsen” en “wilde bijen helpen”.`,
+        why: "Interne links vertellen zoekmachines welke pagina’s belangrijk zijn en verdelen autoriteit over je site.",
+        where: "technisch",
+      },
+      {
+        priority: "laag",
+        action: "Maak FAQ-blokken met echte klantvragen en voeg Product/FAQ JSON-LD toe waar logisch.",
+        why: "Dit verhoogt de kans op rich snippets en maakt pagina’s bruikbaarder voor AI-zoekresultaten.",
+        where: "technisch",
+      },
+    ],
+    contentGaps: [
+      "Wanneer hang je een bijenhotel op? Complete seizoensgids voor voorjaar en najaar",
+      "Waar plaats je een bijenhotel: zon, regen, hoogte en windrichting uitgelegd",
+      "Bijenhotel schoonmaken: wat wel en niet doen voor metselbijen",
+      "Welke wilde bijen gebruiken een bijenhotel in Nederland?",
+      "Bijenhotel op balkon: zo help je bestuivers zonder grote tuin",
+      "Waarom een goedkoop insectenhotel vaak niet goed werkt voor wilde bijen",
+      "Bijvriendelijke tuin maken: planten, nestplekken en water in één plan",
+      "Bijenhotel kopen: checklist voor veilige gangen, materiaal en formaat",
+    ],
+  };
+}
+
+function normalizeDomainLabel(value: string) {
+  return value.replace(/^https?:\/\//, "").replace(/\/.*$/, "") || "de site";
 }
 
 
