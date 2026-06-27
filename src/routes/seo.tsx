@@ -487,7 +487,8 @@ function Seo() {
                 </Section>
               ) : null}
 
-              </>
+
+
 
 
               <Section title="Top organische keywords" subtitle="Waar je nu al op rankt volgens Semrush." icon={TrendingUp}>
