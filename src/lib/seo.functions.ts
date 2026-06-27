@@ -274,7 +274,10 @@ export const analyzeDomain = createServerFn({ method: "POST" })
 
 
     try {
-      // 1 Rank + traffic
+      if (data.skip_semrush) {
+        throw new Error("Semrush is uitgeschakeld — alternatief SEO-plan gemaakt.");
+      }
+
       const ranks = rowsToObjects(
         await callSemrush("/domains/domain_ranks", {
           domain,
