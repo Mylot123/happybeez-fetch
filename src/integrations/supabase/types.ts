@@ -385,7 +385,9 @@ export type Database = {
       }
       seo_domain_snapshots: {
         Row: {
+          ai_actions: Json
           competitors: Json | null
+          content_gaps: Json
           created_at: string
           database_code: string
           domain: string
@@ -393,13 +395,17 @@ export type Database = {
           organic_cost: number | null
           organic_keywords: number | null
           organic_traffic: number | null
+          page_audit: Json | null
           quick_wins: Json | null
           rank_global: number | null
+          soft_error: string | null
           top_keywords: Json | null
           user_id: string
         }
         Insert: {
+          ai_actions?: Json
           competitors?: Json | null
+          content_gaps?: Json
           created_at?: string
           database_code?: string
           domain: string
@@ -407,13 +413,17 @@ export type Database = {
           organic_cost?: number | null
           organic_keywords?: number | null
           organic_traffic?: number | null
+          page_audit?: Json | null
           quick_wins?: Json | null
           rank_global?: number | null
+          soft_error?: string | null
           top_keywords?: Json | null
           user_id: string
         }
         Update: {
+          ai_actions?: Json
           competitors?: Json | null
+          content_gaps?: Json
           created_at?: string
           database_code?: string
           domain?: string
@@ -421,8 +431,10 @@ export type Database = {
           organic_cost?: number | null
           organic_keywords?: number | null
           organic_traffic?: number | null
+          page_audit?: Json | null
           quick_wins?: Json | null
           rank_global?: number | null
+          soft_error?: string | null
           top_keywords?: Json | null
           user_id?: string
         }
