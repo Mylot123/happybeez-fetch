@@ -23,8 +23,9 @@ function normalizeDomain(input: string) {
 
 function isSemrushLimitError(e: unknown) {
   const msg = e instanceof Error ? e.message : String(e);
-  return /semrush|limit|limiet|TOTAL LIMIT EXCEEDED/i.test(msg);
+  return /semrush|limit|limiet|TOTAL LIMIT EXCEEDED|uitgeschakeld/i.test(msg);
 }
+
 
 function fallbackNotice(e: unknown) {
   const msg = e instanceof Error ? e.message : "Semrush is nu niet beschikbaar.";
@@ -259,6 +260,7 @@ export const analyzeDomain = createServerFn({ method: "POST" })
       .object({
         domain: z.string().min(3).max(200),
         database: z.string().default("nl"),
+        skip_semrush: z.boolean().optional().default(false),
       })
       .parse(data),
   )
@@ -266,8 +268,14 @@ export const analyzeDomain = createServerFn({ method: "POST" })
     const domain = normalizeDomain(data.domain);
     const db = data.database;
 
+
+
+
     try {
-      // 1 Rank + traffic
+      if (data.skip_semrush) {
+        throw new Error("Semrush is uitgeschakeld — alternatief SEO-plan gemaakt.");
+      }
+
       const ranks = rowsToObjects(
         await callSemrush("/domains/domain_ranks", {
           domain,
@@ -414,6 +422,7 @@ export const researchKeyword = createServerFn({ method: "POST" })
         seed: z.string().min(2).max(150),
         database: z.string().default("nl"),
         limit: z.number().int().min(5).max(25).default(20),
+        skip_semrush: z.boolean().optional().default(false),
       })
       .parse(data),
   )
@@ -422,6 +431,8 @@ export const researchKeyword = createServerFn({ method: "POST" })
     let soft_error: string | null = null;
 
     try {
+      if (data.skip_semrush) throw new Error("Semrush uitgeschakeld.");
+
       const related = rowsToObjects(
         await callSemrush(
           "/keywords/phrase_related",
@@ -494,6 +505,7 @@ export const trackKeyword = createServerFn({ method: "POST" })
         keyword: z.string().min(2).max(150),
         domain: z.string().min(3).max(200),
         database: z.string().default("nl"),
+        skip_semrush: z.boolean().optional().default(false),
       })
       .parse(data),
   )
@@ -504,6 +516,8 @@ export const trackKeyword = createServerFn({ method: "POST" })
     let soft_error: string | null = null;
 
     try {
+      if (data.skip_semrush) throw new Error("Semrush uitgeschakeld.");
+
       // Metrics for the keyword
       const metricsRows = rowsToObjects(
         await callSemrush("/keywords/phrase_this", {

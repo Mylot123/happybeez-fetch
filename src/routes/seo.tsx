@@ -95,6 +95,22 @@ function Seo() {
   const [history, setHistory] = useState<KwHistory[]>([]);
   const [loadingSnap, setLoadingSnap] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
+  const [skipSemrush, setSkipSemrush] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("seo:skip_semrush") === "1";
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("seo:skip_semrush", skipSemrush ? "1" : "0");
+  }, [skipSemrush]);
+
+  function autoDisableOnLimit(msg: string | null | undefined) {
+    if (msg && /limiet|limit|exceeded/i.test(msg) && !skipSemrush) {
+      setSkipSemrush(true);
+      toast.info("Semrush-limiet bereikt — fallback nu standaard aan.");
+    }
+  }
 
   // Tracked keywords
   const [tracked, setTracked] = useState<SeoRow[]>([]);
@@ -119,6 +135,7 @@ function Seo() {
   useEffect(() => {
     void loadAll();
   }, []);
+
 
   async function loadAll() {
     setLoadingSnap(true);
@@ -145,9 +162,10 @@ function Seo() {
     if (!domain.trim()) return toast.error("Vul een domein in.");
     setAnalyzing(true);
     try {
-      const data = await analyzeDomain({ data: { domain: domain.trim(), database } });
+      const data = await analyzeDomain({ data: { domain: domain.trim(), database, skip_semrush: skipSemrush } });
       if (data.soft_error) {
-        toast.warning(data.soft_error);
+        toast.info(data.soft_error);
+        autoDisableOnLimit(data.soft_error);
         await loadAll();
       } else {
         toast.success(`Analyse klaar — ${data.organic_keywords ?? 0} organische keywords gevonden.`);
@@ -167,10 +185,11 @@ function Seo() {
     setSeed(term);
     setResearching(true);
     try {
-      const data = await researchKeyword({ data: { seed: term, database, limit: 20 } });
+      const data = await researchKeyword({ data: { seed: term, database, limit: 20, skip_semrush: skipSemrush } });
       setIdeas(data.ideas as Idea[]);
       if (data.soft_error) {
-        toast.warning(data.soft_error);
+        toast.info(data.soft_error);
+        autoDisableOnLimit(data.soft_error);
       } else {
         toast.success(`${data.ideas.length} ideeën gevonden voor "${term}".`);
       }
@@ -187,8 +206,8 @@ function Seo() {
     if (!keyword) return;
     setTrackingBusy(true);
     try {
-      const result = await trackKeyword({ data: { keyword, domain: domain.trim(), database } });
-      if (result.soft_error) toast.warning(result.soft_error);
+      const result = await trackKeyword({ data: { keyword, domain: domain.trim(), database, skip_semrush: skipSemrush } });
+      if (result.soft_error) { toast.info(result.soft_error); autoDisableOnLimit(result.soft_error); }
       else toast.success(`"${keyword}" toegevoegd.`);
       setNewKw("");
       const [{ data }, { data: h }] = await Promise.all([
@@ -208,14 +227,14 @@ function Seo() {
     if (!row.domain) return;
     setTrackingBusy(true);
     try {
-      const result = await trackKeyword({ data: { keyword: row.keyword, domain: row.domain, database: row.database_code ?? "nl" } });
+      const result = await trackKeyword({ data: { keyword: row.keyword, domain: row.domain, database: row.database_code ?? "nl", skip_semrush: skipSemrush } });
       const [{ data }, { data: h }] = await Promise.all([
         supabase.from("seo_keywords").select("*").order("created_at", { ascending: false }),
         supabase.from("seo_keyword_history").select("*").order("checked_at", { ascending: false }).limit(500),
       ]);
       setTracked((data ?? []) as SeoRow[]);
       setHistory((h ?? []) as KwHistory[]);
-      if (result.soft_error) toast.warning(result.soft_error);
+      if (result.soft_error) { toast.info(result.soft_error); autoDisableOnLimit(result.soft_error); }
       else toast.success("Rank bijgewerkt.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Update mislukt.");
@@ -223,6 +242,7 @@ function Seo() {
       setTrackingBusy(false);
     }
   }
+
 
   async function removeTracked(id: string) {
     const { error } = await supabase.from("seo_keywords").delete().eq("id", id);
@@ -306,14 +326,24 @@ function Seo() {
         ) : null}
       </div>
 
-      <div className="mb-6 rounded-lg border border-honey/40 bg-honey/10 p-4 text-sm text-foreground/85">
-        <div className="flex items-start gap-2">
+      <div className="mb-6 rounded-lg border border-honey/40 bg-honey/10 p-4 text-sm text-foreground/85 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-start gap-2 flex-1 min-w-[18rem]">
           <Lightbulb className="h-4 w-4 text-gold mt-0.5 shrink-0" />
           <p>
-            Semrush is handig voor exacte volumes en rankings, maar niet verplicht. Bij een limiet maakt deze tool automatisch een bruikbaar SEO-plan op basis van je eigen site, AI en opgeslagen metingen.
+            Semrush is handig voor exacte volumes en rankings, maar niet verplicht. Met "Semrush overslaan" werkt alles meteen op eigen site-audit, AI en je opgeslagen metingen — geen limietfouten.
           </p>
         </div>
+        <label className="flex items-center gap-2 text-xs font-medium text-ink cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={skipSemrush}
+            onChange={(e) => setSkipSemrush(e.target.checked)}
+            className="h-4 w-4 accent-wine"
+          />
+          Semrush overslaan
+        </label>
       </div>
+
 
       {/* Tabs */}
       <div className="border-b border-border mb-6 flex flex-wrap gap-1">
