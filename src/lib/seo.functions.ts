@@ -259,12 +259,19 @@ export const analyzeDomain = createServerFn({ method: "POST" })
       .object({
         domain: z.string().min(3).max(200),
         database: z.string().default("nl"),
+        skip_semrush: z.boolean().optional().default(false),
       })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
     const domain = normalizeDomain(data.domain);
     const db = data.database;
+    if (data.skip_semrush) {
+      throw_fallback: {
+        // jump straight into fallback path
+      }
+    }
+
 
     try {
       // 1 Rank + traffic
