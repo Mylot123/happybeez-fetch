@@ -266,11 +266,8 @@ export const analyzeDomain = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const domain = normalizeDomain(data.domain);
     const db = data.database;
-    if (data.skip_semrush) {
-      throw_fallback: {
-        // jump straight into fallback path
-      }
-    }
+
+
 
 
     try {
