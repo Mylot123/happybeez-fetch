@@ -487,10 +487,8 @@ function Seo() {
                 </Section>
               ) : null}
 
-              <Section title="Top organische keywords" subtitle="Waar je nu al op rankt volgens Semrush." icon={TrendingUp}>
-                {topKws.length === 0 ? (
-                  <p className="text-sm text-muted-foreground p-4">Geen keyword-data.</p>
-                ) : (
+              </>
+
 
               <Section title="Top organische keywords" subtitle="Waar je nu al op rankt volgens Semrush." icon={TrendingUp}>
                 {topKws.length === 0 ? (
