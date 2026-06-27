@@ -456,14 +456,19 @@ export const analyzeDomain = createServerFn({ method: "POST" })
         top_keywords: topKeywords,
         competitors,
         quick_wins: quickWins,
+        page_audit,
+        ai_actions,
+        content_gaps,
+        soft_error: fallbackNotice(e),
       };
       const { supabase, userId } = context;
-      const { data: inserted } = await supabase
+      const { data: inserted, error: insertError } = await supabase
         .from("seo_domain_snapshots")
         .insert({ user_id: userId, ...snapshot })
         .select("id, created_at")
         .single();
-      return { id: inserted?.id ?? null, created_at: inserted?.created_at ?? null, ...snapshot, page_audit, ai_actions, content_gaps, soft_error: fallbackNotice(e) };
+      if (insertError) throw new Error(insertError.message);
+      return { id: inserted?.id ?? null, created_at: inserted?.created_at ?? null, ...snapshot };
     }
   });
 
