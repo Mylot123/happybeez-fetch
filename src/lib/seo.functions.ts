@@ -23,8 +23,9 @@ function normalizeDomain(input: string) {
 
 function isSemrushLimitError(e: unknown) {
   const msg = e instanceof Error ? e.message : String(e);
-  return /semrush|limit|limiet|TOTAL LIMIT EXCEEDED/i.test(msg);
+  return /semrush|limit|limiet|TOTAL LIMIT EXCEEDED|uitgeschakeld/i.test(msg);
 }
+
 
 function fallbackNotice(e: unknown) {
   const msg = e instanceof Error ? e.message : "Semrush is nu niet beschikbaar.";
