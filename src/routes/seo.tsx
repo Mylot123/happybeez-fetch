@@ -95,6 +95,22 @@ function Seo() {
   const [history, setHistory] = useState<KwHistory[]>([]);
   const [loadingSnap, setLoadingSnap] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
+  const [skipSemrush, setSkipSemrush] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("seo:skip_semrush") === "1";
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("seo:skip_semrush", skipSemrush ? "1" : "0");
+  }, [skipSemrush]);
+
+  function autoDisableOnLimit(msg: string | null | undefined) {
+    if (msg && /limiet|limit|exceeded/i.test(msg) && !skipSemrush) {
+      setSkipSemrush(true);
+      toast.info("Semrush-limiet bereikt — fallback nu standaard aan.");
+    }
+  }
 
   // Tracked keywords
   const [tracked, setTracked] = useState<SeoRow[]>([]);
@@ -119,6 +135,7 @@ function Seo() {
   useEffect(() => {
     void loadAll();
   }, []);
+
 
   async function loadAll() {
     setLoadingSnap(true);
