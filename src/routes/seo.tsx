@@ -326,14 +326,24 @@ function Seo() {
         ) : null}
       </div>
 
-      <div className="mb-6 rounded-lg border border-honey/40 bg-honey/10 p-4 text-sm text-foreground/85">
-        <div className="flex items-start gap-2">
+      <div className="mb-6 rounded-lg border border-honey/40 bg-honey/10 p-4 text-sm text-foreground/85 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-start gap-2 flex-1 min-w-[18rem]">
           <Lightbulb className="h-4 w-4 text-gold mt-0.5 shrink-0" />
           <p>
-            Semrush is handig voor exacte volumes en rankings, maar niet verplicht. Bij een limiet maakt deze tool automatisch een bruikbaar SEO-plan op basis van je eigen site, AI en opgeslagen metingen.
+            Semrush is handig voor exacte volumes en rankings, maar niet verplicht. Met "Semrush overslaan" werkt alles meteen op eigen site-audit, AI en je opgeslagen metingen — geen limietfouten.
           </p>
         </div>
+        <label className="flex items-center gap-2 text-xs font-medium text-ink cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={skipSemrush}
+            onChange={(e) => setSkipSemrush(e.target.checked)}
+            className="h-4 w-4 accent-wine"
+          />
+          Semrush overslaan
+        </label>
       </div>
+
 
       {/* Tabs */}
       <div className="border-b border-border mb-6 flex flex-wrap gap-1">
