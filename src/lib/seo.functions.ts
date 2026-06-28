@@ -1033,3 +1033,285 @@ export const fetchRankedKeywords = createServerFn({ method: "POST" })
 
     return { domain, database: db, rows, soft_error, from_cache, checked_at: new Date().toISOString() };
   });
+
+// ──────────────────────────────────────────────────────────────────
+// SCRAPE-BASED RANKING (geen Semrush nodig)
+// ──────────────────────────────────────────────────────────────────
+
+const SCRAPE_UA =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
+
+function hostOf(url: string) {
+  try {
+    return new URL(url).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+async function ddgSerp(keyword: string, region = "nl-nl"): Promise<string[]> {
+  const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(keyword)}&kl=${region}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "User-Agent": SCRAPE_UA,
+      Accept: "text/html,application/xhtml+xml",
+      "Accept-Language": "nl-NL,nl;q=0.9,en;q=0.7",
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: `q=${encodeURIComponent(keyword)}&kl=${region}`,
+  });
+  if (!res.ok) return [];
+  const html = await res.text();
+  const out: string[] = [];
+  const re = /<a[^>]+class="[^"]*result__a[^"]*"[^>]+href="([^"]+)"/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) {
+    let href = m[1];
+    if (href.startsWith("//duckduckgo.com/l/?uddg=")) {
+      try {
+        href = decodeURIComponent(href.split("uddg=")[1].split("&")[0]);
+      } catch {
+        continue;
+      }
+    } else if (href.startsWith("/l/?uddg=")) {
+      try {
+        href = decodeURIComponent(href.split("uddg=")[1].split("&")[0]);
+      } catch {
+        continue;
+      }
+    }
+    if (/^https?:\/\//i.test(href)) out.push(href);
+    if (out.length >= 50) break;
+  }
+  return out;
+}
+
+async function googleSerp(keyword: string, gl = "nl", hl = "nl"): Promise<string[]> {
+  const url = `https://www.google.com/search?q=${encodeURIComponent(keyword)}&hl=${hl}&gl=${gl}&num=30&pws=0`;
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": SCRAPE_UA,
+      Accept: "text/html,application/xhtml+xml",
+      "Accept-Language": `${hl}-${gl.toUpperCase()},${hl};q=0.9,en;q=0.5`,
+      Cookie: "CONSENT=YES+cb.20220419-17-p0.en+FX+000",
+    },
+  });
+  if (!res.ok) return [];
+  const html = await res.text();
+  if (/Our systems have detected unusual traffic|sorry\/index/i.test(html)) return [];
+  const out: string[] = [];
+  // Modern result anchors look like: <a href="https://..." ...><br><h3>
+  const re = /<a[^>]+href="(https?:\/\/[^"#]+)"[^>]*>\s*<br[^>]*>\s*<h3/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) {
+    const href = m[1];
+    if (/google\.[a-z.]+\/(search|aclk|url|preferences)/i.test(href)) continue;
+    out.push(href);
+    if (out.length >= 30) break;
+  }
+  if (!out.length) {
+    // fallback parse: /url?q=
+    const re2 = /\/url\?q=(https?:\/\/[^&"]+)/gi;
+    while ((m = re2.exec(html)) !== null) {
+      const href = decodeURIComponent(m[1]);
+      if (/google\.[a-z.]+/i.test(href)) continue;
+      out.push(href);
+      if (out.length >= 30) break;
+    }
+  }
+  return out;
+}
+
+async function scrapeRank(keyword: string, domain: string, gl = "nl") {
+  const target = domain.replace(/^www\./, "").toLowerCase();
+  // Try Google first
+  let urls = await googleSerp(keyword, gl, gl);
+  let engine: "google" | "duckduckgo" = "google";
+  if (!urls.length) {
+    urls = await ddgSerp(keyword, `${gl}-${gl}`);
+    engine = "duckduckgo";
+  }
+  let position: number | null = null;
+  let hitUrl: string | null = null;
+  urls.forEach((u, i) => {
+    if (position) return;
+    const h = hostOf(u);
+    if (h === target || h.endsWith(`.${target}`)) {
+      position = i + 1;
+      hitUrl = u;
+    }
+  });
+  return { position, url: hitUrl, engine, top: urls.slice(0, 10) };
+}
+
+// Track a keyword via scrape (no Semrush)
+export const trackKeywordScrape = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        keyword: z.string().min(2).max(150),
+        domain: z.string().min(3).max(200),
+        database: z.string().default("nl"),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const domain = normalizeDomain(data.domain);
+    const { supabase, userId } = context;
+    const { position, url, engine, top } = await scrapeRank(data.keyword, domain, data.database);
+
+    const payload = {
+      user_id: userId,
+      keyword: data.keyword,
+      domain,
+      database_code: data.database,
+      current_rank: position,
+      position_url: url,
+      last_checked_at: new Date().toISOString(),
+    };
+
+    const { data: existing } = await supabase
+      .from("seo_keywords")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("keyword", data.keyword)
+      .eq("domain", domain)
+      .maybeSingle();
+
+    if (existing) {
+      await supabase.from("seo_keywords").update(payload).eq("id", existing.id);
+    } else {
+      await supabase.from("seo_keywords").insert(payload);
+    }
+
+    await supabase.from("seo_keyword_history").insert({
+      user_id: userId,
+      keyword: data.keyword,
+      domain,
+      database_code: data.database,
+      rank: position,
+      position_url: url,
+    });
+
+    return { ...payload, engine, serp: top, soft_error: null as string | null };
+  });
+
+// AI agent suggests keywords for the domain, then ranks them
+export const discoverRankedKeywords = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        domain: z.string().min(3).max(200),
+        database: z.string().default("nl"),
+        limit: z.number().int().min(5).max(40).default(20),
+        extra_keywords: z.array(z.string()).optional(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const domain = normalizeDomain(data.domain);
+    const { supabase, userId } = context;
+
+    // 1) Pull homepage to ground the AI suggestions
+    let siteText = "";
+    try {
+      const html = await fetchPageText(`https://${domain}`);
+      siteText = extractReadableText(html).slice(0, 4000);
+    } catch {
+      /* noop */
+    }
+
+    // 2) Ask AI for likely ranking keywords
+    let aiKeywords: string[] = [];
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (apiKey) {
+      try {
+        const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "Je bent een Nederlandse SEO-strateeg. Geef alleen geldige JSON terug: een array van keyword-strings.",
+              },
+              {
+                role: "user",
+                content: `Voor ${domain} (markt: ${data.database.toUpperCase()}). Site-inhoud: """${siteText}""". Geef ${data.limit} realistische zoektermen waarvoor deze site waarschijnlijk al rankt of zou moeten ranken. Mix merknaam, koop-intentie, lange-staart en vragen. Alleen JSON-array.`,
+              },
+            ],
+          }),
+        });
+        if (res.ok) {
+          const j: { choices?: Array<{ message?: { content?: string } }> } = await res.json();
+          const raw = j.choices?.[0]?.message?.content?.trim() ?? "[]";
+          const json = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
+          const parsed = JSON.parse(json);
+          if (Array.isArray(parsed)) aiKeywords = parsed.map((s) => String(s)).filter(Boolean);
+        }
+      } catch {
+        /* noop */
+      }
+    }
+
+    const seedFromExtra = (data.extra_keywords ?? []).map((s) => s.trim()).filter(Boolean);
+    const allKeywords = Array.from(
+      new Set([...seedFromExtra, ...aiKeywords].map(cleanKeyword).filter((k) => k.length > 1)),
+    ).slice(0, data.limit);
+
+    // 3) Rank each (sequential to be polite to Google)
+    type Row = {
+      keyword: string;
+      rank: number | null;
+      previous_rank: number | null;
+      url: string | null;
+      engine: string;
+    };
+    const rows: Row[] = [];
+
+    // pull previous ranks in one shot
+    const { data: hist } = await supabase
+      .from("seo_keyword_history")
+      .select("keyword, rank, checked_at")
+      .eq("user_id", userId)
+      .eq("domain", domain)
+      .in("keyword", allKeywords)
+      .order("checked_at", { ascending: false });
+    const prevMap = new Map<string, number | null>();
+    for (const h of hist ?? []) if (!prevMap.has(h.keyword)) prevMap.set(h.keyword, h.rank);
+
+    for (const kw of allKeywords) {
+      const { position, url, engine } = await scrapeRank(kw, domain, data.database);
+      rows.push({ keyword: kw, rank: position, previous_rank: prevMap.get(kw) ?? null, url, engine });
+      await new Promise((r) => setTimeout(r, 600 + Math.random() * 400));
+    }
+
+    if (rows.length) {
+      await supabase.from("seo_keyword_history").insert(
+        rows.map((r) => ({
+          user_id: userId,
+          keyword: r.keyword,
+          domain,
+          database_code: data.database,
+          rank: r.rank,
+          position_url: r.url,
+        })),
+      );
+    }
+
+    const found = rows.filter((r) => r.rank !== null).length;
+    return {
+      domain,
+      database: data.database,
+      rows,
+      from_cache: false,
+      soft_error: null as string | null,
+      checked_at: new Date().toISOString(),
+      stats: { total: rows.length, found, missing: rows.length - found },
+    };
+  });

@@ -28,7 +28,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
-import { analyzeDomain, auditPage, fetchRankedKeywords, researchKeyword, trackKeyword } from "@/lib/seo.functions";
+import { analyzeDomain, auditPage, discoverRankedKeywords, researchKeyword, trackKeywordScrape } from "@/lib/seo.functions";
 
 type SeoRow = Database["public"]["Tables"]["seo_keywords"]["Row"];
 type Snapshot = Database["public"]["Tables"]["seo_domain_snapshots"]["Row"];
@@ -238,7 +238,7 @@ function Seo() {
     if (!keyword) return;
     setTrackingBusy(true);
     try {
-      const result = await trackKeyword({ data: { keyword, domain: domain.trim(), database, skip_semrush: skipSemrush } });
+      const result = await trackKeywordScrape({ data: { keyword, domain: domain.trim(), database } });
       if (result.soft_error) { toast.info(result.soft_error); autoDisableOnLimit(result.soft_error); }
       else toast.success(`"${keyword}" toegevoegd.`);
       setNewKw("");
@@ -259,7 +259,7 @@ function Seo() {
     if (!row.domain) return;
     setTrackingBusy(true);
     try {
-      const result = await trackKeyword({ data: { keyword: row.keyword, domain: row.domain, database: row.database_code ?? "nl", skip_semrush: skipSemrush } });
+      const result = await trackKeywordScrape({ data: { keyword: row.keyword, domain: row.domain, database: row.database_code ?? "nl" } });
       const [{ data }, { data: h }] = await Promise.all([
         supabase.from("seo_keywords").select("*").order("created_at", { ascending: false }),
         supabase.from("seo_keyword_history").select("*").order("checked_at", { ascending: false }).limit(500),
@@ -305,15 +305,10 @@ function Seo() {
     if (!domain.trim()) return toast.error("Vul een domein in.");
     setRankedLoading(true);
     try {
-      const res = await fetchRankedKeywords({ data: { domain: domain.trim(), database, limit: 50 } });
-      setRanked(res.rows as RankedRow[]);
+      const res = await discoverRankedKeywords({ data: { domain: domain.trim(), database, limit: 20 } });
+      setRanked(res.rows.map((r) => ({ ...r, search_volume: null, cpc: null, competition: null, traffic_share: null })) as RankedRow[]);
       setRankedCheckedAt(res.checked_at);
-      if (res.soft_error) {
-        toast.info(res.from_cache ? `${res.soft_error} Toon laatste opgeslagen meting.` : res.soft_error);
-        autoDisableOnLimit(res.soft_error);
-      } else {
-        toast.success(`${res.rows.length} ranked keywords gevonden voor ${domain}.`);
-      }
+      toast.success(`AI-agent checkte ${res.stats.total} keywords · ${res.stats.found} ranken in top 30.`);
       const { data: h } = await supabase.from("seo_keyword_history").select("*").order("checked_at", { ascending: false }).limit(2000);
       setHistory((h ?? []) as KwHistory[]);
     } catch (e) {
