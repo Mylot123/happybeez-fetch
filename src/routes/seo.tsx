@@ -57,11 +57,11 @@ type Idea = {
 };
 type SeoAction = { priority: "hoog" | "midden" | "laag"; action: string; why: string; where: string };
 type SeoPageAudit = { title: string | null; meta_description: string | null; h1: string | null; word_count: number; issues: string[] };
-type ExtendedSnapshot = Snapshot & {
-  ai_actions?: SeoAction[];
-  content_gaps?: string[];
-  page_audit?: SeoPageAudit | null;
-  soft_error?: string | null;
+type ExtendedSnapshot = Omit<Snapshot, "ai_actions" | "content_gaps" | "page_audit" | "soft_error"> & {
+  ai_actions: SeoAction[];
+  content_gaps: string[];
+  page_audit: SeoPageAudit | null;
+  soft_error: string | null;
 };
 
 export const Route = createFileRoute("/seo")({
@@ -286,10 +286,14 @@ function Seo() {
   const quickWins = (snapshot?.quick_wins ?? []) as TopKw[];
   const competitors = (snapshot?.competitors ?? []) as Competitor[];
   const fallbackPlan = useMemo(() => buildFallbackSeoPlan(domain, topKws), [domain, topKws]);
-  const aiActions = snapshot?.ai_actions?.length ? snapshot.ai_actions : fallbackPlan.actions;
-  const contentGaps = snapshot?.content_gaps?.length ? snapshot.content_gaps : fallbackPlan.contentGaps;
+  const storedActions = snapshot?.ai_actions ?? [];
+  const storedGaps = snapshot?.content_gaps ?? [];
+  const aiActions = storedActions.length ? storedActions : fallbackPlan.actions;
+  const contentGaps = storedGaps.length ? storedGaps : fallbackPlan.contentGaps;
   const pageAudit = snapshot?.page_audit ?? null;
-  const analysisSource = snapshot?.ai_actions?.length || snapshot?.page_audit ? "live" : "fallback";
+  const analysisSource = storedActions.length || pageAudit ? "live" : "fallback";
+  const hasMetricData = snapshot ? [snapshot.rank_global, snapshot.organic_traffic, snapshot.organic_cost].some((value) => value != null) : false;
+  const hasHistoryMetricData = snapshots.some((s) => [s.rank_global, s.organic_traffic, s.organic_cost].some((value) => value != null));
 
   const trackedStats = useMemo(() => {
     const ranked = tracked.filter((t) => t.current_rank != null);
@@ -396,12 +400,21 @@ function Seo() {
             </div>
           ) : (
             <>
-              <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-                <StatCard icon={Trophy} label="Globale rank" value={fmtNum(snapshot.rank_global)} delta={deltaFor(snapshots, "rank_global", true)} />
-                <StatCard icon={Search} label="Organische keywords" value={fmtNum(snapshot.organic_keywords)} delta={deltaFor(snapshots, "organic_keywords")} />
-                <StatCard icon={TrendingUp} label="Organisch verkeer (mnd)" value={fmtNum(snapshot.organic_traffic)} delta={deltaFor(snapshots, "organic_traffic")} />
-                <StatCard icon={Target} label="Verkeerwaarde" value={`€${fmtNum(snapshot.organic_cost)}`} delta={deltaFor(snapshots, "organic_cost")} />
-              </div>
+              {hasMetricData ? (
+                <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+                  <StatCard icon={Trophy} label="Globale rank" value={fmtNum(snapshot.rank_global)} delta={deltaFor(snapshots, "rank_global", true)} />
+                  <StatCard icon={Search} label="Organische keywords" value={fmtNum(snapshot.organic_keywords)} delta={deltaFor(snapshots, "organic_keywords")} />
+                  <StatCard icon={TrendingUp} label="Organisch verkeer (mnd)" value={fmtNum(snapshot.organic_traffic)} delta={deltaFor(snapshots, "organic_traffic")} />
+                  <StatCard icon={Target} label="Verkeerwaarde" value={`€${fmtNum(snapshot.organic_cost)}`} delta={deltaFor(snapshots, "organic_cost")} />
+                </div>
+              ) : (
+                <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+                  <StatCard icon={CheckCircle2} label="SEO-plan" value="Actief" accent="green" />
+                  <StatCard icon={Lightbulb} label="Actiepunten" value={String(aiActions.length)} />
+                  <StatCard icon={TrendingUp} label="Contentkansen" value={String(contentGaps.length)} />
+                  <StatCard icon={Search} label="Keywordfocus" value={fmtNum(snapshot.organic_keywords)} />
+                </div>
+              )}
 
               <div className="rounded-lg border border-wine/20 bg-wine/5 p-4 text-sm text-foreground/85 flex items-start gap-3">
                 <Sparkles className="h-5 w-5 text-wine mt-0.5 shrink-0" />
@@ -415,7 +428,7 @@ function Seo() {
                 </div>
               </div>
 
-              {snapshots.length > 1 ? (
+              {snapshots.length > 1 && hasHistoryMetricData ? (
                 <Section title="Verloop domein" subtitle={`${snapshots.length} metingen bewaard — vergelijk hoe je domein zich ontwikkelt.`} icon={TrendingUp}>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -440,6 +453,18 @@ function Seo() {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                </Section>
+              ) : snapshots.length > 1 ? (
+                <Section title="Analysehistorie" subtitle={`${snapshots.length} analyses bewaard — externe rankingdata was beperkt, daarom vergelijken we de inhoudelijke SEO-output.`} icon={TrendingUp}>
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {snapshots.slice(0, 6).map((s) => (
+                      <div key={s.id} className="border border-border rounded-md p-3 bg-card text-sm">
+                        <p className="text-xs text-muted-foreground">{new Date(s.created_at).toLocaleString("nl-NL")}</p>
+                        <p className="font-medium text-ink mt-1">{(s.ai_actions?.length ?? 0) || fallbackPlan.actions.length} actiepunten</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{(s.content_gaps?.length ?? 0) || fallbackPlan.contentGaps.length} contentkansen · {fmtNum(s.organic_keywords)} keywordfocus</p>
+                      </div>
+                    ))}
                   </div>
                 </Section>
               ) : null}
