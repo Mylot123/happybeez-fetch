@@ -57,11 +57,11 @@ type Idea = {
 };
 type SeoAction = { priority: "hoog" | "midden" | "laag"; action: string; why: string; where: string };
 type SeoPageAudit = { title: string | null; meta_description: string | null; h1: string | null; word_count: number; issues: string[] };
-type ExtendedSnapshot = Snapshot & {
-  ai_actions?: SeoAction[];
-  content_gaps?: string[];
-  page_audit?: SeoPageAudit | null;
-  soft_error?: string | null;
+type ExtendedSnapshot = Omit<Snapshot, "ai_actions" | "content_gaps" | "page_audit" | "soft_error"> & {
+  ai_actions: SeoAction[];
+  content_gaps: string[];
+  page_audit: SeoPageAudit | null;
+  soft_error: string | null;
 };
 
 export const Route = createFileRoute("/seo")({
