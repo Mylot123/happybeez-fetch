@@ -141,6 +141,24 @@ function Seo() {
   const [auditing, setAuditing] = useState(false);
   const [activeAudit, setActiveAudit] = useState<Audit | null>(null);
 
+  // Ranglijst (organic ranked keywords for domain)
+  type RankedRow = {
+    keyword: string;
+    rank: number | null;
+    previous_rank: number | null;
+    search_volume: number | null;
+    cpc: number | null;
+    competition: number | null;
+    traffic_share: number | null;
+    url: string | null;
+  };
+  const [ranked, setRanked] = useState<RankedRow[]>([]);
+  const [rankedCheckedAt, setRankedCheckedAt] = useState<string | null>(null);
+  const [rankedLoading, setRankedLoading] = useState(false);
+  const [rankedFilter, setRankedFilter] = useState<"all" | "top3" | "top10" | "p11_20" | "p21" | "quickwins">("all");
+  const [rankedSort, setRankedSort] = useState<"rank" | "volume" | "delta">("rank");
+
+
   useEffect(() => {
     void loadAll();
   }, []);
