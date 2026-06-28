@@ -84,6 +84,7 @@ function SeoPage() {
 
 const TABS = [
   { id: "overview", label: "Domein-overzicht", icon: Globe },
+  { id: "ranglijst", label: "Ranglijst keywords", icon: Trophy },
   { id: "research", label: "Keyword-onderzoek", icon: Lightbulb },
   { id: "tracking", label: "Rank-tracking", icon: Target },
   { id: "audit", label: "Pagina-audit", icon: FileSearch },
