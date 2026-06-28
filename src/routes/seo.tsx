@@ -1256,7 +1256,7 @@ function RankedKeywordsView({
   sort: "rank" | "volume" | "delta";
   setSort: (v: "rank" | "volume" | "delta") => void;
   checkedAt: string | null;
-  onRefresh: () => void | Promise<void>;
+  onRefresh: () => unknown;
   onAddTrack: (kw: string) => unknown;
 }) {
   const filtered = useMemo(() => {
