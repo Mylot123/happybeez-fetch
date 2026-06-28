@@ -306,7 +306,7 @@ function Seo() {
     setRankedLoading(true);
     try {
       const res = await discoverRankedKeywords({ data: { domain: domain.trim(), database, limit: 20 } });
-      setRanked(res.rows as RankedRow[]);
+      setRanked(res.rows.map((r) => ({ ...r, search_volume: null, cpc: null, competition: null, traffic_share: null })) as RankedRow[]);
       setRankedCheckedAt(res.checked_at);
       toast.success(`AI-agent checkte ${res.stats.total} keywords · ${res.stats.found} ranken in top 30.`);
       const { data: h } = await supabase.from("seo_keyword_history").select("*").order("checked_at", { ascending: false }).limit(2000);
