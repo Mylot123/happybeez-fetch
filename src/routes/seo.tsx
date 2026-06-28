@@ -286,10 +286,12 @@ function Seo() {
   const quickWins = (snapshot?.quick_wins ?? []) as TopKw[];
   const competitors = (snapshot?.competitors ?? []) as Competitor[];
   const fallbackPlan = useMemo(() => buildFallbackSeoPlan(domain, topKws), [domain, topKws]);
-  const aiActions = snapshot?.ai_actions?.length ? snapshot.ai_actions : fallbackPlan.actions;
-  const contentGaps = snapshot?.content_gaps?.length ? snapshot.content_gaps : fallbackPlan.contentGaps;
+  const storedActions = snapshot?.ai_actions ?? [];
+  const storedGaps = snapshot?.content_gaps ?? [];
+  const aiActions = storedActions.length ? storedActions : fallbackPlan.actions;
+  const contentGaps = storedGaps.length ? storedGaps : fallbackPlan.contentGaps;
   const pageAudit = snapshot?.page_audit ?? null;
-  const analysisSource = snapshot?.ai_actions?.length || snapshot?.page_audit ? "live" : "fallback";
+  const analysisSource = storedActions.length || pageAudit ? "live" : "fallback";
 
   const trackedStats = useMemo(() => {
     const ranked = tracked.filter((t) => t.current_rank != null);
