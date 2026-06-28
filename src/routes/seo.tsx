@@ -238,7 +238,7 @@ function Seo() {
     if (!keyword) return;
     setTrackingBusy(true);
     try {
-      const result = await trackKeyword({ data: { keyword, domain: domain.trim(), database, skip_semrush: skipSemrush } });
+      const result = await trackKeywordScrape({ data: { keyword, domain: domain.trim(), database } });
       if (result.soft_error) { toast.info(result.soft_error); autoDisableOnLimit(result.soft_error); }
       else toast.success(`"${keyword}" toegevoegd.`);
       setNewKw("");
