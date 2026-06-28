@@ -305,15 +305,10 @@ function Seo() {
     if (!domain.trim()) return toast.error("Vul een domein in.");
     setRankedLoading(true);
     try {
-      const res = await fetchRankedKeywords({ data: { domain: domain.trim(), database, limit: 50 } });
+      const res = await discoverRankedKeywords({ data: { domain: domain.trim(), database, limit: 20 } });
       setRanked(res.rows as RankedRow[]);
       setRankedCheckedAt(res.checked_at);
-      if (res.soft_error) {
-        toast.info(res.from_cache ? `${res.soft_error} Toon laatste opgeslagen meting.` : res.soft_error);
-        autoDisableOnLimit(res.soft_error);
-      } else {
-        toast.success(`${res.rows.length} ranked keywords gevonden voor ${domain}.`);
-      }
+      toast.success(`AI-agent checkte ${res.stats.total} keywords · ${res.stats.found} ranken in top 30.`);
       const { data: h } = await supabase.from("seo_keyword_history").select("*").order("checked_at", { ascending: false }).limit(2000);
       setHistory((h ?? []) as KwHistory[]);
     } catch (e) {
