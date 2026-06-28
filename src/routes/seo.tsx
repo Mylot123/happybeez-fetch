@@ -631,6 +631,23 @@ function Seo() {
         </div>
       ) : null}
 
+      {/* ──────────────── Ranglijst ──────────────── */}
+      {tab === "ranglijst" ? (
+        <RankedKeywordsView
+          domain={domain}
+          ranked={ranked}
+          history={history}
+          loading={rankedLoading}
+          filter={rankedFilter}
+          setFilter={setRankedFilter}
+          sort={rankedSort}
+          setSort={setRankedSort}
+          checkedAt={rankedCheckedAt}
+          onRefresh={runRanked}
+          onAddTrack={addTracked}
+        />
+      ) : null}
+
       {/* ──────────────── Research ──────────────── */}
       {tab === "research" ? (
         <div className="space-y-6">
