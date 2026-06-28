@@ -28,7 +28,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
-import { analyzeDomain, auditPage, discoverRankedKeywords, fetchRankedKeywords, researchKeyword, trackKeyword, trackKeywordScrape } from "@/lib/seo.functions";
+import { analyzeDomain, auditPage, discoverRankedKeywords, researchKeyword, trackKeywordScrape } from "@/lib/seo.functions";
 
 type SeoRow = Database["public"]["Tables"]["seo_keywords"]["Row"];
 type Snapshot = Database["public"]["Tables"]["seo_domain_snapshots"]["Row"];
