@@ -259,7 +259,7 @@ function Seo() {
     if (!row.domain) return;
     setTrackingBusy(true);
     try {
-      const result = await trackKeyword({ data: { keyword: row.keyword, domain: row.domain, database: row.database_code ?? "nl", skip_semrush: skipSemrush } });
+      const result = await trackKeywordScrape({ data: { keyword: row.keyword, domain: row.domain, database: row.database_code ?? "nl" } });
       const [{ data }, { data: h }] = await Promise.all([
         supabase.from("seo_keywords").select("*").order("created_at", { ascending: false }),
         supabase.from("seo_keyword_history").select("*").order("checked_at", { ascending: false }).limit(500),
