@@ -926,3 +926,110 @@ export const auditPage = createServerFn({ method: "POST" })
       ai_summary: aiSummary,
     };
   });
+
+// ──────────────────────────────────────────────────────────────────
+// Ranked keywords: alle keywords waar een domein op rankt (Semrush domain_organic)
+// + bulk-opslag in seo_keyword_history voor trend per keyword
+// ──────────────────────────────────────────────────────────────────
+export const fetchRankedKeywords = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        domain: z.string().min(3).max(200),
+        database: z.string().default("nl"),
+        limit: z.number().int().min(10).max(100).default(50),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const domain = normalizeDomain(data.domain);
+    const db = data.database;
+    const { supabase, userId } = context;
+
+    let rows: Array<{
+      keyword: string;
+      rank: number | null;
+      previous_rank: number | null;
+      search_volume: number | null;
+      cpc: number | null;
+      competition: number | null;
+      traffic_share: number | null;
+      url: string | null;
+    }> = [];
+    let soft_error: string | null = null;
+    let from_cache = false;
+
+    try {
+      const organic = rowsToObjects(
+        await callSemrush(
+          "/domains/domain_organic",
+          {
+            domain,
+            database: db,
+            export_columns: "Ph,Po,Pp,Nq,Cp,Co,Tr,Ur",
+            display_limit: data.limit,
+          },
+          true,
+        ),
+      );
+      rows = organic.map((r) => ({
+        keyword: r.Ph,
+        rank: Number(r.Po) || null,
+        previous_rank: Number(r.Pp) || null,
+        search_volume: Number(r.Nq) || null,
+        cpc: Number(r.Cp) || null,
+        competition: Number(r.Co) || null,
+        traffic_share: Number(r.Tr) || null,
+        url: r.Ur || null,
+      })).filter((r) => r.keyword);
+
+      // bulk-opslag historie
+      if (rows.length) {
+        await supabase.from("seo_keyword_history").insert(
+          rows.map((r) => ({
+            user_id: userId,
+            keyword: r.keyword,
+            domain,
+            database_code: db,
+            rank: r.rank,
+            search_volume: r.search_volume,
+            cpc: r.cpc,
+            position_url: r.url,
+          })),
+        );
+      }
+    } catch (e) {
+      soft_error = fallbackNotice(e);
+      // fallback: laatste snapshot per keyword uit history
+      const { data: hist } = await supabase
+        .from("seo_keyword_history")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("domain", domain)
+        .order("checked_at", { ascending: false })
+        .limit(2000);
+      const seen = new Map<string, typeof rows[number]>();
+      const prev = new Map<string, number | null>();
+      for (const h of (hist ?? [])) {
+        if (!seen.has(h.keyword)) {
+          seen.set(h.keyword, {
+            keyword: h.keyword,
+            rank: h.rank,
+            previous_rank: null,
+            search_volume: h.search_volume,
+            cpc: h.cpc,
+            competition: null,
+            traffic_share: null,
+            url: h.position_url,
+          });
+        } else if (!prev.has(h.keyword)) {
+          prev.set(h.keyword, h.rank);
+        }
+      }
+      rows = Array.from(seen.values()).map((r) => ({ ...r, previous_rank: prev.get(r.keyword) ?? null }));
+      from_cache = true;
+    }
+
+    return { domain, database: db, rows, soft_error, from_cache, checked_at: new Date().toISOString() };
+  });

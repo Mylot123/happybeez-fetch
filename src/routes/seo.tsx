@@ -28,7 +28,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
-import { analyzeDomain, auditPage, researchKeyword, trackKeyword } from "@/lib/seo.functions";
+import { analyzeDomain, auditPage, fetchRankedKeywords, researchKeyword, trackKeyword } from "@/lib/seo.functions";
 
 type SeoRow = Database["public"]["Tables"]["seo_keywords"]["Row"];
 type Snapshot = Database["public"]["Tables"]["seo_domain_snapshots"]["Row"];
@@ -84,6 +84,7 @@ function SeoPage() {
 
 const TABS = [
   { id: "overview", label: "Domein-overzicht", icon: Globe },
+  { id: "ranglijst", label: "Ranglijst keywords", icon: Trophy },
   { id: "research", label: "Keyword-onderzoek", icon: Lightbulb },
   { id: "tracking", label: "Rank-tracking", icon: Target },
   { id: "audit", label: "Pagina-audit", icon: FileSearch },
@@ -139,6 +140,24 @@ function Seo() {
   const [auditKw, setAuditKw] = useState("bijenhotel");
   const [auditing, setAuditing] = useState(false);
   const [activeAudit, setActiveAudit] = useState<Audit | null>(null);
+
+  // Ranglijst (organic ranked keywords for domain)
+  type RankedRow = {
+    keyword: string;
+    rank: number | null;
+    previous_rank: number | null;
+    search_volume: number | null;
+    cpc: number | null;
+    competition: number | null;
+    traffic_share: number | null;
+    url: string | null;
+  };
+  const [ranked, setRanked] = useState<RankedRow[]>([]);
+  const [rankedCheckedAt, setRankedCheckedAt] = useState<string | null>(null);
+  const [rankedLoading, setRankedLoading] = useState(false);
+  const [rankedFilter, setRankedFilter] = useState<"all" | "top3" | "top10" | "p11_20" | "p21" | "quickwins">("all");
+  const [rankedSort, setRankedSort] = useState<"rank" | "volume" | "delta">("rank");
+
 
   useEffect(() => {
     void loadAll();
@@ -281,6 +300,30 @@ function Seo() {
       setAuditing(false);
     }
   }
+
+  async function runRanked() {
+    if (!domain.trim()) return toast.error("Vul een domein in.");
+    setRankedLoading(true);
+    try {
+      const res = await fetchRankedKeywords({ data: { domain: domain.trim(), database, limit: 50 } });
+      setRanked(res.rows as RankedRow[]);
+      setRankedCheckedAt(res.checked_at);
+      if (res.soft_error) {
+        toast.info(res.from_cache ? `${res.soft_error} Toon laatste opgeslagen meting.` : res.soft_error);
+        autoDisableOnLimit(res.soft_error);
+      } else {
+        toast.success(`${res.rows.length} ranked keywords gevonden voor ${domain}.`);
+      }
+      const { data: h } = await supabase.from("seo_keyword_history").select("*").order("checked_at", { ascending: false }).limit(2000);
+      setHistory((h ?? []) as KwHistory[]);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Ranglijst ophalen mislukt.");
+    } finally {
+      setRankedLoading(false);
+    }
+  }
+
+
 
   const topKws = (snapshot?.top_keywords ?? []) as TopKw[];
   const quickWins = (snapshot?.quick_wins ?? []) as TopKw[];
@@ -586,6 +629,23 @@ function Seo() {
             </>
           )}
         </div>
+      ) : null}
+
+      {/* ──────────────── Ranglijst ──────────────── */}
+      {tab === "ranglijst" ? (
+        <RankedKeywordsView
+          domain={domain}
+          ranked={ranked}
+          history={history}
+          loading={rankedLoading}
+          filter={rankedFilter}
+          setFilter={setRankedFilter}
+          sort={rankedSort}
+          setSort={setRankedSort}
+          checkedAt={rankedCheckedAt}
+          onRefresh={runRanked}
+          onAddTrack={addTracked}
+        />
       ) : null}
 
       {/* ──────────────── Research ──────────────── */}
@@ -1162,3 +1222,235 @@ function AuditView({ audit }: { audit: Audit }) {
     </>
   );
 }
+
+type RankedRowUI = {
+  keyword: string;
+  rank: number | null;
+  previous_rank: number | null;
+  search_volume: number | null;
+  cpc: number | null;
+  competition: number | null;
+  traffic_share: number | null;
+  url: string | null;
+};
+
+function RankedKeywordsView({
+  domain,
+  ranked,
+  history,
+  loading,
+  filter,
+  setFilter,
+  sort,
+  setSort,
+  checkedAt,
+  onRefresh,
+  onAddTrack,
+}: {
+  domain: string;
+  ranked: RankedRowUI[];
+  history: KwHistory[];
+  loading: boolean;
+  filter: "all" | "top3" | "top10" | "p11_20" | "p21" | "quickwins";
+  setFilter: (v: "all" | "top3" | "top10" | "p11_20" | "p21" | "quickwins") => void;
+  sort: "rank" | "volume" | "delta";
+  setSort: (v: "rank" | "volume" | "delta") => void;
+  checkedAt: string | null;
+  onRefresh: () => unknown;
+  onAddTrack: (kw: string) => unknown;
+}) {
+  const filtered = useMemo(() => {
+    const inBand = (r: RankedRowUI) => {
+      const p = r.rank ?? 999;
+      if (filter === "top3") return p >= 1 && p <= 3;
+      if (filter === "top10") return p >= 1 && p <= 10;
+      if (filter === "p11_20") return p >= 11 && p <= 20;
+      if (filter === "p21") return p >= 21;
+      if (filter === "quickwins") return p >= 4 && p <= 20 && (r.search_volume ?? 0) >= 50;
+      return true;
+    };
+    const rows = ranked.filter(inBand);
+    rows.sort((a, b) => {
+      if (sort === "volume") return (b.search_volume ?? 0) - (a.search_volume ?? 0);
+      if (sort === "delta") {
+        const da = (a.previous_rank ?? a.rank ?? 0) - (a.rank ?? 0);
+        const db = (b.previous_rank ?? b.rank ?? 0) - (b.rank ?? 0);
+        return db - da;
+      }
+      return (a.rank ?? 999) - (b.rank ?? 999);
+    });
+    return rows;
+  }, [ranked, filter, sort]);
+
+  const counts = useMemo(() => ({
+    all: ranked.length,
+    top3: ranked.filter((r) => (r.rank ?? 999) <= 3).length,
+    top10: ranked.filter((r) => (r.rank ?? 999) <= 10).length,
+    p11_20: ranked.filter((r) => (r.rank ?? 999) >= 11 && (r.rank ?? 999) <= 20).length,
+    p21: ranked.filter((r) => (r.rank ?? 999) >= 21).length,
+    quickwins: ranked.filter((r) => (r.rank ?? 999) >= 4 && (r.rank ?? 999) <= 20 && (r.search_volume ?? 0) >= 50).length,
+  }), [ranked]);
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-card border border-border rounded-lg p-5 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+          <div>
+            <h2 className="font-heading text-lg font-semibold text-ink flex items-center gap-2">
+              <Trophy className="h-4 w-4 text-gold" /> Waar rankt {domain}?
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Alle organische keywords waarop dit domein in Google's top-100 staat, met positie, vorige meting en volume. Elke vernieuwing wordt bewaard voor trendanalyse.
+            </p>
+            {checkedAt ? (
+              <p className="text-xs text-muted-foreground mt-1">Laatst opgehaald: {new Date(checkedAt).toLocaleString("nl-NL")}</p>
+            ) : null}
+          </div>
+          <Button onClick={() => void onRefresh()} disabled={loading} className="bg-wine text-white hover:bg-wine/90">
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            {loading ? "Ophalen…" : "Vernieuw ranglijst"}
+          </Button>
+        </div>
+
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {([
+            ["all", `Alle (${counts.all})`],
+            ["top3", `Top 3 (${counts.top3})`],
+            ["top10", `Top 10 (${counts.top10})`],
+            ["p11_20", `Pos 11-20 (${counts.p11_20})`],
+            ["p21", `Pos 21+ (${counts.p21})`],
+            ["quickwins", `Quick wins (${counts.quickwins})`],
+          ] as const).map(([id, label]) => (
+            <button
+              key={id}
+              onClick={() => setFilter(id)}
+              className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+                filter === id ? "bg-wine text-white border-wine" : "bg-secondary text-foreground border-border hover:bg-secondary/70"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+          <span className="ml-auto text-xs text-muted-foreground self-center">Sorteer:</span>
+          {([
+            ["rank", "positie"],
+            ["volume", "volume"],
+            ["delta", "Δ"],
+          ] as const).map(([id, label]) => (
+            <button
+              key={id}
+              onClick={() => setSort(id)}
+              className={`text-xs px-2.5 py-1 rounded border ${
+                sort === id ? "border-wine text-wine" : "border-border text-muted-foreground hover:text-ink"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {ranked.length === 0 ? (
+          <div className="rounded-md border border-dashed border-border p-8 text-center">
+            <Trophy className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+            <p className="text-sm text-ink font-medium">Nog geen ranglijst opgehaald</p>
+            <p className="text-xs text-muted-foreground mt-1">Klik op "Vernieuw ranglijst" om alle keywords te zien waar {domain} op rankt.</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Geen keywords in deze categorie.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
+                  <th className="py-2 pr-4">Keyword</th>
+                  <th className="py-2 pr-4 text-right">Positie</th>
+                  <th className="py-2 pr-4 text-right">Δ</th>
+                  <th className="py-2 pr-4 text-right">Volume</th>
+                  <th className="py-2 pr-4 text-right">CPC</th>
+                  <th className="py-2 pr-4 text-right">Verkeer %</th>
+                  <th className="py-2 pr-4">URL</th>
+                  <th className="py-2 pr-4">Trend</th>
+                  <th className="py-2 pr-4 text-right">Actie</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filtered.map((r, i) => {
+                  const delta = r.previous_rank != null && r.rank != null ? r.previous_rank - r.rank : null;
+                  const trend = history
+                    .filter((h) => h.keyword === r.keyword && h.domain === domain && h.rank != null)
+                    .sort((a, b) => +new Date(a.checked_at) - +new Date(b.checked_at))
+                    .slice(-10)
+                    .map((h) => h.rank as number);
+                  return (
+                    <tr key={`${r.keyword}-${i}`} className="hover:bg-secondary/30">
+                      <td className="py-2 pr-4 font-medium text-ink">{r.keyword}</td>
+                      <td className="py-2 pr-4 text-right">{positionBadge(r.rank)}</td>
+                      <td className="py-2 pr-4 text-right">
+                        {delta == null || delta === 0 ? (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        ) : delta > 0 ? (
+                          <span className="text-xs text-green-700 inline-flex items-center gap-0.5">
+                            <TrendingUp className="h-3 w-3" /> +{delta}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-destructive inline-flex items-center gap-0.5">
+                            <TrendingDown className="h-3 w-3" /> {delta}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2 pr-4 text-right tabular-nums">{fmtNum(r.search_volume)}</td>
+                      <td className="py-2 pr-4 text-right tabular-nums">{r.cpc ? `€${r.cpc.toFixed(2)}` : "—"}</td>
+                      <td className="py-2 pr-4 text-right tabular-nums">{r.traffic_share != null ? `${r.traffic_share.toFixed(1)}%` : "—"}</td>
+                      <td className="py-2 pr-4 text-xs text-muted-foreground max-w-[16rem] truncate">
+                        {r.url ? (
+                          <a href={r.url} target="_blank" rel="noreferrer" className="hover:text-wine">{r.url.replace(/^https?:\/\//, "")}</a>
+                        ) : "—"}
+                      </td>
+                      <td className="py-2 pr-4">{trend.length > 1 ? <Sparkline values={trend} /> : <span className="text-xs text-muted-foreground">—</span>}</td>
+                      <td className="py-2 pr-4 text-right">
+                        <button
+                          onClick={() => void onAddTrack(r.keyword)}
+                          className="text-xs text-wine hover:underline inline-flex items-center gap-1"
+                          title="Voeg toe aan tracking"
+                        >
+                          <Crosshair className="h-3 w-3" /> Volg
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Sparkline({ values }: { values: number[] }) {
+  if (values.length < 2) return null;
+  const w = 80;
+  const h = 22;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = Math.max(1, max - min);
+  // lager = beter, dus inverteren zodat top-positie boven staat
+  const points = values
+    .map((v, i) => {
+      const x = (i / (values.length - 1)) * w;
+      const y = ((v - min) / range) * h;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+  const last = values[values.length - 1];
+  const first = values[0];
+  const better = last < first;
+  const color = better ? "#15803d" : last > first ? "#b91c1c" : "#737373";
+  return (
+    <svg width={w} height={h} className="overflow-visible">
+      <polyline fill="none" stroke={color} strokeWidth="1.5" points={points} />
+    </svg>
+  );
+}
+
