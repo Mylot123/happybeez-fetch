@@ -176,6 +176,119 @@ function extractSiteTerms(html: string, domain: string) {
   return { extracted: ex, keywords };
 }
 
+type SeoInsightKeyword = { keyword: string; position: number | null; volume: number | null; cpc: number | null; competition: number | null; traffic_share: number | null; url: string | null; kd: number | null };
+type SeoAction = { priority: "hoog" | "midden" | "laag"; action: string; why: string; where: string };
+
+function fallbackActions(domain: string, keywords: SeoInsightKeyword[]): { ai_actions: SeoAction[]; content_gaps: string[] } {
+  const primary = keywords[0]?.keyword || "bijenhotel";
+  const site = domain.replace(/^https?:\/\//, "").replace(/\/.*$/, "") || "de site";
+  return {
+    ai_actions: [
+      {
+        priority: "hoog",
+        action: `Maak één sterke hoofdpagina rond “${primary} kopen” met keuzehulp, voordelen en plaatsingsadvies.`,
+        why: "Dit vangt koopintentie en geeft Google één duidelijke commerciële pagina om te begrijpen.",
+        where: "productpagina",
+      },
+      {
+        priority: "hoog",
+        action: "Schrijf een complete gids over waar, wanneer en hoe je een bijenhotel ophangt.",
+        why: "Praktische vragen hebben hoge relevantie voor klanten die nog twijfelen en later kunnen converteren.",
+        where: "blog",
+      },
+      {
+        priority: "hoog",
+        action: "Versterk homepage-tekst met wilde bijen, metselbijen, biodiversiteit en bijvriendelijke tuin.",
+        why: "HappyBeez moet niet alleen op producttermen, maar ook op het educatieve biodiversiteitsdomein gevonden worden.",
+        where: "homepage",
+      },
+      {
+        priority: "midden",
+        action: "Maak vergelijkingscontent: bijenhotel vs insectenhotel, bamboe vs hout, goedkoop vs duurzaam.",
+        why: "Vergelijkingen trekken bezoekers die actief keuzes maken en dus dichter bij aankoop zitten.",
+        where: "blog",
+      },
+      {
+        priority: "midden",
+        action: `Link vanaf ${site} intern naar gidsen met ankerteksten zoals “bijenhotel plaatsen” en “wilde bijen helpen”.`,
+        why: "Interne links helpen zoekmachines bepalen welke pagina’s prioriteit hebben.",
+        where: "technisch",
+      },
+      {
+        priority: "laag",
+        action: "Voeg FAQ- en Product-schema toe op pagina’s met duidelijke vragen of producten.",
+        why: "Structured data maakt pagina’s beter leesbaar voor Google en AI-zoekresultaten.",
+        where: "technisch",
+      },
+    ],
+    content_gaps: [
+      "Wanneer hang je een bijenhotel op? Complete seizoensgids",
+      "Waar plaats je een bijenhotel: zon, regen, hoogte en windrichting",
+      "Bijenhotel schoonmaken: wat wel en niet doen voor metselbijen",
+      "Welke wilde bijen gebruiken een bijenhotel in Nederland?",
+      "Bijenhotel op balkon: bestuivers helpen zonder grote tuin",
+      "Waarom een goedkoop insectenhotel vaak niet goed werkt",
+      "Bijvriendelijke tuin maken: planten, nestplekken en water",
+      "Bijenhotel kopen: checklist voor materiaal, gangen en formaat",
+    ],
+  };
+}
+
+async function buildSeoInsights(domain: string, topKeywords: SeoInsightKeyword[]) {
+  const html = await fetchPageText(`https://${domain}`);
+  const ex = html ? extract(html) : null;
+  const pageIssues: string[] = [];
+  if (ex) {
+    if (!ex.title) pageIssues.push("Geen <title> op homepage");
+    else if (ex.title.length < 30 || ex.title.length > 65) pageIssues.push(`Title ${ex.title.length} tekens (ideaal 50–60)`);
+    if (!ex.metaDescription) pageIssues.push("Geen meta description");
+    else if (ex.metaDescription.length < 110 || ex.metaDescription.length > 170) pageIssues.push(`Meta description ${ex.metaDescription.length} tekens (ideaal 140–160)`);
+    if (!ex.h1) pageIssues.push("Geen H1");
+    if (ex.h2s.length < 2) pageIssues.push("Minder dan 2 H2's");
+    if (ex.wordCount < 300) pageIssues.push(`Weinig tekst (${ex.wordCount} woorden)`);
+    if (!ex.canonical) pageIssues.push("Geen canonical tag");
+    if (!ex.ogTitle || !ex.ogImage) pageIssues.push("Open Graph onvolledig");
+    if (ex.imagesTotal > 0 && ex.imagesWithAlt / ex.imagesTotal < 0.8) pageIssues.push(`${ex.imagesWithAlt}/${ex.imagesTotal} afbeeldingen met alt-tekst`);
+    if (!ex.jsonLd) pageIssues.push("Geen JSON-LD schema");
+  }
+  const page_audit = ex ? {
+    title: ex.title || null,
+    meta_description: ex.metaDescription || null,
+    h1: ex.h1 || null,
+    h2s: ex.h2s,
+    word_count: ex.wordCount,
+    issues: pageIssues,
+  } : null;
+
+  let { ai_actions, content_gaps } = fallbackActions(domain, topKeywords);
+  try {
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (apiKey) {
+      const ai = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "openai/gpt-5-mini",
+          messages: [
+            { role: "system", content: "Je bent SEO-strateeg voor HappyBeez (bijenhotels, wilde bijen, biodiversiteit). Antwoord uitsluitend met geldige JSON." },
+            { role: "user", content: `Domein: ${domain}\nTitle: ${ex?.title ?? "—"}\nMeta: ${ex?.metaDescription ?? "—"}\nH1: ${ex?.h1 ?? "—"}\nH2: ${ex?.h2s.join(" | ") ?? "—"}\nWoorden: ${ex?.wordCount ?? 0}\nProblemen: ${pageIssues.join("; ") || "—"}\nKeywords: ${topKeywords.map(k => k.keyword).join(", ")}\n\nGeef JSON: { "actions": [{"priority":"hoog|midden|laag","action":"...","why":"...","where":"homepage|productpagina|blog|technisch"}], "content_gaps": ["...blogonderwerp 1...", "..."] }. Geef 6 concrete acties en 8 blogonderwerpen.` },
+          ],
+        }),
+      });
+      if (ai.ok) {
+        const j: { choices?: Array<{ message?: { content?: string } }> } = await ai.json();
+        const raw = (j.choices?.[0]?.message?.content ?? "").trim().replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
+        const parsed = JSON.parse(raw) as { actions?: SeoAction[]; content_gaps?: string[] };
+        ai_actions = (parsed.actions?.length ? parsed.actions : ai_actions).slice(0, 8);
+        content_gaps = (parsed.content_gaps?.length ? parsed.content_gaps : content_gaps).slice(0, 8);
+      }
+    }
+  } catch {
+    // fallback above remains in place
+  }
+  return { page_audit, ai_actions, content_gaps };
+}
+
 async function callSemrush(path: string, params: Record<string, string | number | undefined>, limitOffset = false): Promise<SemRow> {
   const qs = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== "") qs.set(k, String(v));
