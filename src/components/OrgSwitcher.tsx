@@ -1,4 +1,4 @@
-import { Check, ChevronsUpDown, Building2 } from "lucide-react";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { useState } from "react";
 import { useCurrentOrg } from "@/hooks/use-current-org";
 import { cn } from "@/lib/utils";
@@ -23,31 +23,40 @@ export function OrgSwitcher() {
 
   if (isLoading || !currentOrg) {
     return (
-      <div className="h-9 rounded-md border border-border/60 bg-muted/40 animate-pulse" />
+      <div className="h-[58px] rounded-xl bg-white/5 border border-white/5 animate-pulse" />
     );
   }
 
   const showSwitcher = memberships.length > 1;
+  const initials = currentOrg.name
+    .split(/\s+/)
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger
         className={cn(
-          "w-full flex items-center gap-2 px-2.5 py-2 rounded-md border border-border/60 bg-background hover:bg-muted transition-colors text-left",
-          !showSwitcher && "cursor-default hover:bg-background",
+          "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border border-white/7 bg-ink-shell-soft hover:bg-white/10 transition-colors text-left",
+          !showSwitcher && "cursor-default hover:bg-ink-shell-soft",
         )}
         disabled={!showSwitcher}
       >
-        <div className="w-7 h-7 rounded bg-wine/10 text-wine flex items-center justify-center flex-shrink-0">
-          <Building2 className="w-3.5 h-3.5" />
+        <div className="relative w-9 h-9 rounded-[10px] bg-signal text-white flex items-center justify-center flex-shrink-0 font-extrabold text-[12.5px]">
+          {initials}
+          <span className="absolute -bottom-0.5 -right-0.5 w-[9px] h-[9px] rounded-full bg-[#3DDC84] border-2 border-ink-shell-soft" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-ink truncate">{currentOrg.name}</p>
-          <p className="text-[10px] text-muted-foreground truncate">
+          <p className="text-[13px] font-bold text-white truncate leading-tight">
+            {currentOrg.name}
+          </p>
+          <p className="text-[11px] text-white/50 truncate">
             {currentRole ? ROLE_LABEL[currentRole] : ""}
           </p>
         </div>
-        {showSwitcher && <ChevronsUpDown className="w-3.5 h-3.5 text-muted-foreground" />}
+        {showSwitcher && <ChevronsUpDown className="w-3.5 h-3.5 text-white/40" />}
       </DropdownMenuTrigger>
       {showSwitcher && (
         <DropdownMenuContent align="start" className="w-56">
