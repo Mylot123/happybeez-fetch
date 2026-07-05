@@ -208,13 +208,19 @@ function Seo() {
   }
 
   async function loadCompetitors() {
+    const own = domain.trim();
+    if (own.length < 3) {
+      setDfsCompetitors([]);
+      return;
+    }
     try {
-      const rows = await listSeoCompetitors({ data: { own_domain: domain.trim(), database } });
+      const rows = await listSeoCompetitors({ data: { own_domain: own, database } });
       setDfsCompetitors(rows as CompetitorRow[]);
     } catch {
       setDfsCompetitors([]);
     }
   }
+
 
   async function addCompetitor() {
     if (!newCompetitor.trim()) return toast.error("Vul een concurrent-domein in.");
