@@ -1097,11 +1097,54 @@ function Seo() {
       ) : null}
 
 
-      <p className="mt-8 text-xs text-muted-foreground border-t border-border pt-4">
-        Exacte volumes, posities en concurrentiecijfers komen uit Semrush wanneer beschikbaar. Als die limiet bereikt is, gebruikt HappyBeez eigen audits,
-        AI-keywordplanning en opgeslagen historie zodat je alsnog kunt doorwerken.
-      </p>
+      {/* ──────────────── Backlinks ──────────────── */}
+      {tab === "backlinks" ? (
+        <div className="bg-card border border-dashed border-border rounded-lg p-10 text-center">
+          <ExternalLink className="h-8 w-8 text-muted-foreground/60 mx-auto mb-3" />
+          <p className="font-medium text-ink">Backlinks — binnenkort</p>
+          <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
+            Overzicht van verwijzende domeinen, anker-teksten en autoriteit via DataForSEO. Deze module wordt in een volgende stap ingeschakeld.
+          </p>
+        </div>
+      ) : null}
+
+      {/* ──────────────── Instellingen ──────────────── */}
+      {tab === "settings" ? (
+        <div className="space-y-4">
+          <div className="rounded-lg border border-honey/40 bg-honey/10 p-4 text-sm text-foreground/85 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-start gap-2 flex-1 min-w-[18rem]">
+              <Lightbulb className="h-4 w-4 text-gold mt-0.5 shrink-0" />
+              <p>
+                Semrush is handig voor exacte volumes en rankings, maar niet verplicht. Met "Semrush overslaan" werkt alles meteen op eigen site-audit, AI en je opgeslagen metingen — geen limietfouten.
+              </p>
+            </div>
+            <label className="flex items-center gap-2 text-xs font-medium text-ink cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={skipSemrush}
+                onChange={(e) => setSkipSemrush(e.target.checked)}
+                className="h-4 w-4 accent-wine"
+              />
+              Semrush overslaan
+            </label>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-4 text-sm text-foreground/80">
+            <p className="font-medium text-ink mb-1">Rank-tracking cadans</p>
+            <p className="text-muted-foreground">
+              De dagelijkse DataForSEO-verversing draait via <code className="text-xs bg-muted px-1.5 py-0.5 rounded">/api/public/cron/seo-tracking</code>. Activeer een pg_cron-job om dit dagelijks te triggeren.
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+          <p className="mt-8 text-xs text-muted-foreground border-t border-border pt-4">
+            Exacte volumes, posities en concurrentiecijfers komen uit Semrush wanneer beschikbaar. Als die limiet bereikt is, gebruikt HappyBeez eigen audits,
+            AI-keywordplanning en opgeslagen historie zodat je alsnog kunt doorwerken.
+          </p>
+        </div>
+      </div>
     </div>
+
   );
 }
 
