@@ -386,3 +386,146 @@ export const researchDfsKeywords = createServerFn({ method: "POST" })
 
     return { ideas, soft_error: null };
   });
+
+// ─────────────────────────────────────────────────────────────
+// Bulk keywords: add + enrich (volume/CPC/intent) via DataForSEO Labs.
+// ─────────────────────────────────────────────────────────────
+
+export const bulkAddSeoKeywords = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        keywords: z.array(z.string().min(1)).min(1),
+        domain: z.string().min(3),
+        database: z.string().default("nl"),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: orgRow } = await context.supabase
+      .from("organization_members")
+      .select("org_id")
+      .eq("user_id", context.userId)
+      .limit(1)
+      .single();
+    const orgId = orgRow?.org_id;
+    if (!orgId) throw new Error("Geen organisatie gekoppeld.");
+
+    const domain = normalizeDomain(data.domain);
+    const clean = Array.from(
+      new Set(data.keywords.map((k) => k.trim().toLowerCase()).filter((k) => k.length >= 2)),
+    );
+    if (!clean.length) return { added: 0, skipped: 0 };
+
+    // Skip existing
+    const { data: existing } = await context.supabase
+      .from("seo_keywords")
+      .select("keyword")
+      .eq("org_id", orgId)
+      .eq("domain", domain)
+      .eq("database_code", data.database)
+      .in("keyword", clean);
+    const have = new Set((existing ?? []).map((r) => r.keyword));
+    const rows = clean
+      .filter((k) => !have.has(k))
+      .map((keyword) => ({
+        org_id: orgId,
+        user_id: context.userId,
+        keyword,
+        domain,
+        database_code: data.database,
+        is_active: true,
+      }));
+    if (rows.length) {
+      const { error } = await context.supabase.from("seo_keywords").insert(rows);
+      if (error) throw new Error(error.message);
+    }
+    return { added: rows.length, skipped: clean.length - rows.length };
+  });
+
+type DfsOverviewItem = {
+  keyword_data?: {
+    keyword?: string;
+    keyword_info?: { search_volume?: number | null; cpc?: number | null; competition?: number | null };
+    search_intent_info?: { main_intent?: string | null };
+  };
+};
+
+export const enrichSeoKeywords = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        keywords: z.array(z.string().min(1)).optional(),
+        domain: z.string().min(3),
+        database: z.string().default("nl"),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const auth = dfsAuthHeader();
+    if (!auth) return { enriched: 0, soft_error: "DataForSEO niet gekoppeld." };
+    const domain = normalizeDomain(data.domain);
+    const { location_code, language_code } = dbToLocation(data.database);
+
+    let keywords = (data.keywords ?? []).map((k) => k.trim().toLowerCase()).filter(Boolean);
+    if (!keywords.length) {
+      const { data: kws } = await context.supabase
+        .from("seo_keywords")
+        .select("keyword")
+        .eq("domain", domain)
+        .eq("database_code", data.database);
+      keywords = Array.from(new Set((kws ?? []).map((r) => r.keyword.toLowerCase())));
+    }
+    if (!keywords.length) return { enriched: 0, soft_error: "Geen keywords om te verrijken." };
+
+    const batch = keywords.slice(0, 700);
+    const results = await dfsPost<{ items?: DfsOverviewItem[] }>(
+      "/dataforseo_labs/google/keyword_overview/live",
+      [{ keywords: batch, location_code, language_code }],
+    );
+    const items = results.flatMap((r) => r.items ?? []);
+    let enriched = 0;
+    for (const it of items) {
+      const kd = it.keyword_data;
+      const kw = kd?.keyword?.toLowerCase();
+      if (!kw) continue;
+      const intent = kd?.search_intent_info?.main_intent ?? null;
+      const { error } = await context.supabase
+        .from("seo_keywords")
+        .update({
+          search_volume: kd?.keyword_info?.search_volume ?? null,
+          cpc: kd?.keyword_info?.cpc ?? null,
+          competition: kd?.keyword_info?.competition ?? null,
+          intent,
+        })
+        .eq("keyword", kw)
+        .eq("domain", domain)
+        .eq("database_code", data.database);
+      if (!error) enriched += 1;
+    }
+    return { enriched, soft_error: null };
+  });
+
+export const toggleSeoKeyword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid(), is_active: z.boolean() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("seo_keywords")
+      .update({ is_active: data.is_active })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteSeoKeywords = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ ids: z.array(z.string().uuid()).min(1) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.from("seo_keywords").delete().in("id", data.ids);
+    if (error) throw new Error(error.message);
+    return { deleted: data.ids.length };
+  });
+

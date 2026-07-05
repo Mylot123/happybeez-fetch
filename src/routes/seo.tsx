@@ -31,10 +31,14 @@ import { useAuth } from "@/lib/auth";
 import { analyzeDomain, auditPage, discoverRankedKeywords, researchKeyword, trackKeywordScrape } from "@/lib/seo.functions";
 import {
   addSeoCompetitor,
+  bulkAddSeoKeywords,
+  deleteSeoKeywords,
+  enrichSeoKeywords,
   listSeoCompetitors,
   refreshDfsRankings,
   removeSeoCompetitor,
   researchDfsKeywords,
+  toggleSeoKeyword,
 } from "@/lib/dataforseo.functions";
 
 type SeoRow = Database["public"]["Tables"]["seo_keywords"]["Row"];
@@ -140,6 +144,10 @@ function Seo() {
   // Tracking add
   const [newKw, setNewKw] = useState("");
   const [trackingBusy, setTrackingBusy] = useState(false);
+  const [bulkKw, setBulkKw] = useState("");
+  const [enriching, setEnriching] = useState(false);
+  const [selectedKwIds, setSelectedKwIds] = useState<Set<string>>(new Set());
+  const [rankFilter, setRankFilter] = useState<"all" | "top3" | "top10" | "top100" | "none">("all");
 
   // Audit
   const [audits, setAudits] = useState<Audit[]>([]);
@@ -382,7 +390,91 @@ function Seo() {
     const { error } = await supabase.from("seo_keywords").delete().eq("id", id);
     if (error) return toast.error(error.message);
     setTracked((p) => p.filter((x) => x.id !== id));
+    setSelectedKwIds((prev) => {
+      const n = new Set(prev);
+      n.delete(id);
+      return n;
+    });
   }
+
+  async function bulkDeleteTracked() {
+    if (selectedKwIds.size === 0) return;
+    const ids = Array.from(selectedKwIds);
+    try {
+      await deleteSeoKeywords({ data: { ids } });
+      setTracked((p) => p.filter((x) => !selectedKwIds.has(x.id)));
+      setSelectedKwIds(new Set());
+      toast.success(`${ids.length} keywords verwijderd.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Verwijderen mislukt.");
+    }
+  }
+
+  async function addBulkKeywords() {
+    const list = bulkKw.split(/[\n,]+/).map((s) => s.trim()).filter((s) => s.length >= 2);
+    if (!list.length) return toast.error("Plak of typ minimaal één keyword.");
+    if (!domain.trim()) return toast.error("Vul eerst een domein in.");
+    setTrackingBusy(true);
+    try {
+      const res = await bulkAddSeoKeywords({ data: { keywords: list, domain: domain.trim(), database } });
+      toast.success(`${res.added} nieuwe keywords toegevoegd${res.skipped ? ` (${res.skipped} bestonden al)` : ""}.`);
+      setBulkKw("");
+      const { data } = await supabase.from("seo_keywords").select("*").order("created_at", { ascending: false });
+      setTracked((data ?? []) as SeoRow[]);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Bulk toevoegen mislukt.");
+    } finally {
+      setTrackingBusy(false);
+    }
+  }
+
+  async function enrichAll() {
+    if (!domain.trim()) return toast.error("Vul een domein in.");
+    setEnriching(true);
+    try {
+      const res = await enrichSeoKeywords({ data: { domain: domain.trim(), database } });
+      if (res.soft_error) toast.info(res.soft_error);
+      else toast.success(`${res.enriched} keywords verrijkt.`);
+      const { data } = await supabase.from("seo_keywords").select("*").order("created_at", { ascending: false });
+      setTracked((data ?? []) as SeoRow[]);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Verrijken mislukt.");
+    } finally {
+      setEnriching(false);
+    }
+  }
+
+  async function toggleKeywordActive(row: SeoRow) {
+    const next = !((row as SeoRow & { is_active?: boolean }).is_active ?? true);
+    setTracked((p) => p.map((x) => (x.id === row.id ? { ...x, is_active: next } : x)));
+    try {
+      await toggleSeoKeyword({ data: { id: row.id, is_active: next } });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Aan/uit mislukt.");
+      setTracked((p) => p.map((x) => (x.id === row.id ? { ...x, is_active: !next } : x)));
+    }
+  }
+
+  function exportRankingsCsv() {
+    const rows = tracked.filter((r) => (r as SeoRow & { is_active?: boolean }).is_active !== false);
+    const header = ["keyword", "volume", "positie", "url", "laatst_gemeten"];
+    const body = rows.map((r) => [
+      r.keyword,
+      r.search_volume ?? "",
+      r.current_rank ?? "",
+      r.position_url ?? "",
+      r.last_checked_at ?? "",
+    ]);
+    const csv = [header, ...body].map((cols) => cols.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `rankings-${domain}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
 
   async function runAudit() {
     if (!auditUrl.trim()) return toast.error("Vul een URL in.");
@@ -718,19 +810,159 @@ function Seo() {
 
       {/* ──────────────── Ranglijst ──────────────── */}
       {tab === "ranglijst" ? (
-        <RankedKeywordsView
-          domain={domain}
-          ranked={ranked}
-          history={history}
-          loading={rankedLoading}
-          filter={rankedFilter}
-          setFilter={setRankedFilter}
-          sort={rankedSort}
-          setSort={setRankedSort}
-          checkedAt={rankedCheckedAt}
-          onRefresh={runRanked}
-          onAddTrack={addTracked}
-        />
+        <div className="space-y-6">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h2 className="font-heading text-2xl text-ink">Rankings</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Live posities op Google.{database} (mobile).
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={exportRankingsCsv} disabled={tracked.length === 0}>
+                <ExternalLink className="h-4 w-4" /> Export CSV
+              </Button>
+              <Button onClick={() => void refreshDfs()} disabled={dfsRefreshing} className="bg-wine text-white hover:bg-wine/90">
+                {dfsRefreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Refresh nu
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+            <StatCard icon={Crosshair} label="Actieve keywords" value={String(tracked.filter((r) => (r as SeoRow & { is_active?: boolean }).is_active !== false).length)} />
+            <StatCard icon={Trophy} label="In top 10" value={String(trackedStats.top10)} accent="green" />
+            <StatCard icon={Target} label="In top 100" value={String(tracked.filter((t) => (t.current_rank ?? 999) <= 100).length)} />
+            <StatCard
+              icon={RefreshCw}
+              label="Laatste refresh"
+              value={
+                tracked.reduce((max, r) => {
+                  const ts = r.last_checked_at ? +new Date(r.last_checked_at) : 0;
+                  return ts > max ? ts : max;
+                }, 0)
+                  ? new Date(
+                      tracked.reduce((max, r) => {
+                        const ts = r.last_checked_at ? +new Date(r.last_checked_at) : 0;
+                        return ts > max ? ts : max;
+                      }, 0),
+                    ).toLocaleString("nl-NL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
+                  : "—"
+              }
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {([
+              { id: "all", label: "Alle" },
+              { id: "top3", label: "Top 3" },
+              { id: "top10", label: "Top 10" },
+              { id: "top100", label: "Top 100" },
+              { id: "none", label: "Niet rankend" },
+            ] as const).map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setRankFilter(f.id)}
+                className={`text-sm px-3 py-1.5 rounded-md transition-colors ${
+                  rankFilter === f.id ? "bg-ink text-white" : "bg-card border border-border text-muted-foreground hover:bg-secondary/40"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            {(() => {
+              const rows = tracked
+                .filter((r) => (r as SeoRow & { is_active?: boolean }).is_active !== false)
+                .filter((r) => {
+                  const p = r.current_rank;
+                  if (rankFilter === "top3") return p != null && p <= 3;
+                  if (rankFilter === "top10") return p != null && p <= 10;
+                  if (rankFilter === "top100") return p != null && p <= 100;
+                  if (rankFilter === "none") return p == null;
+                  return true;
+                });
+              if (rows.length === 0) {
+                return <p className="p-8 text-sm text-muted-foreground text-center">Geen keywords in dit filter.</p>;
+              }
+              return (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/40">
+                      <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
+                        <th className="py-3 pl-4 pr-4">Keyword</th>
+                        <th className="py-3 pr-4 text-right">Volume</th>
+                        <th className="py-3 pr-4">Positie</th>
+                        <th className="py-3 pr-4 text-right">Verandering</th>
+                        <th className="py-3 pr-4">Rankt op</th>
+                        <th className="py-3 pr-4">Laatst gemeten</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {rows.map((row) => {
+                        const hist = history
+                          .filter((h) => h.keyword === row.keyword && h.domain === row.domain)
+                          .sort((a, b) => +new Date(b.checked_at) - +new Date(a.checked_at));
+                        const prev = hist[1];
+                        const rankDelta =
+                          prev?.rank != null && row.current_rank != null ? prev.rank - row.current_rank : null;
+                        return (
+                          <tr key={row.id} className="hover:bg-secondary/30">
+                            <td className="py-2 pl-4 pr-4 font-medium text-ink">{row.keyword}</td>
+                            <td className="py-2 pr-4 text-right tabular-nums">{fmtNum(row.search_volume)}</td>
+                            <td className="py-2 pr-4">
+                              {row.current_rank != null ? (
+                                positionBadge(row.current_rank)
+                              ) : row.last_checked_at ? (
+                                <span className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">Niet rankend</span>
+                              ) : (
+                                <span className="text-xs px-2 py-0.5 rounded bg-secondary text-muted-foreground">Nog niet gemeten</span>
+                              )}
+                            </td>
+                            <td className="py-2 pr-4 text-right">
+                              {rankDelta == null || rankDelta === 0 ? (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              ) : rankDelta > 0 ? (
+                                <span className="text-xs text-green-700 inline-flex items-center gap-0.5">
+                                  <TrendingUp className="h-3 w-3" /> +{rankDelta}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-destructive inline-flex items-center gap-0.5">
+                                  <TrendingDown className="h-3 w-3" /> {rankDelta}
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-2 pr-4 text-xs text-muted-foreground max-w-[20rem] truncate">
+                              {row.position_url ? (
+                                <a href={row.position_url} target="_blank" rel="noreferrer" className="hover:text-wine">
+                                  {row.position_url.replace(/^https?:\/\//, "")}
+                                </a>
+                              ) : (
+                                "—"
+                              )}
+                            </td>
+                            <td className="py-2 pr-4 text-xs text-muted-foreground">
+                              {row.last_checked_at
+                                ? new Date(row.last_checked_at).toLocaleString("nl-NL", {
+                                    day: "numeric",
+                                    month: "numeric",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })
+                                : "—"}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
       ) : null}
 
       {/* ──────────────── Research ──────────────── */}
@@ -810,86 +1042,120 @@ function Seo() {
       {/* ──────────────── Tracking ──────────────── */}
       {tab === "tracking" ? (
         <div className="space-y-6">
-          <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-            <StatCard icon={Crosshair} label="Gevolgde keywords" value={String(tracked.length)} />
-            <StatCard icon={Trophy} label="Top 3" value={String(trackedStats.top3)} accent="green" />
-            <StatCard icon={Target} label="Top 10" value={String(trackedStats.top10)} accent="green" />
-            <StatCard icon={TrendingUp} label="Gem. positie" value={trackedStats.avg ? `#${trackedStats.avg}` : "—"} />
-          </div>
-
-          <Section title="Rank-tracking" subtitle="Voeg keywords toe en bewaar iedere meting via DataForSEO." icon={Target}>
-            <div className="flex flex-wrap gap-2 mb-4">
-              <Input
-                value={newKw}
-                onChange={(e) => setNewKw(e.target.value)}
-                placeholder="bv. bijenhotel kopen"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") void addTracked(newKw);
-                }}
-                className="flex-1 min-w-[14rem]"
-              />
-              <Button onClick={() => void addTracked(newKw)} disabled={trackingBusy} className="bg-wine text-white hover:bg-wine/90">
-                {trackingBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crosshair className="h-4 w-4" />} Voeg toe & check
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h2 className="font-heading text-2xl text-ink">Keywords</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Voeg keywords toe — volume, CPC en intent worden automatisch verrijkt via DataForSEO.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              {selectedKwIds.size > 0 ? (
+                <Button variant="outline" onClick={() => void bulkDeleteTracked()} className="border-destructive/40 text-destructive">
+                  <Trash2 className="h-4 w-4" /> Verwijder {selectedKwIds.size}
+                </Button>
+              ) : null}
+              <Button onClick={() => void enrichAll()} disabled={enriching} variant="outline" className="border-wine text-wine">
+                {enriching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Verrijk alle
               </Button>
             </div>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+            <textarea
+              value={bulkKw}
+              onChange={(e) => setBulkKw(e.target.value)}
+              placeholder={"Plak keywords, één per regel\nbv.:\nbijenhotel kopen\nwilde bijen huis\ninsectenhotel groot"}
+              className="w-full min-h-[9rem] rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-wine"
+            />
+            <div className="flex justify-end">
+              <Button
+                onClick={() => void addBulkKeywords()}
+                disabled={trackingBusy || bulkKw.trim().length === 0}
+                className="bg-wine text-white hover:bg-wine/90"
+              >
+                {trackingBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crosshair className="h-4 w-4" />}{" "}
+                Voeg {bulkKw.split(/[\n,]+/).map((s) => s.trim()).filter((s) => s.length >= 2).length} keywords toe
+              </Button>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
             {tracked.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nog geen gevolgde keywords. Voeg er één toe of "volg" een idee uit het onderzoek.</p>
+              <p className="p-8 text-sm text-muted-foreground text-center">
+                Nog geen keywords. Plak een lijstje hierboven of "volg" een idee uit Research.
+              </p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead>
+                  <thead className="bg-muted/40">
                     <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                      <th className="py-2 pr-4">Keyword</th>
-                      <th className="py-2 pr-4 text-right">Positie</th>
-                      <th className="py-2 pr-4 text-right">Trend</th>
-                      <th className="py-2 pr-4 text-right">Volume</th>
-                      <th className="py-2 pr-4 text-right">KD</th>
-                      <th className="py-2 pr-4">URL</th>
-                      <th className="py-2 pr-4">Laatste check</th>
-                      <th className="py-2 pr-4 text-right">Acties</th>
+                      <th className="py-3 pl-4 pr-2 w-8">
+                        <input
+                          type="checkbox"
+                          checked={selectedKwIds.size > 0 && selectedKwIds.size === tracked.length}
+                          onChange={(e) =>
+                            setSelectedKwIds(e.target.checked ? new Set(tracked.map((t) => t.id)) : new Set())
+                          }
+                          className="h-4 w-4 accent-wine"
+                        />
+                      </th>
+                      <th className="py-3 pr-4">Keyword</th>
+                      <th className="py-3 pr-4 text-right">Volume</th>
+                      <th className="py-3 pr-4 text-right">CPC</th>
+                      <th className="py-3 pr-4">Intent</th>
+                      <th className="py-3 pr-4 text-right">Positie</th>
+                      <th className="py-3 pr-4 text-center">Actief</th>
+                      <th className="py-3 pr-4">Toegevoegd</th>
+                      <th className="py-3 pr-4 text-right">Acties</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
                     {tracked.map((row) => {
-                      const hist = history
-                        .filter((h) => h.keyword === row.keyword && h.domain === row.domain)
-                        .sort((a, b) => +new Date(b.checked_at) - +new Date(a.checked_at));
-                      const prev = hist[1];
-                      const rankDelta =
-                        prev?.rank != null && row.current_rank != null ? prev.rank - row.current_rank : null;
+                      const rowExt = row as SeoRow & { is_active?: boolean };
+                      const active = rowExt.is_active !== false;
+                      const checked = selectedKwIds.has(row.id);
                       return (
                         <tr key={row.id} className="hover:bg-secondary/30">
-                          <td className="py-2 pr-4 font-medium text-ink">{row.keyword}</td>
-                          <td className="py-2 pr-4 text-right">{positionBadge(row.current_rank)}</td>
-                          <td className="py-2 pr-4 text-right">
-                            {rankDelta == null || rankDelta === 0 ? (
-                              <span className="text-xs text-muted-foreground">—</span>
-                            ) : rankDelta > 0 ? (
-                              <span className="text-xs text-green-700 inline-flex items-center gap-0.5">
-                                <TrendingUp className="h-3 w-3" /> +{rankDelta}
-                              </span>
-                            ) : (
-                              <span className="text-xs text-destructive inline-flex items-center gap-0.5">
-                                <TrendingDown className="h-3 w-3" /> {rankDelta}
-                              </span>
-                            )}
-                            {hist.length > 1 ? (
-                              <span className="block text-[10px] text-muted-foreground">{hist.length} metingen</span>
-                            ) : null}
+                          <td className="py-2 pl-4 pr-2">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) =>
+                                setSelectedKwIds((prev) => {
+                                  const n = new Set(prev);
+                                  if (e.target.checked) n.add(row.id);
+                                  else n.delete(row.id);
+                                  return n;
+                                })
+                              }
+                              className="h-4 w-4 accent-wine"
+                            />
                           </td>
+                          <td className="py-2 pr-4 font-medium text-ink">{row.keyword}</td>
                           <td className="py-2 pr-4 text-right tabular-nums">{fmtNum(row.search_volume)}</td>
-                          <td className="py-2 pr-4 text-right tabular-nums">{kdBadge(row.difficulty)}</td>
-                          <td className="py-2 pr-4 text-xs text-muted-foreground max-w-[18rem] truncate">
-                            {row.position_url ? (
-                              <a href={row.position_url} target="_blank" rel="noreferrer" className="hover:text-wine">
-                                {row.position_url}
-                              </a>
-                            ) : (
-                              "—"
-                            )}
+                          <td className="py-2 pr-4 text-right tabular-nums">
+                            {row.cpc != null ? `€${Number(row.cpc).toFixed(2)}` : "—"}
+                          </td>
+                          <td className="py-2 pr-4">{intentBadge(row.intent)}</td>
+                          <td className="py-2 pr-4 text-right">{positionBadge(row.current_rank)}</td>
+                          <td className="py-2 pr-4 text-center">
+                            <button
+                              onClick={() => void toggleKeywordActive(row)}
+                              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                                active ? "bg-wine" : "bg-muted"
+                              }`}
+                              aria-label={active ? "Uitzetten" : "Aanzetten"}
+                            >
+                              <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                  active ? "translate-x-4" : "translate-x-0.5"
+                                }`}
+                              />
+                            </button>
                           </td>
                           <td className="py-2 pr-4 text-xs text-muted-foreground">
-                            {row.last_checked_at ? new Date(row.last_checked_at).toLocaleDateString("nl-NL") : "—"}
+                            {new Date(row.created_at).toLocaleDateString("nl-NL")}
                           </td>
                           <td className="py-2 pr-4 text-right">
                             <div className="inline-flex gap-2">
@@ -897,11 +1163,15 @@ function Seo() {
                                 onClick={() => void refreshKeyword(row)}
                                 disabled={trackingBusy}
                                 className="text-muted-foreground hover:text-wine"
-                                title="Ververs"
+                                title="Ververs positie"
                               >
                                 <RefreshCw className="h-4 w-4" />
                               </button>
-                              <button onClick={() => void removeTracked(row.id)} className="text-muted-foreground hover:text-destructive" title="Verwijder">
+                              <button
+                                onClick={() => void removeTracked(row.id)}
+                                className="text-muted-foreground hover:text-destructive"
+                                title="Verwijder"
+                              >
                                 <Trash2 className="h-4 w-4" />
                               </button>
                             </div>
@@ -913,66 +1183,71 @@ function Seo() {
                 </table>
               </div>
             )}
-          </Section>
+          </div>
+
+          <div className="rounded-lg border border-border bg-card p-4">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Snel toevoegen</p>
+            <div className="flex flex-wrap gap-2">
+              <Input
+                value={newKw}
+                onChange={(e) => setNewKw(e.target.value)}
+                placeholder="Eén keyword toevoegen + direct rank checken"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void addTracked(newKw);
+                }}
+                className="flex-1 min-w-[14rem]"
+              />
+              <Button onClick={() => void addTracked(newKw)} disabled={trackingBusy} className="bg-wine text-white hover:bg-wine/90">
+                {trackingBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crosshair className="h-4 w-4" />} Voeg toe & check
+              </Button>
+            </div>
+          </div>
         </div>
       ) : null}
 
       {/* ──────────────── Audit ──────────────── */}
       {tab === "audit" ? (
-        <div className="grid gap-6 lg:grid-cols-[24rem_1fr]">
-          <Section title="Nieuwe audit" subtitle="On-page SEO-check met AI-advies." icon={FileSearch}>
-            <div className="space-y-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="au-url">Pagina URL</Label>
-                <Input id="au-url" value={auditUrl} onChange={(e) => setAuditUrl(e.target.value)} placeholder="https://…" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="au-kw">Doel-keyword</Label>
-                <Input id="au-kw" value={auditKw} onChange={(e) => setAuditKw(e.target.value)} placeholder="bv. bijenhotel" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="au-goal">Zakelijk doel</Label>
-                <Input id="au-goal" value={auditGoal} onChange={(e) => setAuditGoal(e.target.value)} placeholder="bv. verkoop / autoriteit" />
-              </div>
-              <Button onClick={runAudit} disabled={auditing} className="w-full bg-wine text-white hover:bg-wine/90">
-                {auditing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} {auditing ? "Audit loopt…" : "Start audit"}
+        <div className="space-y-6">
+          <div>
+            <h2 className="font-heading text-2xl text-ink">On-page Audit</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Analyseer meta, content, techniek, snelheid en Core Web Vitals.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+              <Input
+                value={auditUrl}
+                onChange={(e) => setAuditUrl(e.target.value)}
+                placeholder="https://voorbeeld.nl/pagina"
+              />
+              <Input
+                value={auditKw}
+                onChange={(e) => setAuditKw(e.target.value)}
+                placeholder="Focus keyword"
+              />
+              <Button onClick={runAudit} disabled={auditing} className="bg-wine text-white hover:bg-wine/90">
+                {auditing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Run audit
               </Button>
             </div>
-            {audits.length > 0 ? (
-              <div className="mt-6">
-                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-2">Eerdere audits</p>
-                <div className="space-y-1.5">
-                  {audits.map((a) => (
-                    <button
-                      key={a.id}
-                      onClick={() => setActiveAudit(a)}
-                      className={`w-full text-left text-xs p-2 rounded border transition-colors ${
-                        activeAudit?.id === a.id ? "border-wine bg-secondary/40" : "border-border hover:bg-secondary/30"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="truncate">{a.url.replace(/^https?:\/\//, "")}</span>
-                        <span className={`tabular-nums font-semibold ${scoreColor(a.score)}`}>{a.score ?? "—"}</span>
-                      </div>
-                      <span className="text-muted-foreground">{new Date(a.created_at).toLocaleString("nl-NL")}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </Section>
-
-          <div className="space-y-6">
-            {activeAudit ? (
-              <AuditView audit={activeAudit} />
-            ) : (
-              <div className="bg-card border border-dashed border-border rounded-lg p-10 text-center">
-                <Eye className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                <p className="font-heading text-lg text-ink">Nog geen audit geopend</p>
-                <p className="text-sm text-muted-foreground mt-1">Start een nieuwe audit links, of kies een eerdere.</p>
-              </div>
-            )}
           </div>
+
+          {audits.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center">
+              <Eye className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+              <p className="font-heading text-lg text-ink">Nog geen audits</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Vul een URL + focus keyword in hierboven en klik Run audit.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {audits.map((a) => (
+                <AuditCard key={a.id} audit={a} />
+              ))}
+            </div>
+          )}
         </div>
       ) : null}
 
@@ -1156,6 +1431,19 @@ function kdBadge(kd: number | null | undefined): React.ReactNode {
   return <span className={`tabular-nums ${cls}`}>{v}</span>;
 }
 
+function intentBadge(intent: string | null | undefined): React.ReactNode {
+  if (!intent) return <span className="text-muted-foreground text-xs">—</span>;
+  const map: Record<string, { label: string; cls: string }> = {
+    informational: { label: "informatief", cls: "bg-blue-100 text-blue-800" },
+    navigational: { label: "navigatie", cls: "bg-secondary text-muted-foreground" },
+    commercial: { label: "commercieel", cls: "bg-honey/40 text-ink" },
+    transactional: { label: "koop", cls: "bg-green-100 text-green-800" },
+  };
+  const m = map[intent.toLowerCase()] ?? { label: intent, cls: "bg-secondary text-muted-foreground" };
+  return <span className={`text-xs px-2 py-0.5 rounded font-medium ${m.cls}`}>{m.label}</span>;
+}
+
+
 function StatCard({
   icon: Icon,
   label,
@@ -1325,6 +1613,121 @@ function KeywordTable({ rows, highlight }: { rows: TopKw[]; highlight?: boolean 
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function AuditCard({ audit }: { audit: Audit }) {
+  const issues = (audit.issues ?? []) as string[];
+  const recs = (audit.recommendations ?? []) as string[];
+  const [open, setOpen] = useState(true);
+
+  const titleLen = (audit.title ?? "").length;
+  const descLen = (audit.meta_description ?? "").length;
+  const words = audit.word_count ?? 0;
+  const subs = [
+    { label: "H1", score: audit.h1 ? 10 : 0, max: 10 },
+    { label: "Title", score: titleLen >= 30 && titleLen <= 60 ? 5 : titleLen ? 3 : 0, max: 5 },
+    { label: "Content", score: words >= 600 ? 10 : words >= 300 ? 5 : 0, max: 10 },
+    { label: "Keyword", score: audit.target_keyword ? 15 : 0, max: 15 },
+    { label: "Description", score: descLen >= 120 && descLen <= 160 ? 5 : descLen ? 3 : 0, max: 5 },
+    { label: "Performance", score: audit.score != null ? Math.round(((audit.score ?? 0) / 100) * 15) : 0, max: 15 },
+  ];
+
+  const findings: Array<{ sev: "high" | "med" | "low"; text: string }> = [];
+  if (titleLen && (titleLen < 30 || titleLen > 60))
+    findings.push({ sev: "med", text: `Title lengte ${titleLen} tekens — mik op 30–60.` });
+  if (descLen && (descLen < 120 || descLen > 160))
+    findings.push({ sev: "med", text: `Description lengte ${descLen} tekens — mik op 120–160.` });
+  if (!audit.h1) findings.push({ sev: "high", text: "Geen H1 gevonden op de pagina." });
+  if (words > 0 && words < 300) findings.push({ sev: "high", text: `Slechts ${words} woorden — dunne content.` });
+  for (const it of issues) findings.push({ sev: "med", text: it });
+  for (const r of recs) findings.push({ sev: "low", text: `AI: ${r}` });
+
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <button onClick={() => setOpen((v) => !v)} className="w-full flex items-start justify-between gap-4 p-4 text-left hover:bg-secondary/20">
+        <div className="min-w-0">
+          <p className="font-heading text-lg text-ink truncate">{audit.url}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {audit.target_keyword ? `"${audit.target_keyword}" · ` : ""}
+            {new Date(audit.created_at).toLocaleString("nl-NL")}
+          </p>
+          <div className="flex gap-2 mt-2">
+            {findings.filter((f) => f.sev === "high").length > 0 ? (
+              <span className="text-xs px-2 py-0.5 rounded border border-destructive text-destructive">
+                {findings.filter((f) => f.sev === "high").length} kritiek
+              </span>
+            ) : null}
+            {findings.filter((f) => f.sev === "med").length > 0 ? (
+              <span className="text-xs px-2 py-0.5 rounded border border-honey text-honey">
+                {findings.filter((f) => f.sev === "med").length} verbeterpunten
+              </span>
+            ) : null}
+            {findings.filter((f) => f.sev === "low").length > 0 ? (
+              <span className="text-xs px-2 py-0.5 rounded border border-border text-muted-foreground">
+                {findings.filter((f) => f.sev === "low").length} suggesties
+              </span>
+            ) : null}
+          </div>
+        </div>
+        <div className="text-right shrink-0">
+          <div className={`text-3xl font-heading font-bold tabular-nums ${scoreColor(audit.score)}`}>
+            {audit.score ?? "—"}
+            <span className="text-sm text-muted-foreground font-normal">/100</span>
+          </div>
+          <div className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Score</div>
+        </div>
+      </button>
+
+      {open ? (
+        <div className="grid gap-6 md:grid-cols-2 border-t border-border p-5">
+          <div>
+            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground mb-3">Deelscores</p>
+            <div className="space-y-2 text-sm">
+              {subs.map((s) => (
+                <div key={s.label} className="flex items-center justify-between border-b border-border/60 py-1.5">
+                  <span className="text-foreground/80">{s.label}</span>
+                  <span className="tabular-nums font-medium text-ink">{s.score}</span>
+                </div>
+              ))}
+            </div>
+            {audit.ai_summary ? (
+              <div className="mt-4 rounded-md bg-honey/10 border border-honey/40 p-3 text-xs text-foreground/85 whitespace-pre-line">
+                {audit.ai_summary}
+              </div>
+            ) : null}
+          </div>
+
+          <div>
+            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground mb-3">Bevindingen ({findings.length})</p>
+            {findings.length === 0 ? (
+              <p className="text-sm text-muted-foreground inline-flex items-center gap-1">
+                <CheckCircle2 className="h-4 w-4 text-green-700" /> Geen bevindingen — keurig.
+              </p>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {findings.map((f, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span
+                      className={`text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded border ${
+                        f.sev === "high"
+                          ? "border-destructive text-destructive"
+                          : f.sev === "med"
+                            ? "border-honey text-honey"
+                            : "border-border text-muted-foreground"
+                      }`}
+                    >
+                      {f.sev === "high" ? "high" : f.sev === "med" ? "med" : "low"}
+                    </span>
+                    <span className="text-foreground/85">{f.text}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
