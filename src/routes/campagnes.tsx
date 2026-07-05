@@ -296,8 +296,70 @@ function CampagnesPage() {
               </article>
             ))}
           </section>
+
+          {versions.length > 0 && (
+            <section className="mt-8">
+              <div className="flex items-center gap-2 mb-3">
+                <History className="w-4 h-4 text-muted-foreground" />
+                <h3 className="text-sm font-semibold text-ink uppercase tracking-widest">Vorige versies</h3>
+              </div>
+              <ul className="divide-y divide-border/60 border border-border/60 rounded-lg overflow-hidden">
+                {versions.map((v) => {
+                  const snap = (v.snapshot ?? {}) as { theme?: string; blocks?: unknown[] };
+                  const blockCount = Array.isArray(snap.blocks) ? snap.blocks.length : 0;
+                  return (
+                    <li key={v.id} className="flex items-center justify-between gap-4 px-4 py-3 bg-card">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-ink truncate">{snap.theme ?? "Onbekend thema"}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {new Date(v.created_at).toLocaleString("nl-NL", { dateStyle: "short", timeStyle: "short" })}
+                          {" · "}{blockCount} blokken
+                          {v.prev_status ? ` · was ${STATUS_LABEL[v.prev_status] ?? v.prev_status}` : ""}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onRestore(v.id)}
+                        disabled={restoringId === v.id}
+                      >
+                        {restoringId === v.id ? (
+                          <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                        ) : (
+                          <RotateCcw className="w-3.5 h-3.5 mr-1" />
+                        )}
+                        Herstel
+                      </Button>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="text-xs text-muted-foreground mt-2">
+                Bij herstel wordt het huidige plan ook opgeslagen als versie, zodat je altijd terug kunt.
+              </p>
+            </section>
+          )}
         </>
       )}
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-600" />
+              Bestaand plan overschrijven?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Het huidige maandplan heeft status <span className="font-semibold">{STATUS_LABEL[plan?.status ?? ""] ?? plan?.status}</span>.
+              Opnieuw genereren vervangt het thema en alle contentblokken. De huidige versie wordt bewaard onder "Vorige versies" zodat je hem kunt herstellen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuleren</AlertDialogCancel>
+            <AlertDialogAction onClick={onConfirmRegenerate}>Ja, overschrijf</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
