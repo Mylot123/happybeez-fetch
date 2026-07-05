@@ -121,6 +121,37 @@ export const generateCampaignPlan = createServerFn({ method: "POST" })
       throw new Error("AI-antwoord miste verplichte velden.");
     }
 
+    // Snapshot existing plan (if any) before overwrite so it can be restored
+    const { data: existing } = await context.supabase
+      .from("campaign_plans")
+      .select("id, theme, goal, summary, status")
+      .eq("org_id", data.org_id)
+      .eq("year", data.year)
+      .eq("month", data.month)
+      .maybeSingle();
+
+    if (existing?.id) {
+      const { data: existingBlocks } = await context.supabase
+        .from("campaign_blocks")
+        .select("name, pillar, week, hook, platforms, notes, sort_order")
+        .eq("plan_id", existing.id)
+        .order("sort_order", { ascending: true });
+
+      await context.supabase.from("campaign_plan_versions").insert({
+        plan_id: existing.id,
+        org_id: data.org_id,
+        prev_status: existing.status,
+        created_by: context.userId,
+        snapshot: {
+          theme: existing.theme,
+          goal: existing.goal,
+          summary: existing.summary,
+          status: existing.status,
+          blocks: existingBlocks ?? [],
+        },
+      });
+    }
+
     const { data: plan, error: planErr } = await context.supabase
       .from("campaign_plans")
       .upsert(
