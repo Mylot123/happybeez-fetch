@@ -1617,6 +1617,121 @@ function KeywordTable({ rows, highlight }: { rows: TopKw[]; highlight?: boolean 
   );
 }
 
+function AuditCard({ audit }: { audit: Audit }) {
+  const issues = (audit.issues ?? []) as string[];
+  const recs = (audit.recommendations ?? []) as string[];
+  const [open, setOpen] = useState(true);
+
+  const titleLen = (audit.title ?? "").length;
+  const descLen = (audit.meta_description ?? "").length;
+  const words = audit.word_count ?? 0;
+  const subs = [
+    { label: "H1", score: audit.h1 ? 10 : 0, max: 10 },
+    { label: "Title", score: titleLen >= 30 && titleLen <= 60 ? 5 : titleLen ? 3 : 0, max: 5 },
+    { label: "Content", score: words >= 600 ? 10 : words >= 300 ? 5 : 0, max: 10 },
+    { label: "Keyword", score: audit.target_keyword ? 15 : 0, max: 15 },
+    { label: "Description", score: descLen >= 120 && descLen <= 160 ? 5 : descLen ? 3 : 0, max: 5 },
+    { label: "Performance", score: audit.score != null ? Math.round(((audit.score ?? 0) / 100) * 15) : 0, max: 15 },
+  ];
+
+  const findings: Array<{ sev: "high" | "med" | "low"; text: string }> = [];
+  if (titleLen && (titleLen < 30 || titleLen > 60))
+    findings.push({ sev: "med", text: `Title lengte ${titleLen} tekens — mik op 30–60.` });
+  if (descLen && (descLen < 120 || descLen > 160))
+    findings.push({ sev: "med", text: `Description lengte ${descLen} tekens — mik op 120–160.` });
+  if (!audit.h1) findings.push({ sev: "high", text: "Geen H1 gevonden op de pagina." });
+  if (words > 0 && words < 300) findings.push({ sev: "high", text: `Slechts ${words} woorden — dunne content.` });
+  for (const it of issues) findings.push({ sev: "med", text: it });
+  for (const r of recs) findings.push({ sev: "low", text: `AI: ${r}` });
+
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <button onClick={() => setOpen((v) => !v)} className="w-full flex items-start justify-between gap-4 p-4 text-left hover:bg-secondary/20">
+        <div className="min-w-0">
+          <p className="font-heading text-lg text-ink truncate">{audit.url}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {audit.target_keyword ? `"${audit.target_keyword}" · ` : ""}
+            {new Date(audit.created_at).toLocaleString("nl-NL")}
+          </p>
+          <div className="flex gap-2 mt-2">
+            {findings.filter((f) => f.sev === "high").length > 0 ? (
+              <span className="text-xs px-2 py-0.5 rounded border border-destructive text-destructive">
+                {findings.filter((f) => f.sev === "high").length} kritiek
+              </span>
+            ) : null}
+            {findings.filter((f) => f.sev === "med").length > 0 ? (
+              <span className="text-xs px-2 py-0.5 rounded border border-honey text-honey">
+                {findings.filter((f) => f.sev === "med").length} verbeterpunten
+              </span>
+            ) : null}
+            {findings.filter((f) => f.sev === "low").length > 0 ? (
+              <span className="text-xs px-2 py-0.5 rounded border border-border text-muted-foreground">
+                {findings.filter((f) => f.sev === "low").length} suggesties
+              </span>
+            ) : null}
+          </div>
+        </div>
+        <div className="text-right shrink-0">
+          <div className={`text-3xl font-heading font-bold tabular-nums ${scoreColor(audit.score)}`}>
+            {audit.score ?? "—"}
+            <span className="text-sm text-muted-foreground font-normal">/100</span>
+          </div>
+          <div className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Score</div>
+        </div>
+      </button>
+
+      {open ? (
+        <div className="grid gap-6 md:grid-cols-2 border-t border-border p-5">
+          <div>
+            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground mb-3">Deelscores</p>
+            <div className="space-y-2 text-sm">
+              {subs.map((s) => (
+                <div key={s.label} className="flex items-center justify-between border-b border-border/60 py-1.5">
+                  <span className="text-foreground/80">{s.label}</span>
+                  <span className="tabular-nums font-medium text-ink">{s.score}</span>
+                </div>
+              ))}
+            </div>
+            {audit.ai_summary ? (
+              <div className="mt-4 rounded-md bg-honey/10 border border-honey/40 p-3 text-xs text-foreground/85 whitespace-pre-line">
+                {audit.ai_summary}
+              </div>
+            ) : null}
+          </div>
+
+          <div>
+            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground mb-3">Bevindingen ({findings.length})</p>
+            {findings.length === 0 ? (
+              <p className="text-sm text-muted-foreground inline-flex items-center gap-1">
+                <CheckCircle2 className="h-4 w-4 text-green-700" /> Geen bevindingen — keurig.
+              </p>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {findings.map((f, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span
+                      className={`text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded border ${
+                        f.sev === "high"
+                          ? "border-destructive text-destructive"
+                          : f.sev === "med"
+                            ? "border-honey text-honey"
+                            : "border-border text-muted-foreground"
+                      }`}
+                    >
+                      {f.sev === "high" ? "high" : f.sev === "med" ? "med" : "low"}
+                    </span>
+                    <span className="text-foreground/85">{f.text}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function AuditView({ audit }: { audit: Audit }) {
   const issues = (audit.issues ?? []) as string[];
   const recs = (audit.recommendations ?? []) as string[];
