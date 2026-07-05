@@ -330,17 +330,24 @@ export type Database = {
       }
       content_calendar_items: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
+          campaign_block_id: string | null
           canva_link: string | null
           channel: string
           content_text: string | null
           content_type: string | null
           created_at: string
+          failure_reason: string | null
+          hashtags: string[]
           id: string
           image_storage_path: string | null
           image_url: string | null
           notes: string | null
           org_id: string
           publish_date: string | null
+          review_notes: string | null
+          scheduled_at: string | null
           source_id: string | null
           source_type: string | null
           status: string
@@ -349,17 +356,24 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          campaign_block_id?: string | null
           canva_link?: string | null
           channel: string
           content_text?: string | null
           content_type?: string | null
           created_at?: string
+          failure_reason?: string | null
+          hashtags?: string[]
           id?: string
           image_storage_path?: string | null
           image_url?: string | null
           notes?: string | null
           org_id?: string
           publish_date?: string | null
+          review_notes?: string | null
+          scheduled_at?: string | null
           source_id?: string | null
           source_type?: string | null
           status?: string
@@ -368,17 +382,24 @@ export type Database = {
           user_id: string
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          campaign_block_id?: string | null
           canva_link?: string | null
           channel?: string
           content_text?: string | null
           content_type?: string | null
           created_at?: string
+          failure_reason?: string | null
+          hashtags?: string[]
           id?: string
           image_storage_path?: string | null
           image_url?: string | null
           notes?: string | null
           org_id?: string
           publish_date?: string | null
+          review_notes?: string | null
+          scheduled_at?: string | null
           source_id?: string | null
           source_type?: string | null
           status?: string
@@ -387,6 +408,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "content_calendar_items_campaign_block_id_fkey"
+            columns: ["campaign_block_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_blocks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "content_calendar_items_org_id_fkey"
             columns: ["org_id"]
