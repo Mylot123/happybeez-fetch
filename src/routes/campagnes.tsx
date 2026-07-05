@@ -57,8 +57,11 @@ function CampagnesPage() {
   const [year, setYear] = useState(now.getFullYear());
   const [extra, setExtra] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [restoringId, setRestoringId] = useState<string | null>(null);
   const gen = useServerFn(generateCampaignPlan);
   const setStatus = useServerFn(setCampaignPlanStatus);
+  const restoreFn = useServerFn(restoreCampaignPlanVersion);
   const qc = useQueryClient();
 
   const planQuery = useQuery({
