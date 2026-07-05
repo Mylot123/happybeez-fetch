@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SocialProfielenRouteImport } from './routes/social-profielen'
 import { Route as SeoRouteImport } from './routes/seo'
+import { Route as PlanningRouteImport } from './routes/planning'
 import { Route as NieuwsRouteImport } from './routes/nieuws'
 import { Route as MerkprofielRouteImport } from './routes/merkprofiel'
 import { Route as KalenderRouteImport } from './routes/kalender'
@@ -30,6 +31,11 @@ const SocialProfielenRoute = SocialProfielenRouteImport.update({
 const SeoRoute = SeoRouteImport.update({
   id: '/seo',
   path: '/seo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanningRoute = PlanningRouteImport.update({
+  id: '/planning',
+  path: '/planning',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NieuwsRoute = NieuwsRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/kalender': typeof KalenderRoute
   '/merkprofiel': typeof MerkprofielRoute
   '/nieuws': typeof NieuwsRoute
+  '/planning': typeof PlanningRoute
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
 }
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/kalender': typeof KalenderRoute
   '/merkprofiel': typeof MerkprofielRoute
   '/nieuws': typeof NieuwsRoute
+  '/planning': typeof PlanningRoute
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
 }
@@ -123,6 +131,7 @@ export interface FileRoutesById {
   '/kalender': typeof KalenderRoute
   '/merkprofiel': typeof MerkprofielRoute
   '/nieuws': typeof NieuwsRoute
+  '/planning': typeof PlanningRoute
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
 }
@@ -139,6 +148,7 @@ export interface FileRouteTypes {
     | '/kalender'
     | '/merkprofiel'
     | '/nieuws'
+    | '/planning'
     | '/seo'
     | '/social-profielen'
   fileRoutesByTo: FileRoutesByTo
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/kalender'
     | '/merkprofiel'
     | '/nieuws'
+    | '/planning'
     | '/seo'
     | '/social-profielen'
   id:
@@ -167,6 +178,7 @@ export interface FileRouteTypes {
     | '/kalender'
     | '/merkprofiel'
     | '/nieuws'
+    | '/planning'
     | '/seo'
     | '/social-profielen'
   fileRoutesById: FileRoutesById
@@ -182,6 +194,7 @@ export interface RootRouteChildren {
   KalenderRoute: typeof KalenderRoute
   MerkprofielRoute: typeof MerkprofielRoute
   NieuwsRoute: typeof NieuwsRoute
+  PlanningRoute: typeof PlanningRoute
   SeoRoute: typeof SeoRoute
   SocialProfielenRoute: typeof SocialProfielenRoute
 }
@@ -200,6 +213,13 @@ declare module '@tanstack/react-router' {
       path: '/seo'
       fullPath: '/seo'
       preLoaderRoute: typeof SeoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/planning': {
+      id: '/planning'
+      path: '/planning'
+      fullPath: '/planning'
+      preLoaderRoute: typeof PlanningRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/nieuws': {
@@ -286,6 +306,7 @@ const rootRouteChildren: RootRouteChildren = {
   KalenderRoute: KalenderRoute,
   MerkprofielRoute: MerkprofielRoute,
   NieuwsRoute: NieuwsRoute,
+  PlanningRoute: PlanningRoute,
   SeoRoute: SeoRoute,
   SocialProfielenRoute: SocialProfielenRoute,
 }
