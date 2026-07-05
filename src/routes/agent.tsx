@@ -1,13 +1,31 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useConversation, ConversationProvider } from "@elevenlabs/react";
-import { Mic, MicOff, Loader2, MessageSquare, Trash2, ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
+import { Mic, MicOff, Loader2, MessageSquare, Trash2, ChevronDown, ChevronRight, ExternalLink, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useServerFn } from "@tanstack/react-start";
+import { summarizeAgentConversation, backfillAgentSummaries } from "@/lib/agent.functions";
+
+const CATEGORY_LIST = [
+  "SEO & Vindbaarheid",
+  "Content & Social",
+  "Techniek/Bugs",
+  "Account & Instellingen",
+  "Overig",
+] as const;
+
+const CATEGORY_STYLES: Record<string, string> = {
+  "SEO & Vindbaarheid": "bg-wine/10 text-wine border-wine/30",
+  "Content & Social": "bg-gold/15 text-gold border-gold/30",
+  "Techniek/Bugs": "bg-destructive/10 text-destructive border-destructive/30",
+  "Account & Instellingen": "bg-forest/10 text-forest border-forest/30",
+  "Overig": "bg-muted text-muted-foreground border-border",
+};
 
 const AGENT_ID = "agent_9401kvw93hayexdrbs6z367s52m9";
 
