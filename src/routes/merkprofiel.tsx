@@ -208,13 +208,16 @@ function MerkprofielPage() {
             )}
 
             {step === 3 && (
-              <div className="space-y-6">
-                <ArrayField
-                  label="Contentpijlers (3–5)"
-                  hint="Vaste thema's waar posts over gaan."
-                  values={form.pillars}
-                  onChange={(v) => setField("pillars", v)}
-                  placeholder="Bv. Bijen & natuur"
+              <div className="space-y-8">
+                <PillarMixField
+                  values={form.pillar_mix}
+                  onChange={(v) => {
+                    setField("pillar_mix", v);
+                    setField(
+                      "pillars",
+                      v.map((p) => p.name).filter((n) => n.trim().length > 0),
+                    );
+                  }}
                 />
                 <ArrayField
                   label="USPs / bewijs"
