@@ -344,3 +344,110 @@ function ArrayField({
     </div>
   );
 }
+
+const DEFAULT_MIX: PillarMix[] = [
+  { name: "Educatie & tips", weight: 30 },
+  { name: "Achter de schermen", weight: 25 },
+  { name: "Klantverhalen", weight: 20 },
+  { name: "Aanbod & acties", weight: 15 },
+  { name: "Actueel & seizoen", weight: 10 },
+];
+
+function PillarMixField({
+  values,
+  onChange,
+}: {
+  values: PillarMix[];
+  onChange: (v: PillarMix[]) => void;
+}) {
+  const list = values.length ? values : [];
+  const total = list.reduce((s, p) => s + (p.weight || 0), 0);
+  const ok = total === 100;
+
+  const update = (i: number, patch: Partial<PillarMix>) =>
+    onChange(list.map((p, j) => (j === i ? { ...p, ...patch } : p)));
+  const remove = (i: number) => onChange(list.filter((_, j) => j !== i));
+  const add = () => onChange([...list, { name: "Nieuwe pijler", weight: 0 }]);
+  const normalize = () => {
+    if (!list.length) return;
+    const t = list.reduce((s, p) => s + (p.weight || 0), 0) || 1;
+    const scaled = list.map((p) => ({ ...p, weight: Math.round((p.weight / t) * 100) }));
+    const diff = 100 - scaled.reduce((s, p) => s + p.weight, 0);
+    if (scaled.length) scaled[0].weight += diff;
+    onChange(scaled);
+  };
+
+  return (
+    <div>
+      <div className="flex items-baseline justify-between mb-1">
+        <Label>Contentpijlers & balans</Label>
+        <span
+          className={cn(
+            "text-xs font-semibold tabular-nums",
+            ok ? "text-emerald-600" : "text-wine",
+          )}
+        >
+          Totaal: {total}% {ok ? "✓" : "— moet 100% zijn"}
+        </span>
+      </div>
+      <p className="text-xs text-muted-foreground mb-3">
+        Bepaal per type bericht welk aandeel het in de mix krijgt. De AI-planner gebruikt deze balans om
+        campagnes en posts te verdelen.
+      </p>
+
+      {list.length === 0 && (
+        <div className="border border-dashed border-border rounded-md p-4 text-sm text-muted-foreground mb-3">
+          Nog geen pijlers. Start met een aanbevolen mix of voeg zelf toe.
+          <div className="mt-3">
+            <Button type="button" variant="outline" size="sm" onClick={() => onChange(DEFAULT_MIX)}>
+              Aanbevolen mix laden
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {list.map((p, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-3 bg-muted/30 border border-border/60 rounded-md px-3 py-2"
+          >
+            <Input
+              value={p.name}
+              onChange={(e) => update(i, { name: e.target.value })}
+              className="w-56 h-8 bg-background"
+            />
+            <input
+              type="range"
+              min={0}
+              max={60}
+              value={p.weight}
+              onChange={(e) => update(i, { weight: Number(e.target.value) })}
+              className="flex-1 accent-wine"
+            />
+            <span className="w-12 text-right text-sm font-semibold tabular-nums">{p.weight}%</span>
+            <button
+              type="button"
+              onClick={() => remove(i)}
+              className="text-muted-foreground hover:text-wine text-lg leading-none px-1"
+              aria-label="Verwijder pijler"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-2 mt-3">
+        <Button type="button" variant="outline" size="sm" onClick={add}>
+          + Pijler toevoegen
+        </Button>
+        {list.length > 0 && (
+          <Button type="button" variant="ghost" size="sm" onClick={normalize}>
+            Normaliseer naar 100%
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
