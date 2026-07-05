@@ -177,11 +177,28 @@ function AgentPage() {
     if (!user) return;
     const { data } = await supabase
       .from("agent_conversations")
-      .select("id,title,started_at,ended_at,elevenlabs_conversation_id")
+      .select("id,title,started_at,ended_at,elevenlabs_conversation_id,summary,category")
       .eq("user_id", user.id)
       .order("started_at", { ascending: false })
       .limit(50);
     setHistory(data ?? []);
+    if (!backfilledRef.current && (data ?? []).some((c) => !c.summary || !c.category)) {
+      backfilledRef.current = true;
+      try {
+        const res = await backfillFn();
+        if (res?.processed > 0) {
+          const { data: refreshed } = await supabase
+            .from("agent_conversations")
+            .select("id,title,started_at,ended_at,elevenlabs_conversation_id,summary,category")
+            .eq("user_id", user.id)
+            .order("started_at", { ascending: false })
+            .limit(50);
+          setHistory(refreshed ?? []);
+        }
+      } catch {
+        /* stil */
+      }
+    }
   }
 
   useEffect(() => {
