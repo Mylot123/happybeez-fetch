@@ -1,0 +1,1 @@
+ALTER TABLE public.brand_profiles ADD COLUMN IF NOT EXISTS pillar_mix jsonb NOT NULL DEFAULT '[]'::jsonb;

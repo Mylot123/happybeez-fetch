@@ -170,6 +170,7 @@ export type Database = {
           id: string
           industry: string | null
           org_id: string
+          pillar_mix: Json
           pillars: string[]
           primary_color: string | null
           secondary_color: string | null
@@ -185,6 +186,7 @@ export type Database = {
           id?: string
           industry?: string | null
           org_id: string
+          pillar_mix?: Json
           pillars?: string[]
           primary_color?: string | null
           secondary_color?: string | null
@@ -200,6 +202,7 @@ export type Database = {
           id?: string
           industry?: string | null
           org_id?: string
+          pillar_mix?: Json
           pillars?: string[]
           primary_color?: string | null
           secondary_color?: string | null
