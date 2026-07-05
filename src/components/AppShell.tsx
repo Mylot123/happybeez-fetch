@@ -18,6 +18,7 @@ import pdfAsset from "@/assets/HappyBeez-Social-Studio.pdf.asset.json";
 import pptxAsset from "@/assets/HappyBeez-Social-Studio.pptx.asset.json";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/auth";
+import { OrgSwitcher } from "@/components/OrgSwitcher";
 
 const navItems = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -58,13 +59,13 @@ export function AppShell({ children }: { children: ReactNode }) {
           "lg:translate-x-0 lg:relative",
         )}
       >
-        <div className="px-6 py-7 border-b border-sidebar-border">
+        <div className="px-6 py-6 border-b border-sidebar-border">
           <span className="text-xs tracking-[0.2em] uppercase text-muted-foreground font-medium">
-            Social Studio
+            SocialMotor
           </span>
-          <h1 className="font-heading font-bold text-ink text-xl leading-tight mt-1">
-            HappyBeez
-          </h1>
+          <div className="mt-3">
+            <OrgSwitcher />
+          </div>
           <div className="mt-3 h-px bg-gold/40 w-8" />
         </div>
 
