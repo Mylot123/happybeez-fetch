@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Palette, Save, Sparkles, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Palette, Save, Sparkles, Loader2, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,20 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrg } from "@/hooks/use-current-org";
 import { saveBrandProfile } from "@/lib/brand.functions";
+import { analyzeWebsiteForBrand } from "@/lib/website-analysis.functions";
 import { cn } from "@/lib/utils";
+
+type WebsiteAnalysis = {
+  summary: string;
+  tone_of_voice: string;
+  style_keywords: string[];
+  visual_direction: string;
+  suggested_primary: string;
+  suggested_secondary: string;
+  palette: string[];
+  fonts: string[];
+  meta: { title: string; description: string; ogImage: string };
+};
 
 export const Route = createFileRoute("/merkprofiel")({
   head: () => ({
@@ -67,7 +80,10 @@ function MerkprofielPage() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [saving, setSaving] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState<WebsiteAnalysis | null>(null);
   const save = useServerFn(saveBrandProfile);
+  const analyze = useServerFn(analyzeWebsiteForBrand);
   const qc = useQueryClient();
 
   const { data: profile, isLoading } = useQuery({
@@ -116,6 +132,37 @@ function MerkprofielPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const onAnalyzeWebsite = async () => {
+    const url = form.website.trim();
+    if (!url) {
+      toast.error("Vul eerst een website-URL in (stap 1).");
+      setStep(0);
+      return;
+    }
+    setAnalyzing(true);
+    setAnalysis(null);
+    try {
+      const result = await analyze({ data: { url } });
+      setAnalysis(result);
+      toast.success("Website-analyse klaar");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Analyse mislukt");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const applyAnalysis = (opts: { colors?: boolean; tone?: boolean }) => {
+    if (!analysis) return;
+    setForm((f) => ({
+      ...f,
+      primary_color: opts.colors && analysis.suggested_primary ? analysis.suggested_primary : f.primary_color,
+      secondary_color: opts.colors && analysis.suggested_secondary ? analysis.suggested_secondary : f.secondary_color,
+      tone: opts.tone && analysis.tone_of_voice ? analysis.tone_of_voice : f.tone,
+    }));
+    toast.success("Overgenomen in het profiel");
   };
 
   return (
@@ -230,24 +277,171 @@ function MerkprofielPage() {
             )}
 
             {step === 4 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="primary_color">Primaire kleur</Label>
-                  <Input
-                    id="primary_color"
-                    value={form.primary_color}
-                    onChange={(e) => setField("primary_color", e.target.value)}
-                    placeholder="#B0985C"
-                  />
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="primary_color">Primaire kleur</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="primary_color"
+                        value={form.primary_color}
+                        onChange={(e) => setField("primary_color", e.target.value)}
+                        placeholder="#B0985C"
+                      />
+                      {form.primary_color && (
+                        <div
+                          className="w-10 h-10 rounded border border-border shrink-0"
+                          style={{ backgroundColor: form.primary_color }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="secondary_color">Secundaire kleur</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="secondary_color"
+                        value={form.secondary_color}
+                        onChange={(e) => setField("secondary_color", e.target.value)}
+                        placeholder="#7A1F3D"
+                      />
+                      {form.secondary_color && (
+                        <div
+                          className="w-10 h-10 rounded border border-border shrink-0"
+                          style={{ backgroundColor: form.secondary_color }}
+                        />
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="secondary_color">Secundaire kleur</Label>
-                  <Input
-                    id="secondary_color"
-                    value={form.secondary_color}
-                    onChange={(e) => setField("secondary_color", e.target.value)}
-                    placeholder="#7A1F3D"
-                  />
+
+                <div className="border-t border-border pt-5">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div>
+                      <Label className="flex items-center gap-2">
+                        <Globe className="w-4 h-4 text-wine" />
+                        Analyseer de website
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        We halen de site op en laten AI kleuren, typografie en tone-of-voice afleiden als huisstijl-uitgangspunt.
+                        {form.website ? (
+                          <> Bron: <span className="font-medium text-ink">{form.website}</span></>
+                        ) : (
+                          <> Vul eerst een website in bij stap 1.</>
+                        )}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={onAnalyzeWebsite}
+                      disabled={analyzing || !form.website}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {analyzing ? (
+                        <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Analyseren…</>
+                      ) : (
+                        <><Sparkles className="w-4 h-4 mr-1" /> Start analyse</>
+                      )}
+                    </Button>
+                  </div>
+
+                  {analysis && (
+                    <div className="bg-muted/40 border border-border/60 rounded-md p-4 space-y-4 text-sm">
+                      {analysis.summary && (
+                        <div>
+                          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Samenvatting</p>
+                          <p className="text-ink leading-snug">{analysis.summary}</p>
+                        </div>
+                      )}
+
+                      {analysis.visual_direction && (
+                        <div>
+                          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Visuele richting</p>
+                          <p className="text-ink leading-snug">{analysis.visual_direction}</p>
+                        </div>
+                      )}
+
+                      {analysis.tone_of_voice && (
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Tone-of-voice</p>
+                            <p className="text-ink">{analysis.tone_of_voice}</p>
+                          </div>
+                          <Button size="sm" variant="ghost" onClick={() => applyAnalysis({ tone: true })}>
+                            Overnemen
+                          </Button>
+                        </div>
+                      )}
+
+                      {analysis.style_keywords.length > 0 && (
+                        <div>
+                          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Stijlkernwoorden</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {analysis.style_keywords.map((k) => (
+                              <span key={k} className="px-2 py-0.5 rounded-full bg-wine/10 text-wine text-xs">
+                                {k}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {analysis.palette.length > 0 && (
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-xs uppercase tracking-widest text-muted-foreground">Kleurenpalet</p>
+                            {(analysis.suggested_primary || analysis.suggested_secondary) && (
+                              <Button size="sm" variant="ghost" onClick={() => applyAnalysis({ colors: true })}>
+                                Kleuren overnemen
+                              </Button>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {analysis.palette.map((c) => {
+                              const isPri = c === analysis.suggested_primary;
+                              const isSec = c === analysis.suggested_secondary;
+                              return (
+                                <button
+                                  key={c}
+                                  type="button"
+                                  onClick={() => {
+                                    if (!form.primary_color) setField("primary_color", c);
+                                    else setField("secondary_color", c);
+                                    toast.success(`Kleur ${c} toegepast`);
+                                  }}
+                                  className={cn(
+                                    "group flex items-center gap-2 rounded border border-border bg-background px-2 py-1 text-xs font-mono hover:border-wine",
+                                    (isPri || isSec) && "ring-1 ring-wine",
+                                  )}
+                                  title={isPri ? "Voorgestelde primaire" : isSec ? "Voorgestelde secundaire" : "Klik om toe te wijzen"}
+                                >
+                                  <span
+                                    className="w-4 h-4 rounded-sm border border-border/60"
+                                    style={{ backgroundColor: c }}
+                                  />
+                                  {c}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {analysis.fonts.length > 0 && (
+                        <div>
+                          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Fonts</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {analysis.fonts.map((f) => (
+                              <span key={f} className="px-2 py-0.5 rounded-full bg-secondary text-ink text-xs">
+                                {f}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
