@@ -753,7 +753,10 @@ function Seo() {
                 className="flex-1 min-w-[14rem]"
               />
               <Button onClick={() => void runResearch()} disabled={researching} className="bg-wine text-white hover:bg-wine/90">
-                {researching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} Onderzoek
+                {researching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} AI + Semrush
+              </Button>
+              <Button onClick={() => void runDfsResearch()} disabled={researching} variant="outline" className="border-signal text-signal">
+                {researching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} DataForSEO
               </Button>
             </div>
             <div className="flex flex-wrap gap-1.5 mb-4">
