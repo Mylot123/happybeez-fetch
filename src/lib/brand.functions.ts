@@ -8,6 +8,10 @@ const upsertSchema = z.object({
   audience: z.string().max(1000).optional().nullable(),
   tone: z.string().max(500).optional().nullable(),
   pillars: z.array(z.string().max(120)).max(12).default([]),
+  pillar_mix: z
+    .array(z.object({ name: z.string().max(120), weight: z.number().int().min(0).max(100) }))
+    .max(12)
+    .default([]),
   usps: z.array(z.string().max(200)).max(12).default([]),
   primary_color: z.string().max(20).optional().nullable(),
   secondary_color: z.string().max(20).optional().nullable(),
