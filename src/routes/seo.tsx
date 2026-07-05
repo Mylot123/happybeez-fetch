@@ -1304,6 +1304,19 @@ function kdBadge(kd: number | null | undefined): React.ReactNode {
   return <span className={`tabular-nums ${cls}`}>{v}</span>;
 }
 
+function intentBadge(intent: string | null | undefined): React.ReactNode {
+  if (!intent) return <span className="text-muted-foreground text-xs">—</span>;
+  const map: Record<string, { label: string; cls: string }> = {
+    informational: { label: "informatief", cls: "bg-blue-100 text-blue-800" },
+    navigational: { label: "navigatie", cls: "bg-secondary text-muted-foreground" },
+    commercial: { label: "commercieel", cls: "bg-honey/40 text-ink" },
+    transactional: { label: "koop", cls: "bg-green-100 text-green-800" },
+  };
+  const m = map[intent.toLowerCase()] ?? { label: intent, cls: "bg-secondary text-muted-foreground" };
+  return <span className={`text-xs px-2 py-0.5 rounded font-medium ${m.cls}`}>{m.label}</span>;
+}
+
+
 function StatCard({
   icon: Icon,
   label,
