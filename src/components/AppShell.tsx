@@ -13,6 +13,9 @@ import {
   Images,
   Mic,
   FileDown,
+  Palette,
+  Sparkles,
+  type LucideIcon,
 } from "lucide-react";
 import pdfAsset from "@/assets/HappyBeez-Social-Studio.pdf.asset.json";
 import pptxAsset from "@/assets/HappyBeez-Social-Studio.pptx.asset.json";
@@ -20,17 +23,40 @@ import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/auth";
 import { OrgSwitcher } from "@/components/OrgSwitcher";
 
-const navItems = [
-  { path: "/", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/nieuws", label: "Nieuws", icon: Newspaper },
-  { path: "/kalender", label: "Kalender", icon: CalendarDays },
-  { path: "/boek", label: "Boekbibliotheek", icon: BookOpen },
-  { path: "/foto-bibliotheek", label: "Foto's & Kennisbank", icon: Images },
-  { path: "/content-studio", label: "Content Studio", icon: Wand2 },
-  { path: "/social-profielen", label: "Social Profielen", icon: Users },
-  { path: "/seo", label: "SEO & Ranking", icon: Search },
-  { path: "/agent", label: "Josef (AI)", icon: Mic },
-] as const;
+type NavItem = { path: string; label: string; icon: LucideIcon };
+type NavGroup = { label: string; items: NavItem[] };
+
+const navGroups: NavGroup[] = [
+  {
+    label: "Overzicht",
+    items: [{ path: "/", label: "Dashboard", icon: LayoutDashboard }],
+  },
+  {
+    label: "Strategie",
+    items: [
+      { path: "/merkprofiel", label: "Merkprofiel", icon: Palette },
+      { path: "/campagnes", label: "Campagnes", icon: Sparkles },
+    ],
+  },
+  {
+    label: "Content",
+    items: [
+      { path: "/content-studio", label: "Content Studio", icon: Wand2 },
+      { path: "/kalender", label: "Kalender", icon: CalendarDays },
+      { path: "/foto-bibliotheek", label: "Foto's & Kennis", icon: Images },
+      { path: "/boek", label: "Boekbibliotheek", icon: BookOpen },
+      { path: "/nieuws", label: "Nieuws", icon: Newspaper },
+    ],
+  },
+  {
+    label: "Groei",
+    items: [
+      { path: "/seo", label: "SEO & Ranking", icon: Search },
+      { path: "/social-profielen", label: "Social Profielen", icon: Users },
+      { path: "/agent", label: "Josef (AI)", icon: Mic },
+    ],
+  },
+];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -53,7 +79,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full w-60 z-30 flex flex-col transition-transform duration-300",
+          "fixed top-0 left-0 h-full w-64 z-30 flex flex-col transition-transform duration-300",
           "bg-sidebar border-r border-sidebar-border",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
           "lg:translate-x-0 lg:relative",
@@ -69,31 +95,38 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="mt-3 h-px bg-gold/40 w-8" />
         </div>
 
-        <nav className="flex-1 px-4 py-5 space-y-0.5 overflow-y-auto">
-          {navItems.map(({ path, label, icon: Icon }) => {
-            const active = location.pathname === path;
-            return (
-                <Link
-                  key={path}
-                  to={path}
-                onClick={() => setSidebarOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm transition-all duration-150 border-l-2 pl-[10px]",
-                  active
-                    ? "bg-wine/10 text-wine font-semibold border-wine"
-                    : "text-foreground/60 hover:bg-muted hover:text-foreground font-medium border-transparent",
-                )}
-              >
-                <Icon
-                  className={cn(
-                    "w-4 h-4 flex-shrink-0",
-                    active ? "text-wine" : "text-muted-foreground",
-                  )}
-                />
-                {label}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
+          {navGroups.map((group) => (
+            <div key={group.label} className="space-y-0.5">
+              <p className="px-3 pb-1.5 text-[10px] tracking-[0.18em] uppercase text-muted-foreground/70 font-semibold">
+                {group.label}
+              </p>
+              {group.items.map(({ path, label, icon: Icon }) => {
+                const active = location.pathname === path;
+                return (
+                  <Link
+                    key={path}
+                    to={path}
+                    onClick={() => setSidebarOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-all duration-150 border-l-2 pl-[10px]",
+                      active
+                        ? "bg-wine/10 text-wine font-semibold border-wine"
+                        : "text-foreground/60 hover:bg-muted hover:text-foreground font-medium border-transparent",
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        "w-4 h-4 flex-shrink-0",
+                        active ? "text-wine" : "text-muted-foreground",
+                      )}
+                    />
+                    <span className="truncate">{label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         <div className="px-4 py-4 border-t border-sidebar-border space-y-2">
@@ -125,12 +158,6 @@ export function AppShell({ children }: { children: ReactNode }) {
             <LogOut className="w-4 h-4" />
             Uitloggen
           </button>
-          <div className="mt-3 px-3">
-            <p className="text-xs font-semibold text-ink">Team Bijenhotel</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Social Media &amp; Content
-            </p>
-          </div>
         </div>
       </aside>
 
@@ -144,7 +171,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Menu className="w-5 h-5 text-foreground" />
           </button>
           <span className="font-heading font-bold text-ink text-base">
-            HappyBeez
+            SocialMotor
           </span>
         </header>
 

@@ -12,9 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SocialProfielenRouteImport } from './routes/social-profielen'
 import { Route as SeoRouteImport } from './routes/seo'
 import { Route as NieuwsRouteImport } from './routes/nieuws'
+import { Route as MerkprofielRouteImport } from './routes/merkprofiel'
 import { Route as KalenderRouteImport } from './routes/kalender'
 import { Route as FotoBibliotheekRouteImport } from './routes/foto-bibliotheek'
 import { Route as ContentStudioRouteImport } from './routes/content-studio'
+import { Route as CampagnesRouteImport } from './routes/campagnes'
 import { Route as BoekRouteImport } from './routes/boek'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AgentRouteImport } from './routes/agent'
@@ -35,6 +37,11 @@ const NieuwsRoute = NieuwsRouteImport.update({
   path: '/nieuws',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MerkprofielRoute = MerkprofielRouteImport.update({
+  id: '/merkprofiel',
+  path: '/merkprofiel',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const KalenderRoute = KalenderRouteImport.update({
   id: '/kalender',
   path: '/kalender',
@@ -48,6 +55,11 @@ const FotoBibliotheekRoute = FotoBibliotheekRouteImport.update({
 const ContentStudioRoute = ContentStudioRouteImport.update({
   id: '/content-studio',
   path: '/content-studio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CampagnesRoute = CampagnesRouteImport.update({
+  id: '/campagnes',
+  path: '/campagnes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BoekRoute = BoekRouteImport.update({
@@ -76,9 +88,11 @@ export interface FileRoutesByFullPath {
   '/agent': typeof AgentRoute
   '/auth': typeof AuthRoute
   '/boek': typeof BoekRoute
+  '/campagnes': typeof CampagnesRoute
   '/content-studio': typeof ContentStudioRoute
   '/foto-bibliotheek': typeof FotoBibliotheekRoute
   '/kalender': typeof KalenderRoute
+  '/merkprofiel': typeof MerkprofielRoute
   '/nieuws': typeof NieuwsRoute
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
@@ -88,9 +102,11 @@ export interface FileRoutesByTo {
   '/agent': typeof AgentRoute
   '/auth': typeof AuthRoute
   '/boek': typeof BoekRoute
+  '/campagnes': typeof CampagnesRoute
   '/content-studio': typeof ContentStudioRoute
   '/foto-bibliotheek': typeof FotoBibliotheekRoute
   '/kalender': typeof KalenderRoute
+  '/merkprofiel': typeof MerkprofielRoute
   '/nieuws': typeof NieuwsRoute
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
@@ -101,9 +117,11 @@ export interface FileRoutesById {
   '/agent': typeof AgentRoute
   '/auth': typeof AuthRoute
   '/boek': typeof BoekRoute
+  '/campagnes': typeof CampagnesRoute
   '/content-studio': typeof ContentStudioRoute
   '/foto-bibliotheek': typeof FotoBibliotheekRoute
   '/kalender': typeof KalenderRoute
+  '/merkprofiel': typeof MerkprofielRoute
   '/nieuws': typeof NieuwsRoute
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
@@ -115,9 +133,11 @@ export interface FileRouteTypes {
     | '/agent'
     | '/auth'
     | '/boek'
+    | '/campagnes'
     | '/content-studio'
     | '/foto-bibliotheek'
     | '/kalender'
+    | '/merkprofiel'
     | '/nieuws'
     | '/seo'
     | '/social-profielen'
@@ -127,9 +147,11 @@ export interface FileRouteTypes {
     | '/agent'
     | '/auth'
     | '/boek'
+    | '/campagnes'
     | '/content-studio'
     | '/foto-bibliotheek'
     | '/kalender'
+    | '/merkprofiel'
     | '/nieuws'
     | '/seo'
     | '/social-profielen'
@@ -139,9 +161,11 @@ export interface FileRouteTypes {
     | '/agent'
     | '/auth'
     | '/boek'
+    | '/campagnes'
     | '/content-studio'
     | '/foto-bibliotheek'
     | '/kalender'
+    | '/merkprofiel'
     | '/nieuws'
     | '/seo'
     | '/social-profielen'
@@ -152,9 +176,11 @@ export interface RootRouteChildren {
   AgentRoute: typeof AgentRoute
   AuthRoute: typeof AuthRoute
   BoekRoute: typeof BoekRoute
+  CampagnesRoute: typeof CampagnesRoute
   ContentStudioRoute: typeof ContentStudioRoute
   FotoBibliotheekRoute: typeof FotoBibliotheekRoute
   KalenderRoute: typeof KalenderRoute
+  MerkprofielRoute: typeof MerkprofielRoute
   NieuwsRoute: typeof NieuwsRoute
   SeoRoute: typeof SeoRoute
   SocialProfielenRoute: typeof SocialProfielenRoute
@@ -183,6 +209,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NieuwsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/merkprofiel': {
+      id: '/merkprofiel'
+      path: '/merkprofiel'
+      fullPath: '/merkprofiel'
+      preLoaderRoute: typeof MerkprofielRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/kalender': {
       id: '/kalender'
       path: '/kalender'
@@ -202,6 +235,13 @@ declare module '@tanstack/react-router' {
       path: '/content-studio'
       fullPath: '/content-studio'
       preLoaderRoute: typeof ContentStudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/campagnes': {
+      id: '/campagnes'
+      path: '/campagnes'
+      fullPath: '/campagnes'
+      preLoaderRoute: typeof CampagnesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/boek': {
@@ -240,9 +280,11 @@ const rootRouteChildren: RootRouteChildren = {
   AgentRoute: AgentRoute,
   AuthRoute: AuthRoute,
   BoekRoute: BoekRoute,
+  CampagnesRoute: CampagnesRoute,
   ContentStudioRoute: ContentStudioRoute,
   FotoBibliotheekRoute: FotoBibliotheekRoute,
   KalenderRoute: KalenderRoute,
+  MerkprofielRoute: MerkprofielRoute,
   NieuwsRoute: NieuwsRoute,
   SeoRoute: SeoRoute,
   SocialProfielenRoute: SocialProfielenRoute,
