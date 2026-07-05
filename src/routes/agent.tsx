@@ -243,11 +243,17 @@ function AgentPage() {
 
   async function stop() {
     await conversation.endSession();
-    if (convIdRef.current) {
+    const cid = convIdRef.current;
+    if (cid) {
       await supabase
         .from("agent_conversations")
         .update({ ended_at: new Date().toISOString() })
-        .eq("id", convIdRef.current);
+        .eq("id", cid);
+      summarizeFn({ data: { conversationId: cid } })
+        .then(() => loadHistory())
+        .catch(() => {
+          /* stil */
+        });
     }
     convIdRef.current = null;
     setConversationId(null);
