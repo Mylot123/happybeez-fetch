@@ -94,6 +94,21 @@ function CampagnesPage() {
     },
   });
 
+  const versionsQuery = useQuery({
+    queryKey: ["campaign-plan-versions", planQuery.data?.id],
+    enabled: !!planQuery.data?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("campaign_plan_versions")
+        .select("id, created_at, prev_status, snapshot")
+        .eq("plan_id", planQuery.data!.id)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const years = useMemo(() => {
     const y = now.getFullYear();
     return [y - 1, y, y + 1];
@@ -102,9 +117,10 @@ function CampagnesPage() {
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["campaign-plan", currentOrgId, year, month] });
     qc.invalidateQueries({ queryKey: ["campaign-blocks"] });
+    qc.invalidateQueries({ queryKey: ["campaign-plan-versions"] });
   };
 
-  const onGenerate = async () => {
+  const runGenerate = async () => {
     if (!currentOrgId) return;
     setBusy(true);
     try {
@@ -119,6 +135,20 @@ function CampagnesPage() {
     }
   };
 
+  const onGenerateClick = () => {
+    const status = planQuery.data?.status;
+    if (status === "approved" || status === "active") {
+      setConfirmOpen(true);
+      return;
+    }
+    void runGenerate();
+  };
+
+  const onConfirmRegenerate = async () => {
+    setConfirmOpen(false);
+    await runGenerate();
+  };
+
   const changeStatus = async (status: "concept" | "approved" | "active" | "archived") => {
     if (!planQuery.data?.id) return;
     try {
@@ -130,8 +160,22 @@ function CampagnesPage() {
     }
   };
 
+  const onRestore = async (versionId: string) => {
+    setRestoringId(versionId);
+    try {
+      await restoreFn({ data: { version_id: versionId } });
+      toast.success("Vorige versie hersteld");
+      invalidate();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Herstellen mislukt");
+    } finally {
+      setRestoringId(null);
+    }
+  };
+
   const plan = planQuery.data;
   const blocks = blocksQuery.data ?? [];
+  const versions = versionsQuery.data ?? [];
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
