@@ -18,6 +18,7 @@ import pdfAsset from "@/assets/HappyBeez-Social-Studio.pdf.asset.json";
 import pptxAsset from "@/assets/HappyBeez-Social-Studio.pptx.asset.json";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/auth";
+import { OrgSwitcher } from "@/components/OrgSwitcher";
 
 const navItems = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
