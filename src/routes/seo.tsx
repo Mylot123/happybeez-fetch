@@ -390,7 +390,91 @@ function Seo() {
     const { error } = await supabase.from("seo_keywords").delete().eq("id", id);
     if (error) return toast.error(error.message);
     setTracked((p) => p.filter((x) => x.id !== id));
+    setSelectedKwIds((prev) => {
+      const n = new Set(prev);
+      n.delete(id);
+      return n;
+    });
   }
+
+  async function bulkDeleteTracked() {
+    if (selectedKwIds.size === 0) return;
+    const ids = Array.from(selectedKwIds);
+    try {
+      await deleteSeoKeywords({ data: { ids } });
+      setTracked((p) => p.filter((x) => !selectedKwIds.has(x.id)));
+      setSelectedKwIds(new Set());
+      toast.success(`${ids.length} keywords verwijderd.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Verwijderen mislukt.");
+    }
+  }
+
+  async function addBulkKeywords() {
+    const list = bulkKw.split(/[\n,]+/).map((s) => s.trim()).filter((s) => s.length >= 2);
+    if (!list.length) return toast.error("Plak of typ minimaal één keyword.");
+    if (!domain.trim()) return toast.error("Vul eerst een domein in.");
+    setTrackingBusy(true);
+    try {
+      const res = await bulkAddSeoKeywords({ data: { keywords: list, domain: domain.trim(), database } });
+      toast.success(`${res.added} nieuwe keywords toegevoegd${res.skipped ? ` (${res.skipped} bestonden al)` : ""}.`);
+      setBulkKw("");
+      const { data } = await supabase.from("seo_keywords").select("*").order("created_at", { ascending: false });
+      setTracked((data ?? []) as SeoRow[]);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Bulk toevoegen mislukt.");
+    } finally {
+      setTrackingBusy(false);
+    }
+  }
+
+  async function enrichAll() {
+    if (!domain.trim()) return toast.error("Vul een domein in.");
+    setEnriching(true);
+    try {
+      const res = await enrichSeoKeywords({ data: { domain: domain.trim(), database } });
+      if (res.soft_error) toast.info(res.soft_error);
+      else toast.success(`${res.enriched} keywords verrijkt.`);
+      const { data } = await supabase.from("seo_keywords").select("*").order("created_at", { ascending: false });
+      setTracked((data ?? []) as SeoRow[]);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Verrijken mislukt.");
+    } finally {
+      setEnriching(false);
+    }
+  }
+
+  async function toggleKeywordActive(row: SeoRow) {
+    const next = !((row as SeoRow & { is_active?: boolean }).is_active ?? true);
+    setTracked((p) => p.map((x) => (x.id === row.id ? { ...x, is_active: next } : x)));
+    try {
+      await toggleSeoKeyword({ data: { id: row.id, is_active: next } });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Aan/uit mislukt.");
+      setTracked((p) => p.map((x) => (x.id === row.id ? { ...x, is_active: !next } : x)));
+    }
+  }
+
+  function exportRankingsCsv() {
+    const rows = tracked.filter((r) => (r as SeoRow & { is_active?: boolean }).is_active !== false);
+    const header = ["keyword", "volume", "positie", "url", "laatst_gemeten"];
+    const body = rows.map((r) => [
+      r.keyword,
+      r.search_volume ?? "",
+      r.current_rank ?? "",
+      r.position_url ?? "",
+      r.last_checked_at ?? "",
+    ]);
+    const csv = [header, ...body].map((cols) => cols.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `rankings-${domain}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
 
   async function runAudit() {
     if (!auditUrl.trim()) return toast.error("Vul een URL in.");
