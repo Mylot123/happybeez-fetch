@@ -212,3 +212,97 @@ export const setCampaignPlanStatus = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+const restoreSchema = z.object({
+  version_id: z.string().uuid(),
+});
+
+type BlockSnap = {
+  name?: string;
+  pillar?: string | null;
+  week?: number | null;
+  hook?: string | null;
+  platforms?: string[] | null;
+  notes?: string | null;
+  sort_order?: number | null;
+};
+
+export const restoreCampaignPlanVersion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => restoreSchema.parse(data))
+  .handler(async ({ context, data }) => {
+    const { data: version, error: verErr } = await context.supabase
+      .from("campaign_plan_versions")
+      .select("id, plan_id, org_id, snapshot")
+      .eq("id", data.version_id)
+      .maybeSingle();
+    if (verErr) throw new Error(verErr.message);
+    if (!version) throw new Error("Versie niet gevonden");
+
+    const snap = (version.snapshot ?? {}) as {
+      theme?: string;
+      goal?: string | null;
+      summary?: string | null;
+      status?: string;
+      blocks?: BlockSnap[];
+    };
+
+    // Snapshot the current state first so restore itself is also reversible
+    const { data: current } = await context.supabase
+      .from("campaign_plans")
+      .select("id, theme, goal, summary, status")
+      .eq("id", version.plan_id)
+      .maybeSingle();
+    if (current) {
+      const { data: currentBlocks } = await context.supabase
+        .from("campaign_blocks")
+        .select("name, pillar, week, hook, platforms, notes, sort_order")
+        .eq("plan_id", current.id)
+        .order("sort_order", { ascending: true });
+      await context.supabase.from("campaign_plan_versions").insert({
+        plan_id: current.id,
+        org_id: version.org_id,
+        prev_status: current.status,
+        created_by: context.userId,
+        snapshot: {
+          theme: current.theme,
+          goal: current.goal,
+          summary: current.summary,
+          status: current.status,
+          blocks: currentBlocks ?? [],
+        },
+      });
+    }
+
+    const { error: updErr } = await context.supabase
+      .from("campaign_plans")
+      .update({
+        theme: snap.theme ?? "Hersteld plan",
+        goal: snap.goal ?? null,
+        summary: snap.summary ?? null,
+        status: "concept",
+      })
+      .eq("id", version.plan_id);
+    if (updErr) throw new Error(updErr.message);
+
+    await context.supabase.from("campaign_blocks").delete().eq("plan_id", version.plan_id);
+
+    const blocks = Array.isArray(snap.blocks) ? snap.blocks : [];
+    if (blocks.length) {
+      const rows = blocks.map((b, i) => ({
+        plan_id: version.plan_id,
+        org_id: version.org_id,
+        name: (b.name ?? `Blok ${i + 1}`).slice(0, 200),
+        pillar: b.pillar ?? null,
+        week: typeof b.week === "number" ? Math.min(Math.max(b.week, 1), 6) : i + 1,
+        hook: b.hook ?? null,
+        platforms: Array.isArray(b.platforms) ? b.platforms.slice(0, 6) : [],
+        notes: b.notes ?? null,
+        sort_order: typeof b.sort_order === "number" ? b.sort_order : i,
+      }));
+      const { error: insErr } = await context.supabase.from("campaign_blocks").insert(rows);
+      if (insErr) throw new Error(insErr.message);
+    }
+
+    return { plan_id: version.plan_id };
+  });
