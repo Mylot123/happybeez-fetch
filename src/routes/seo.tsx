@@ -175,15 +175,23 @@ function Seo() {
   const [dfsBusy, setDfsBusy] = useState(false);
   const [dfsRefreshing, setDfsRefreshing] = useState(false);
 
+  useEffect(() => {
+    void loadAll();
+  }, []);
 
+  useEffect(() => {
+    if (!domain) return;
+    void loadCompetitors();
+  }, [domain, database]);
 
   async function loadAll() {
     setLoadingSnap(true);
-    const [snaps, kws, aud, hist] = await Promise.all([
+    const [snaps, kws, aud, hist, ch] = await Promise.all([
       supabase.from("seo_domain_snapshots").select("*").order("created_at", { ascending: false }).limit(30),
       supabase.from("seo_keywords").select("*").order("created_at", { ascending: false }),
       supabase.from("seo_page_audits").select("*").order("created_at", { ascending: false }).limit(10),
       supabase.from("seo_keyword_history").select("*").order("checked_at", { ascending: false }).limit(500),
+      supabase.from("seo_competitor_history").select("keyword,competitor_domain,rank,checked_at").order("checked_at", { ascending: false }).limit(1000),
     ]);
     setLoadingSnap(false);
     const snapList = (snaps.data ?? []) as ExtendedSnapshot[];
@@ -196,7 +204,81 @@ function Seo() {
     setTracked((kws.data ?? []) as SeoRow[]);
     setAudits((aud.data ?? []) as Audit[]);
     setHistory((hist.data ?? []) as KwHistory[]);
+    setDfsCompHist((ch.data ?? []) as CompetitorHistRow[]);
   }
+
+  async function loadCompetitors() {
+    try {
+      const rows = await listSeoCompetitors({ data: { own_domain: domain.trim(), database } });
+      setDfsCompetitors(rows as CompetitorRow[]);
+    } catch {
+      setDfsCompetitors([]);
+    }
+  }
+
+  async function addCompetitor() {
+    if (!newCompetitor.trim()) return toast.error("Vul een concurrent-domein in.");
+    setDfsBusy(true);
+    try {
+      await addSeoCompetitor({
+        data: {
+          own_domain: domain.trim(),
+          competitor_domain: newCompetitor.trim(),
+          label: newCompetitorLabel.trim() || undefined,
+          database,
+        },
+      });
+      setNewCompetitor("");
+      setNewCompetitorLabel("");
+      await loadCompetitors();
+      toast.success("Concurrent toegevoegd.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Toevoegen mislukt.");
+    } finally {
+      setDfsBusy(false);
+    }
+  }
+
+  async function delCompetitor(id: string) {
+    try {
+      await removeSeoCompetitor({ data: { id } });
+      setDfsCompetitors((p) => p.filter((c) => c.id !== id));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Verwijderen mislukt.");
+    }
+  }
+
+  async function refreshDfs() {
+    setDfsRefreshing(true);
+    try {
+      const res = await refreshDfsRankings({ data: { own_domain: domain.trim(), database } });
+      if (res.soft_error) toast.info(res.soft_error);
+      else toast.success(`DataForSEO check: ${res.checked}/${res.keywords} keywords · ${res.own_found ?? 0} in top-100.`);
+      await loadAll();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "DataForSEO refresh mislukt.");
+    } finally {
+      setDfsRefreshing(false);
+    }
+  }
+
+  async function runDfsResearch() {
+    if (seed.trim().length < 2) return toast.error("Vul een seed keyword in.");
+    setResearching(true);
+    try {
+      const res = await researchDfsKeywords({ data: { seed: seed.trim(), database, limit: 30 } });
+      if (res.soft_error) toast.info(res.soft_error);
+      else {
+        setIdeas(res.ideas as Idea[]);
+        toast.success(`${res.ideas.length} DataForSEO ideeën gevonden.`);
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Research mislukt.");
+    } finally {
+      setResearching(false);
+    }
+  }
+
 
   async function runAnalyze() {
     if (!domain.trim()) return toast.error("Vul een domein in.");
