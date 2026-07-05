@@ -28,11 +28,14 @@ export const Route = createFileRoute("/merkprofiel")({
   ),
 });
 
+type PillarMix = { name: string; weight: number };
+
 type FormState = {
   industry: string;
   audience: string;
   tone: string;
   pillars: string[];
+  pillar_mix: PillarMix[];
   usps: string[];
   primary_color: string;
   secondary_color: string;
@@ -44,6 +47,7 @@ const EMPTY: FormState = {
   audience: "",
   tone: "",
   pillars: [],
+  pillar_mix: [],
   usps: [],
   primary_color: "",
   secondary_color: "",
