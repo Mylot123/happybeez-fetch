@@ -218,6 +218,116 @@ export type Database = {
           },
         ]
       }
+      campaign_blocks: {
+        Row: {
+          created_at: string
+          hook: string | null
+          id: string
+          name: string
+          notes: string | null
+          org_id: string
+          pillar: string | null
+          plan_id: string
+          platforms: string[]
+          sort_order: number
+          updated_at: string
+          week: number | null
+        }
+        Insert: {
+          created_at?: string
+          hook?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          org_id: string
+          pillar?: string | null
+          plan_id: string
+          platforms?: string[]
+          sort_order?: number
+          updated_at?: string
+          week?: number | null
+        }
+        Update: {
+          created_at?: string
+          hook?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          org_id?: string
+          pillar?: string | null
+          plan_id?: string
+          platforms?: string[]
+          sort_order?: number
+          updated_at?: string
+          week?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_blocks_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_blocks_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_plans: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          goal: string | null
+          id: string
+          month: number
+          org_id: string
+          status: string
+          summary: string | null
+          theme: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          goal?: string | null
+          id?: string
+          month: number
+          org_id: string
+          status?: string
+          summary?: string | null
+          theme: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          goal?: string | null
+          id?: string
+          month?: number
+          org_id?: string
+          status?: string
+          summary?: string | null
+          theme?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_plans_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_calendar_items: {
         Row: {
           canva_link: string | null
