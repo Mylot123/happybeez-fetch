@@ -1203,6 +1203,7 @@ export type Database = {
           domain: string | null
           id: string
           intent: string | null
+          is_active: boolean
           keyword: string
           last_checked_at: string | null
           notes: string | null
@@ -1222,6 +1223,7 @@ export type Database = {
           domain?: string | null
           id?: string
           intent?: string | null
+          is_active?: boolean
           keyword: string
           last_checked_at?: string | null
           notes?: string | null
@@ -1241,6 +1243,7 @@ export type Database = {
           domain?: string | null
           id?: string
           intent?: string | null
+          is_active?: boolean
           keyword?: string
           last_checked_at?: string | null
           notes?: string | null
