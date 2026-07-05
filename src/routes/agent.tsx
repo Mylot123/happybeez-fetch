@@ -86,6 +86,8 @@ type Conv = {
   started_at: string;
   ended_at: string | null;
   elevenlabs_conversation_id: string | null;
+  summary: string | null;
+  category: string | null;
 };
 type ConvWithMsgs = Conv & { messages: { role: string; content: string; created_at: string }[] };
 
@@ -98,6 +100,9 @@ function AgentPage() {
   const [history, setHistory] = useState<Conv[]>([]);
   const [expanded, setExpanded] = useState<Record<string, ConvWithMsgs | "loading">>({});
   const [starting, setStarting] = useState(false);
+  const summarizeFn = useServerFn(summarizeAgentConversation);
+  const backfillFn = useServerFn(backfillAgentSummaries);
+  const backfilledRef = useRef(false);
 
   const conversation = useConversation({
     onConnect: () => toast.success("Verbonden met Josef"),
