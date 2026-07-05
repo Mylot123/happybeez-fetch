@@ -774,6 +774,75 @@ export type Database = {
         }
         Relationships: []
       }
+      post_metrics: {
+        Row: {
+          clicks: number
+          comments: number
+          engagement_rate: number
+          id: string
+          impressions: number
+          likes: number
+          org_id: string
+          platform: string
+          post_id: string
+          provider_post_id: string | null
+          raw: Json
+          reach: number
+          recorded_at: string
+          saves: number
+          shares: number
+        }
+        Insert: {
+          clicks?: number
+          comments?: number
+          engagement_rate?: number
+          id?: string
+          impressions?: number
+          likes?: number
+          org_id: string
+          platform: string
+          post_id: string
+          provider_post_id?: string | null
+          raw?: Json
+          reach?: number
+          recorded_at?: string
+          saves?: number
+          shares?: number
+        }
+        Update: {
+          clicks?: number
+          comments?: number
+          engagement_rate?: number
+          id?: string
+          impressions?: number
+          likes?: number
+          org_id?: string
+          platform?: string
+          post_id?: string
+          provider_post_id?: string | null
+          raw?: Json
+          reach?: number
+          recorded_at?: string
+          saves?: number
+          shares?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_metrics_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_metrics_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "content_calendar_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
