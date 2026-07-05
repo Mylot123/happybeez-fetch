@@ -902,86 +902,120 @@ function Seo() {
       {/* ──────────────── Tracking ──────────────── */}
       {tab === "tracking" ? (
         <div className="space-y-6">
-          <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-            <StatCard icon={Crosshair} label="Gevolgde keywords" value={String(tracked.length)} />
-            <StatCard icon={Trophy} label="Top 3" value={String(trackedStats.top3)} accent="green" />
-            <StatCard icon={Target} label="Top 10" value={String(trackedStats.top10)} accent="green" />
-            <StatCard icon={TrendingUp} label="Gem. positie" value={trackedStats.avg ? `#${trackedStats.avg}` : "—"} />
-          </div>
-
-          <Section title="Rank-tracking" subtitle="Voeg keywords toe en bewaar iedere meting via DataForSEO." icon={Target}>
-            <div className="flex flex-wrap gap-2 mb-4">
-              <Input
-                value={newKw}
-                onChange={(e) => setNewKw(e.target.value)}
-                placeholder="bv. bijenhotel kopen"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") void addTracked(newKw);
-                }}
-                className="flex-1 min-w-[14rem]"
-              />
-              <Button onClick={() => void addTracked(newKw)} disabled={trackingBusy} className="bg-wine text-white hover:bg-wine/90">
-                {trackingBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crosshair className="h-4 w-4" />} Voeg toe & check
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h2 className="font-heading text-2xl text-ink">Keywords</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Voeg keywords toe — volume, CPC en intent worden automatisch verrijkt via DataForSEO.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              {selectedKwIds.size > 0 ? (
+                <Button variant="outline" onClick={() => void bulkDeleteTracked()} className="border-destructive/40 text-destructive">
+                  <Trash2 className="h-4 w-4" /> Verwijder {selectedKwIds.size}
+                </Button>
+              ) : null}
+              <Button onClick={() => void enrichAll()} disabled={enriching} variant="outline" className="border-wine text-wine">
+                {enriching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Verrijk alle
               </Button>
             </div>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+            <textarea
+              value={bulkKw}
+              onChange={(e) => setBulkKw(e.target.value)}
+              placeholder={"Plak keywords, één per regel\nbv.:\nbijenhotel kopen\nwilde bijen huis\ninsectenhotel groot"}
+              className="w-full min-h-[9rem] rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-wine"
+            />
+            <div className="flex justify-end">
+              <Button
+                onClick={() => void addBulkKeywords()}
+                disabled={trackingBusy || bulkKw.trim().length === 0}
+                className="bg-wine text-white hover:bg-wine/90"
+              >
+                {trackingBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crosshair className="h-4 w-4" />}{" "}
+                Voeg {bulkKw.split(/[\n,]+/).map((s) => s.trim()).filter((s) => s.length >= 2).length} keywords toe
+              </Button>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
             {tracked.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nog geen gevolgde keywords. Voeg er één toe of "volg" een idee uit het onderzoek.</p>
+              <p className="p-8 text-sm text-muted-foreground text-center">
+                Nog geen keywords. Plak een lijstje hierboven of "volg" een idee uit Research.
+              </p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead>
+                  <thead className="bg-muted/40">
                     <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                      <th className="py-2 pr-4">Keyword</th>
-                      <th className="py-2 pr-4 text-right">Positie</th>
-                      <th className="py-2 pr-4 text-right">Trend</th>
-                      <th className="py-2 pr-4 text-right">Volume</th>
-                      <th className="py-2 pr-4 text-right">KD</th>
-                      <th className="py-2 pr-4">URL</th>
-                      <th className="py-2 pr-4">Laatste check</th>
-                      <th className="py-2 pr-4 text-right">Acties</th>
+                      <th className="py-3 pl-4 pr-2 w-8">
+                        <input
+                          type="checkbox"
+                          checked={selectedKwIds.size > 0 && selectedKwIds.size === tracked.length}
+                          onChange={(e) =>
+                            setSelectedKwIds(e.target.checked ? new Set(tracked.map((t) => t.id)) : new Set())
+                          }
+                          className="h-4 w-4 accent-wine"
+                        />
+                      </th>
+                      <th className="py-3 pr-4">Keyword</th>
+                      <th className="py-3 pr-4 text-right">Volume</th>
+                      <th className="py-3 pr-4 text-right">CPC</th>
+                      <th className="py-3 pr-4">Intent</th>
+                      <th className="py-3 pr-4 text-right">Positie</th>
+                      <th className="py-3 pr-4 text-center">Actief</th>
+                      <th className="py-3 pr-4">Toegevoegd</th>
+                      <th className="py-3 pr-4 text-right">Acties</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
                     {tracked.map((row) => {
-                      const hist = history
-                        .filter((h) => h.keyword === row.keyword && h.domain === row.domain)
-                        .sort((a, b) => +new Date(b.checked_at) - +new Date(a.checked_at));
-                      const prev = hist[1];
-                      const rankDelta =
-                        prev?.rank != null && row.current_rank != null ? prev.rank - row.current_rank : null;
+                      const rowExt = row as SeoRow & { is_active?: boolean };
+                      const active = rowExt.is_active !== false;
+                      const checked = selectedKwIds.has(row.id);
                       return (
                         <tr key={row.id} className="hover:bg-secondary/30">
-                          <td className="py-2 pr-4 font-medium text-ink">{row.keyword}</td>
-                          <td className="py-2 pr-4 text-right">{positionBadge(row.current_rank)}</td>
-                          <td className="py-2 pr-4 text-right">
-                            {rankDelta == null || rankDelta === 0 ? (
-                              <span className="text-xs text-muted-foreground">—</span>
-                            ) : rankDelta > 0 ? (
-                              <span className="text-xs text-green-700 inline-flex items-center gap-0.5">
-                                <TrendingUp className="h-3 w-3" /> +{rankDelta}
-                              </span>
-                            ) : (
-                              <span className="text-xs text-destructive inline-flex items-center gap-0.5">
-                                <TrendingDown className="h-3 w-3" /> {rankDelta}
-                              </span>
-                            )}
-                            {hist.length > 1 ? (
-                              <span className="block text-[10px] text-muted-foreground">{hist.length} metingen</span>
-                            ) : null}
+                          <td className="py-2 pl-4 pr-2">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) =>
+                                setSelectedKwIds((prev) => {
+                                  const n = new Set(prev);
+                                  if (e.target.checked) n.add(row.id);
+                                  else n.delete(row.id);
+                                  return n;
+                                })
+                              }
+                              className="h-4 w-4 accent-wine"
+                            />
                           </td>
+                          <td className="py-2 pr-4 font-medium text-ink">{row.keyword}</td>
                           <td className="py-2 pr-4 text-right tabular-nums">{fmtNum(row.search_volume)}</td>
-                          <td className="py-2 pr-4 text-right tabular-nums">{kdBadge(row.difficulty)}</td>
-                          <td className="py-2 pr-4 text-xs text-muted-foreground max-w-[18rem] truncate">
-                            {row.position_url ? (
-                              <a href={row.position_url} target="_blank" rel="noreferrer" className="hover:text-wine">
-                                {row.position_url}
-                              </a>
-                            ) : (
-                              "—"
-                            )}
+                          <td className="py-2 pr-4 text-right tabular-nums">
+                            {row.cpc != null ? `€${Number(row.cpc).toFixed(2)}` : "—"}
+                          </td>
+                          <td className="py-2 pr-4">{intentBadge(row.intent)}</td>
+                          <td className="py-2 pr-4 text-right">{positionBadge(row.current_rank)}</td>
+                          <td className="py-2 pr-4 text-center">
+                            <button
+                              onClick={() => void toggleKeywordActive(row)}
+                              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                                active ? "bg-wine" : "bg-muted"
+                              }`}
+                              aria-label={active ? "Uitzetten" : "Aanzetten"}
+                            >
+                              <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                  active ? "translate-x-4" : "translate-x-0.5"
+                                }`}
+                              />
+                            </button>
                           </td>
                           <td className="py-2 pr-4 text-xs text-muted-foreground">
-                            {row.last_checked_at ? new Date(row.last_checked_at).toLocaleDateString("nl-NL") : "—"}
+                            {new Date(row.created_at).toLocaleDateString("nl-NL")}
                           </td>
                           <td className="py-2 pr-4 text-right">
                             <div className="inline-flex gap-2">
@@ -989,11 +1023,15 @@ function Seo() {
                                 onClick={() => void refreshKeyword(row)}
                                 disabled={trackingBusy}
                                 className="text-muted-foreground hover:text-wine"
-                                title="Ververs"
+                                title="Ververs positie"
                               >
                                 <RefreshCw className="h-4 w-4" />
                               </button>
-                              <button onClick={() => void removeTracked(row.id)} className="text-muted-foreground hover:text-destructive" title="Verwijder">
+                              <button
+                                onClick={() => void removeTracked(row.id)}
+                                className="text-muted-foreground hover:text-destructive"
+                                title="Verwijder"
+                              >
                                 <Trash2 className="h-4 w-4" />
                               </button>
                             </div>
@@ -1005,7 +1043,25 @@ function Seo() {
                 </table>
               </div>
             )}
-          </Section>
+          </div>
+
+          <div className="rounded-lg border border-border bg-card p-4">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Snel toevoegen</p>
+            <div className="flex flex-wrap gap-2">
+              <Input
+                value={newKw}
+                onChange={(e) => setNewKw(e.target.value)}
+                placeholder="Eén keyword toevoegen + direct rank checken"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void addTracked(newKw);
+                }}
+                className="flex-1 min-w-[14rem]"
+              />
+              <Button onClick={() => void addTracked(newKw)} disabled={trackingBusy} className="bg-wine text-white hover:bg-wine/90">
+                {trackingBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crosshair className="h-4 w-4" />} Voeg toe & check
+              </Button>
+            </div>
+          </div>
         </div>
       ) : null}
 
