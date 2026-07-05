@@ -457,76 +457,64 @@ function Seo() {
         </div>
       </div>
 
-      {/* Domain bar */}
-      <div className="bg-card border border-border rounded-lg p-4 shadow-sm mb-6 flex flex-wrap items-end gap-3">
-        <div className="flex-1 min-w-[14rem] space-y-1.5">
-          <Label htmlFor="seo-domain" className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Jouw domein</Label>
-          <Input id="seo-domain" value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="happybeez.nl" />
-        </div>
-        <div className="w-28 space-y-1.5">
-          <Label htmlFor="seo-db" className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Markt</Label>
-          <select
-            id="seo-db"
-            value={database}
-            onChange={(e) => setDatabase(e.target.value)}
-            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-          >
-            <option value="nl">NL</option>
-            <option value="be">BE</option>
-            <option value="de">DE</option>
-            <option value="us">US</option>
-            <option value="uk">UK</option>
-          </select>
-        </div>
-        <Button onClick={runAnalyze} disabled={analyzing} className="bg-wine text-white hover:bg-wine/90">
-          {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-          {analyzing ? "Analyseren…" : snapshot ? "Vernieuw analyse" : "Analyseer domein"}
-        </Button>
-        {snapshot ? (
-          <span className="text-xs text-muted-foreground self-center">
-            Laatste analyse: {new Date(snapshot.created_at).toLocaleString("nl-NL")}
-          </span>
-        ) : null}
-      </div>
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Sub-sidebar */}
+        <aside className="md:w-56 shrink-0">
+          <nav className="bg-card border border-border rounded-lg p-2 md:sticky md:top-4 flex md:flex-col gap-1 overflow-x-auto">
+            {TABS.map((t) => {
+              const Icon = t.icon;
+              const active = tab === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm text-left whitespace-nowrap transition-colors ${
+                    active ? "bg-wine/10 text-wine font-medium" : "text-muted-foreground hover:text-ink hover:bg-muted/50"
+                  }`}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span>{t.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
 
-      <div className="mb-6 rounded-lg border border-honey/40 bg-honey/10 p-4 text-sm text-foreground/85 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-start gap-2 flex-1 min-w-[18rem]">
-          <Lightbulb className="h-4 w-4 text-gold mt-0.5 shrink-0" />
-          <p>
-            Semrush is handig voor exacte volumes en rankings, maar niet verplicht. Met "Semrush overslaan" werkt alles meteen op eigen site-audit, AI en je opgeslagen metingen — geen limietfouten.
-          </p>
-        </div>
-        <label className="flex items-center gap-2 text-xs font-medium text-ink cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={skipSemrush}
-            onChange={(e) => setSkipSemrush(e.target.checked)}
-            className="h-4 w-4 accent-wine"
-          />
-          Semrush overslaan
-        </label>
-      </div>
+        {/* Main content */}
+        <div className="min-w-0 flex-1">
+          {/* Domain bar */}
+          <div className="bg-card border border-border rounded-lg p-4 shadow-sm mb-6 flex flex-wrap items-end gap-3">
+            <div className="flex-1 min-w-[14rem] space-y-1.5">
+              <Label htmlFor="seo-domain" className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Jouw domein</Label>
+              <Input id="seo-domain" value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="happybeez.nl" />
+            </div>
+            <div className="w-28 space-y-1.5">
+              <Label htmlFor="seo-db" className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Markt</Label>
+              <select
+                id="seo-db"
+                value={database}
+                onChange={(e) => setDatabase(e.target.value)}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="nl">NL</option>
+                <option value="be">BE</option>
+                <option value="de">DE</option>
+                <option value="us">US</option>
+                <option value="uk">UK</option>
+              </select>
+            </div>
+            <Button onClick={runAnalyze} disabled={analyzing} className="bg-wine text-white hover:bg-wine/90">
+              {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {analyzing ? "Analyseren…" : snapshot ? "Vernieuw analyse" : "Analyseer domein"}
+            </Button>
+            {snapshot ? (
+              <span className="text-xs text-muted-foreground self-center">
+                Laatste analyse: {new Date(snapshot.created_at).toLocaleString("nl-NL")}
+              </span>
+            ) : null}
+          </div>
 
 
-      {/* Tabs */}
-      <div className="border-b border-border mb-6 flex flex-wrap gap-1">
-        {TABS.map((t) => {
-          const Icon = t.icon;
-          const active = tab === t.id;
-          return (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm border-b-2 -mb-px transition-colors ${
-                active ? "border-wine text-ink font-medium" : "border-transparent text-muted-foreground hover:text-ink"
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {t.label}
-            </button>
-          );
-        })}
-      </div>
 
       {/* ──────────────── Overview ──────────────── */}
       {tab === "overview" ? (
