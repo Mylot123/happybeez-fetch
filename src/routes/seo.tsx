@@ -29,6 +29,13 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
 import { analyzeDomain, auditPage, discoverRankedKeywords, researchKeyword, trackKeywordScrape } from "@/lib/seo.functions";
+import {
+  addSeoCompetitor,
+  listSeoCompetitors,
+  refreshDfsRankings,
+  removeSeoCompetitor,
+  researchDfsKeywords,
+} from "@/lib/dataforseo.functions";
 
 type SeoRow = Database["public"]["Tables"]["seo_keywords"]["Row"];
 type Snapshot = Database["public"]["Tables"]["seo_domain_snapshots"]["Row"];
