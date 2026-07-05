@@ -810,19 +810,159 @@ function Seo() {
 
       {/* ──────────────── Ranglijst ──────────────── */}
       {tab === "ranglijst" ? (
-        <RankedKeywordsView
-          domain={domain}
-          ranked={ranked}
-          history={history}
-          loading={rankedLoading}
-          filter={rankedFilter}
-          setFilter={setRankedFilter}
-          sort={rankedSort}
-          setSort={setRankedSort}
-          checkedAt={rankedCheckedAt}
-          onRefresh={runRanked}
-          onAddTrack={addTracked}
-        />
+        <div className="space-y-6">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h2 className="font-heading text-2xl text-ink">Rankings</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Live posities op Google.{database} (mobile).
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={exportRankingsCsv} disabled={tracked.length === 0}>
+                <ExternalLink className="h-4 w-4" /> Export CSV
+              </Button>
+              <Button onClick={() => void refreshDfs()} disabled={dfsRefreshing} className="bg-wine text-white hover:bg-wine/90">
+                {dfsRefreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Refresh nu
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+            <StatCard icon={Crosshair} label="Actieve keywords" value={String(tracked.filter((r) => (r as SeoRow & { is_active?: boolean }).is_active !== false).length)} />
+            <StatCard icon={Trophy} label="In top 10" value={String(trackedStats.top10)} accent="green" />
+            <StatCard icon={Target} label="In top 100" value={String(tracked.filter((t) => (t.current_rank ?? 999) <= 100).length)} />
+            <StatCard
+              icon={RefreshCw}
+              label="Laatste refresh"
+              value={
+                tracked.reduce((max, r) => {
+                  const ts = r.last_checked_at ? +new Date(r.last_checked_at) : 0;
+                  return ts > max ? ts : max;
+                }, 0)
+                  ? new Date(
+                      tracked.reduce((max, r) => {
+                        const ts = r.last_checked_at ? +new Date(r.last_checked_at) : 0;
+                        return ts > max ? ts : max;
+                      }, 0),
+                    ).toLocaleString("nl-NL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
+                  : "—"
+              }
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {([
+              { id: "all", label: "Alle" },
+              { id: "top3", label: "Top 3" },
+              { id: "top10", label: "Top 10" },
+              { id: "top100", label: "Top 100" },
+              { id: "none", label: "Niet rankend" },
+            ] as const).map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setRankFilter(f.id)}
+                className={`text-sm px-3 py-1.5 rounded-md transition-colors ${
+                  rankFilter === f.id ? "bg-ink text-white" : "bg-card border border-border text-muted-foreground hover:bg-secondary/40"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            {(() => {
+              const rows = tracked
+                .filter((r) => (r as SeoRow & { is_active?: boolean }).is_active !== false)
+                .filter((r) => {
+                  const p = r.current_rank;
+                  if (rankFilter === "top3") return p != null && p <= 3;
+                  if (rankFilter === "top10") return p != null && p <= 10;
+                  if (rankFilter === "top100") return p != null && p <= 100;
+                  if (rankFilter === "none") return p == null;
+                  return true;
+                });
+              if (rows.length === 0) {
+                return <p className="p-8 text-sm text-muted-foreground text-center">Geen keywords in dit filter.</p>;
+              }
+              return (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/40">
+                      <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
+                        <th className="py-3 pl-4 pr-4">Keyword</th>
+                        <th className="py-3 pr-4 text-right">Volume</th>
+                        <th className="py-3 pr-4">Positie</th>
+                        <th className="py-3 pr-4 text-right">Verandering</th>
+                        <th className="py-3 pr-4">Rankt op</th>
+                        <th className="py-3 pr-4">Laatst gemeten</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {rows.map((row) => {
+                        const hist = history
+                          .filter((h) => h.keyword === row.keyword && h.domain === row.domain)
+                          .sort((a, b) => +new Date(b.checked_at) - +new Date(a.checked_at));
+                        const prev = hist[1];
+                        const rankDelta =
+                          prev?.rank != null && row.current_rank != null ? prev.rank - row.current_rank : null;
+                        return (
+                          <tr key={row.id} className="hover:bg-secondary/30">
+                            <td className="py-2 pl-4 pr-4 font-medium text-ink">{row.keyword}</td>
+                            <td className="py-2 pr-4 text-right tabular-nums">{fmtNum(row.search_volume)}</td>
+                            <td className="py-2 pr-4">
+                              {row.current_rank != null ? (
+                                positionBadge(row.current_rank)
+                              ) : row.last_checked_at ? (
+                                <span className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">Niet rankend</span>
+                              ) : (
+                                <span className="text-xs px-2 py-0.5 rounded bg-secondary text-muted-foreground">Nog niet gemeten</span>
+                              )}
+                            </td>
+                            <td className="py-2 pr-4 text-right">
+                              {rankDelta == null || rankDelta === 0 ? (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              ) : rankDelta > 0 ? (
+                                <span className="text-xs text-green-700 inline-flex items-center gap-0.5">
+                                  <TrendingUp className="h-3 w-3" /> +{rankDelta}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-destructive inline-flex items-center gap-0.5">
+                                  <TrendingDown className="h-3 w-3" /> {rankDelta}
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-2 pr-4 text-xs text-muted-foreground max-w-[20rem] truncate">
+                              {row.position_url ? (
+                                <a href={row.position_url} target="_blank" rel="noreferrer" className="hover:text-wine">
+                                  {row.position_url.replace(/^https?:\/\//, "")}
+                                </a>
+                              ) : (
+                                "—"
+                              )}
+                            </td>
+                            <td className="py-2 pr-4 text-xs text-muted-foreground">
+                              {row.last_checked_at
+                                ? new Date(row.last_checked_at).toLocaleString("nl-NL", {
+                                    day: "numeric",
+                                    month: "numeric",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })
+                                : "—"}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
       ) : null}
 
       {/* ──────────────── Research ──────────────── */}
