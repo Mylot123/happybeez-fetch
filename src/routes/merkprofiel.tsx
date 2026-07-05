@@ -80,7 +80,10 @@ function MerkprofielPage() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [saving, setSaving] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState<WebsiteAnalysis | null>(null);
   const save = useServerFn(saveBrandProfile);
+  const analyze = useServerFn(analyzeWebsiteForBrand);
   const qc = useQueryClient();
 
   const { data: profile, isLoading } = useQuery({
