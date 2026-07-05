@@ -264,7 +264,7 @@ function AgentPage() {
     setExpanded((p) => ({ ...p, [id]: "loading" }));
     const { data: conv } = await supabase
       .from("agent_conversations")
-      .select("id,title,started_at,ended_at,elevenlabs_conversation_id")
+      .select("id,title,started_at,ended_at,elevenlabs_conversation_id,summary,category")
       .eq("id", id)
       .single();
     const { data: msgs } = await supabase
