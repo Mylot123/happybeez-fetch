@@ -126,7 +126,6 @@ function Seo() {
   function autoDisableOnLimit(msg: string | null | undefined) {
     if (msg && /limiet|limit|exceeded/i.test(msg) && !skipSemrush) {
       setSkipSemrush(true);
-      toast.info("Semrush-limiet bereikt — fallback nu standaard aan.");
     }
   }
 
@@ -452,7 +451,7 @@ function Seo() {
           <span className="text-xs tracking-[0.2em] uppercase text-muted-foreground font-medium">Vindbaarheid</span>
           <h1 className="font-heading font-bold text-ink text-3xl mt-1 ruled-heading">SEO & Ranking</h1>
           <p className="text-sm text-muted-foreground mt-2 max-w-2xl">
-            SEO-engine met eigen pagina-audits, AI-keywordstrategie en Semrush-data wanneer beschikbaar — zonder stil te vallen bij limieten.
+            SEO-engine met eigen pagina-audits, AI-keywordstrategie en DataForSEO-rankings — dagelijks up-to-date.
           </p>
         </div>
       </div>
@@ -552,7 +551,7 @@ function Seo() {
                   <p className="mt-1">
                     {analysisSource === "live"
                       ? "Deze analyse bevat live site-audit en AI-actiepunten van de laatste vernieuwing."
-                      : "Semrush geeft weinig of geen bruikbare data; daarom toont de engine nu direct een praktisch HappyBeez SEO-plan op basis van je domein en relevante bijenhotel-keywords."}
+                      : "Engine toont een praktisch HappyBeez SEO-plan op basis van je domein en relevante bijenhotel-keywords."}
                   </p>
                 </div>
               </div>
@@ -672,7 +671,7 @@ function Seo() {
 
 
 
-              <Section title="Top organische keywords" subtitle="Waar je nu al op rankt volgens Semrush." icon={TrendingUp}>
+              <Section title="Top organische keywords" subtitle="Waar je nu al op rankt." icon={TrendingUp}>
                 {topKws.length === 0 ? (
                   <p className="text-sm text-muted-foreground p-4">Geen keyword-data.</p>
                 ) : (
@@ -737,21 +736,18 @@ function Seo() {
       {/* ──────────────── Research ──────────────── */}
       {tab === "research" ? (
         <div className="space-y-6">
-          <Section title="Keyword-onderzoek" subtitle="Vind koopkeywords, vragen en blogonderwerpen. Exacte volumes komen uit Semrush; bij limiet vult AI het strategisch aan." icon={Lightbulb}>
+          <Section title="Keyword-onderzoek" subtitle="Vind koopkeywords, vragen en blogonderwerpen met echte volumes via DataForSEO." icon={Lightbulb}>
             <div className="flex flex-wrap gap-2 mb-4">
               <Input
                 value={seed}
                 onChange={(e) => setSeed(e.target.value)}
                 placeholder="bv. bijenhotel, wilde bijen, insectenhotel…"
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") void runResearch();
+                  if (e.key === "Enter") void runDfsResearch();
                 }}
                 className="flex-1 min-w-[14rem]"
               />
-              <Button onClick={() => void runResearch()} disabled={researching} className="bg-wine text-white hover:bg-wine/90">
-                {researching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} AI + Semrush
-              </Button>
-              <Button onClick={() => void runDfsResearch()} disabled={researching} variant="outline" className="border-signal text-signal">
+              <Button onClick={() => void runDfsResearch()} disabled={researching} className="bg-wine text-white hover:bg-wine/90">
                 {researching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} DataForSEO
               </Button>
             </div>
@@ -821,7 +817,7 @@ function Seo() {
             <StatCard icon={TrendingUp} label="Gem. positie" value={trackedStats.avg ? `#${trackedStats.avg}` : "—"} />
           </div>
 
-          <Section title="Rank-tracking" subtitle="Voeg keywords toe en bewaar iedere meting. Als Semrush op limiet zit, blijft het keyword alvast in je SEO-lijst staan." icon={Target}>
+          <Section title="Rank-tracking" subtitle="Voeg keywords toe en bewaar iedere meting via DataForSEO." icon={Target}>
             <div className="flex flex-wrap gap-2 mb-4">
               <Input
                 value={newKw}
@@ -1068,7 +1064,7 @@ function Seo() {
           ) : null}
 
           {competitors.length > 0 ? (
-            <Section title="Semrush-suggesties" subtitle="Domeinen die op dezelfde keywords ranken (uit domeinanalyse)." icon={Compass}>
+            <Section title="Concurrent-suggesties" subtitle="Domeinen die op dezelfde keywords ranken." icon={Compass}>
               <div className="grid gap-3 sm:grid-cols-2">
                 {competitors.map((c) => (
                   <div key={c.domain} className="border border-border rounded-lg p-4">
@@ -1111,23 +1107,6 @@ function Seo() {
       {/* ──────────────── Instellingen ──────────────── */}
       {tab === "settings" ? (
         <div className="space-y-4">
-          <div className="rounded-lg border border-honey/40 bg-honey/10 p-4 text-sm text-foreground/85 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-start gap-2 flex-1 min-w-[18rem]">
-              <Lightbulb className="h-4 w-4 text-gold mt-0.5 shrink-0" />
-              <p>
-                Semrush is handig voor exacte volumes en rankings, maar niet verplicht. Met "Semrush overslaan" werkt alles meteen op eigen site-audit, AI en je opgeslagen metingen — geen limietfouten.
-              </p>
-            </div>
-            <label className="flex items-center gap-2 text-xs font-medium text-ink cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={skipSemrush}
-                onChange={(e) => setSkipSemrush(e.target.checked)}
-                className="h-4 w-4 accent-wine"
-              />
-              Semrush overslaan
-            </label>
-          </div>
           <div className="rounded-lg border border-border bg-card p-4 text-sm text-foreground/80">
             <p className="font-medium text-ink mb-1">Rank-tracking cadans</p>
             <p className="text-muted-foreground">
@@ -1138,8 +1117,7 @@ function Seo() {
       ) : null}
 
           <p className="mt-8 text-xs text-muted-foreground border-t border-border pt-4">
-            Exacte volumes, posities en concurrentiecijfers komen uit Semrush wanneer beschikbaar. Als die limiet bereikt is, gebruikt HappyBeez eigen audits,
-            AI-keywordplanning en opgeslagen historie zodat je alsnog kunt doorwerken.
+            Exacte volumes, posities en concurrentiecijfers komen uit DataForSEO. AI vult aan met keywordplanning en actiepunten.
           </p>
         </div>
       </div>
@@ -1248,7 +1226,7 @@ function buildFallbackSeoPlan(domain: string, rows: TopKw[]): { actions: SeoActi
       {
         priority: "hoog",
         action: "Voeg op de homepage een korte SEO-sectie toe met wilde bijen, metselbijen, biodiversiteit en bijvriendelijke tuin. ",
-        why: "De huidige Semrush-data is beperkt; extra context helpt Google beter begrijpen waarvoor HappyBeez relevant is.",
+        why: "Extra context op de homepage helpt Google beter begrijpen waarvoor HappyBeez relevant is.",
         where: "homepage",
       },
       {
