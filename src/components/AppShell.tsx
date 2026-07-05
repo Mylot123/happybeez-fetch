@@ -15,6 +15,7 @@ import {
   FileDown,
   Palette,
   Sparkles,
+  KanbanSquare,
   type LucideIcon,
 } from "lucide-react";
 import pdfAsset from "@/assets/HappyBeez-Social-Studio.pdf.asset.json";
@@ -42,6 +43,7 @@ const navGroups: NavGroup[] = [
     label: "Content",
     items: [
       { path: "/content-studio", label: "Content Studio", icon: Wand2 },
+      { path: "/planning", label: "Planning & Approvals", icon: KanbanSquare },
       { path: "/kalender", label: "Kalender", icon: CalendarDays },
       { path: "/foto-bibliotheek", label: "Foto's & Kennis", icon: Images },
       { path: "/boek", label: "Boekbibliotheek", icon: BookOpen },
