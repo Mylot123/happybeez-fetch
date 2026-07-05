@@ -405,6 +405,34 @@ function AgentPage() {
         </div>
       </div>
 
+      <div className="mb-8">
+        <h2 className="font-heading font-semibold text-ink text-xl mb-4 flex items-center gap-2">
+          <Tag className="w-5 h-5 text-wine" />
+          Onderwerpen
+        </h2>
+        {history.length === 0 ? (
+          <p className="text-sm text-muted-foreground italic">Nog geen gesprekken.</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {CATEGORY_LIST.map((cat) => {
+              const count = history.filter((h) => (h.category ?? "Overig") === cat).length;
+              return (
+                <div
+                  key={cat}
+                  className={cn(
+                    "rounded-lg border p-3 flex flex-col gap-1",
+                    CATEGORY_STYLES[cat],
+                  )}
+                >
+                  <span className="text-2xl font-bold leading-none">{count}</span>
+                  <span className="text-xs font-medium leading-tight">{cat}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       <div>
         <h2 className="font-heading font-semibold text-ink text-xl mb-4 flex items-center gap-2">
           <MessageSquare className="w-5 h-5 text-wine" />
@@ -419,34 +447,56 @@ function AgentPage() {
             {history.map((c) => {
               const ex = expanded[c.id];
               const isOpen = !!ex;
+              const cat = c.category ?? null;
               return (
                 <div
                   key={c.id}
                   className="bg-card border border-border rounded-md overflow-hidden"
                 >
-                  <div className="flex items-center justify-between p-4">
+                  <div className="flex items-start justify-between p-4 gap-3">
                     <button
                       onClick={() => toggleExpand(c.id)}
-                      className="flex items-center gap-2 flex-1 text-left"
+                      className="flex items-start gap-2 flex-1 text-left min-w-0"
                     >
                       {isOpen ? (
-                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                        <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
                       ) : (
-                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
                       )}
-                      <div>
-                        <p className="text-sm font-medium text-ink">
-                          {c.title ?? "Gesprek"}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-medium text-ink">
+                            {c.title ?? "Gesprek"}
+                          </p>
+                          {cat && (
+                            <span
+                              className={cn(
+                                "text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full border",
+                                CATEGORY_STYLES[cat] ?? CATEGORY_STYLES["Overig"],
+                              )}
+                            >
+                              {cat}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
                           {new Date(c.started_at).toLocaleString("nl-NL")}
                           {c.id === conversationId && " · actief"}
                         </p>
+                        {c.summary ? (
+                          <p className="text-sm text-ink/80 mt-1.5 leading-snug">
+                            {c.summary}
+                          </p>
+                        ) : c.ended_at ? (
+                          <p className="text-xs text-muted-foreground italic mt-1.5">
+                            Samenvatting wordt opgesteld…
+                          </p>
+                        ) : null}
                       </div>
                     </button>
                     <button
                       onClick={() => deleteConv(c.id)}
-                      className="p-2 hover:bg-muted rounded text-muted-foreground hover:text-destructive"
+                      className="p-2 hover:bg-muted rounded text-muted-foreground hover:text-destructive shrink-0"
                       title="Verwijderen"
                     >
                       <Trash2 className="w-4 h-4" />
