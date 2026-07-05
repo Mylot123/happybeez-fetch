@@ -89,7 +89,7 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3.5 bg-white border border-line rounded-full px-4.5 py-2 text-[12.5px] text-[#75766F] whitespace-nowrap">
+        <div className="flex items-center gap-3.5 bg-white border border-line rounded-full px-[18px] py-2 text-[12.5px] text-[#75766F] whitespace-nowrap">
           <span className="relative flex items-center gap-1.5">
             <span className="relative w-1.5 h-1.5 rounded-full bg-[#3DDC84]">
               <span className="absolute -inset-1 rounded-full border border-[#3DDC84]/60 animate-ping" />
