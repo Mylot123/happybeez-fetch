@@ -332,6 +332,7 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by: string | null
+          ayrshare_post_id: string | null
           campaign_block_id: string | null
           canva_link: string | null
           channel: string
@@ -343,9 +344,11 @@ export type Database = {
           id: string
           image_storage_path: string | null
           image_url: string | null
+          last_publish_attempt_at: string | null
           notes: string | null
           org_id: string
           publish_date: string | null
+          retry_count: number
           review_notes: string | null
           scheduled_at: string | null
           source_id: string | null
@@ -358,6 +361,7 @@ export type Database = {
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
+          ayrshare_post_id?: string | null
           campaign_block_id?: string | null
           canva_link?: string | null
           channel: string
@@ -369,9 +373,11 @@ export type Database = {
           id?: string
           image_storage_path?: string | null
           image_url?: string | null
+          last_publish_attempt_at?: string | null
           notes?: string | null
           org_id?: string
           publish_date?: string | null
+          retry_count?: number
           review_notes?: string | null
           scheduled_at?: string | null
           source_id?: string | null
@@ -384,6 +390,7 @@ export type Database = {
         Update: {
           approved_at?: string | null
           approved_by?: string | null
+          ayrshare_post_id?: string | null
           campaign_block_id?: string | null
           canva_link?: string | null
           channel?: string
@@ -395,9 +402,11 @@ export type Database = {
           id?: string
           image_storage_path?: string | null
           image_url?: string | null
+          last_publish_attempt_at?: string | null
           notes?: string | null
           org_id?: string
           publish_date?: string | null
+          retry_count?: number
           review_notes?: string | null
           scheduled_at?: string | null
           source_id?: string | null
@@ -585,6 +594,74 @@ export type Database = {
           },
         ]
       }
+      media_assets: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          duration_seconds: number | null
+          format: string | null
+          height: number | null
+          id: string
+          meta: Json
+          org_id: string
+          prompt: string | null
+          render_job_id: string | null
+          render_status: string
+          source: string
+          template_id: string | null
+          type: string
+          updated_at: string
+          url: string
+          width: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          duration_seconds?: number | null
+          format?: string | null
+          height?: number | null
+          id?: string
+          meta?: Json
+          org_id: string
+          prompt?: string | null
+          render_job_id?: string | null
+          render_status?: string
+          source?: string
+          template_id?: string | null
+          type: string
+          updated_at?: string
+          url: string
+          width?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          duration_seconds?: number | null
+          format?: string | null
+          height?: number | null
+          id?: string
+          meta?: Json
+          org_id?: string
+          prompt?: string | null
+          render_job_id?: string | null
+          render_status?: string
+          source?: string
+          template_id?: string | null
+          type?: string
+          updated_at?: string
+          url?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_assets_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       news_items: {
         Row: {
           created_at: string
@@ -720,6 +797,60 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      publish_attempts: {
+        Row: {
+          attempted_at: string
+          error: string | null
+          id: string
+          org_id: string
+          platform: string
+          post_id: string
+          provider: string
+          provider_post_id: string | null
+          response: Json | null
+          status: string
+        }
+        Insert: {
+          attempted_at?: string
+          error?: string | null
+          id?: string
+          org_id: string
+          platform: string
+          post_id: string
+          provider?: string
+          provider_post_id?: string | null
+          response?: Json | null
+          status: string
+        }
+        Update: {
+          attempted_at?: string
+          error?: string | null
+          id?: string
+          org_id?: string
+          platform?: string
+          post_id?: string
+          provider?: string
+          provider_post_id?: string | null
+          response?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publish_attempts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publish_attempts_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "content_calendar_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       seo_domain_snapshots: {
         Row: {
@@ -1071,6 +1202,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      video_templates: {
+        Row: {
+          aspect_ratio: string
+          created_at: string
+          creatomate_template_id: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          thumbnail_url: string | null
+          updated_at: string
+          variables_schema: Json
+        }
+        Insert: {
+          aspect_ratio?: string
+          created_at?: string
+          creatomate_template_id: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          thumbnail_url?: string | null
+          updated_at?: string
+          variables_schema?: Json
+        }
+        Update: {
+          aspect_ratio?: string
+          created_at?: string
+          creatomate_template_id?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          thumbnail_url?: string | null
+          updated_at?: string
+          variables_schema?: Json
+        }
+        Relationships: []
       }
     }
     Views: {
