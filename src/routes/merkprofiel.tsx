@@ -76,7 +76,7 @@ function MerkprofielPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("brand_profiles")
-        .select("industry, audience, tone, pillars, usps, primary_color, secondary_color, website")
+        .select("industry, audience, tone, pillars, pillar_mix, usps, primary_color, secondary_color, website")
         .eq("org_id", currentOrgId!)
         .maybeSingle();
       if (error) throw error;
@@ -86,11 +86,13 @@ function MerkprofielPage() {
 
   useEffect(() => {
     if (profile) {
+      const rawMix = Array.isArray(profile.pillar_mix) ? (profile.pillar_mix as unknown as PillarMix[]) : [];
       setForm({
         industry: profile.industry ?? "",
         audience: profile.audience ?? "",
         tone: profile.tone ?? "",
         pillars: profile.pillars ?? [],
+        pillar_mix: rawMix.filter((m) => m && typeof m.name === "string"),
         usps: profile.usps ?? [],
         primary_color: profile.primary_color ?? "",
         secondary_color: profile.secondary_color ?? "",
