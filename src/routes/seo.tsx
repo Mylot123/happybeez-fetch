@@ -90,12 +90,14 @@ function SeoPage() {
 }
 
 const TABS = [
-  { id: "overview", label: "Domein-overzicht", icon: Globe },
-  { id: "ranglijst", label: "Ranglijst keywords", icon: Trophy },
-  { id: "research", label: "Keyword-onderzoek", icon: Lightbulb },
-  { id: "tracking", label: "Rank-tracking", icon: Target },
-  { id: "audit", label: "Pagina-audit", icon: FileSearch },
+  { id: "overview", label: "Dashboard", icon: Globe },
+  { id: "tracking", label: "Keywords", icon: Target },
+  { id: "ranglijst", label: "Rankings", icon: Trophy },
+  { id: "research", label: "Research", icon: Lightbulb },
+  { id: "audit", label: "On-page", icon: FileSearch },
   { id: "competitors", label: "Concurrenten", icon: Compass },
+  { id: "backlinks", label: "Backlinks", icon: ExternalLink },
+  { id: "settings", label: "Instellingen", icon: Crosshair },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
