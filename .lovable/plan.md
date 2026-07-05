@@ -49,10 +49,11 @@ Multi-tenant + rollen       single-user                  → Sprint 1 fundament
 - `generatePostImage` uitgebreid: formaat-presets (1:1, 4:5, 9:16, 16:9) + optioneel `org_id` → brand_profile-stijl (tone, kleuren, pijlers) als prompt-prefix i.p.v. hardcoded HB-stijl.
 
 
-### Sprint 6 — Analytics + feedback-loop
-- pg_cron daily → Ayrshare Analytics API → `post_metrics`-tabel.
-- Dashboard-tab: bereik/engagement/beste tijden per kanaal.
-- Analytics-samenvatting wordt context voor volgende `generateCampaignPlan`-call → het feedback-mechanisme uit het bouwplan.
+### Sprint 6 — Analytics + feedback-loop ✅ opgeleverd
+- Nieuwe tabel `post_metrics` (per post × platform × dag: reach, impressions, likes, comments, shares, saves, clicks, engagement_rate). RLS: org-leden lezen.
+- Server route `POST /api/public/cron/analytics` — dagelijks pg_cron → Ayrshare Analytics API → upsert `post_metrics`.
+- Route `/analytics`: KPI-cards, per-kanaal-bars, top-5 posts (laatste 30 dagen).
+- Feedback-loop: `generateCampaignPlan` haalt analytics-samenvatting op en geeft die als extra context aan Gemini → best-presterende kanalen krijgen meer gewicht in nieuwe plannen.
 
 ## Technische keuzes (afgestemd op Happy Beez-stack)
 
