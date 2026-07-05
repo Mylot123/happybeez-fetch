@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Palette, Save, Sparkles, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Palette, Save, Sparkles, Loader2, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,20 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrg } from "@/hooks/use-current-org";
 import { saveBrandProfile } from "@/lib/brand.functions";
+import { analyzeWebsiteForBrand } from "@/lib/website-analysis.functions";
 import { cn } from "@/lib/utils";
+
+type WebsiteAnalysis = {
+  summary: string;
+  tone_of_voice: string;
+  style_keywords: string[];
+  visual_direction: string;
+  suggested_primary: string;
+  suggested_secondary: string;
+  palette: string[];
+  fonts: string[];
+  meta: { title: string; description: string; ogImage: string };
+};
 
 export const Route = createFileRoute("/merkprofiel")({
   head: () => ({
