@@ -50,7 +50,15 @@ const CONTENT_TYPES = [
   "nieuws",
   "behind_scenes",
 ] as const;
-const STATUSES = ["idee", "bewerking", "gepland", "gepubliceerd"] as const;
+const STATUSES = ["draft", "review", "approved", "scheduled", "published", "failed"] as const;
+const STATUS_LABEL: Record<(typeof STATUSES)[number], string> = {
+  draft: "Concept",
+  review: "Ter beoordeling",
+  approved: "Goedgekeurd",
+  scheduled: "Ingepland",
+  published: "Gepubliceerd",
+  failed: "Mislukt",
+};
 
 type Channel = (typeof CHANNELS)[number];
 type ContentType = (typeof CONTENT_TYPES)[number];
@@ -73,10 +81,12 @@ const channelEmoji: Record<Channel, string> = {
 };
 
 const statusBorder: Record<Status, string> = {
-  idee: "border-l-muted-foreground/40",
-  bewerking: "border-l-amber-400",
-  gepland: "border-l-forest",
-  gepubliceerd: "border-l-emerald-500",
+  draft: "border-l-muted-foreground/40",
+  review: "border-l-amber-400",
+  approved: "border-l-forest",
+  scheduled: "border-l-blue-500",
+  published: "border-l-emerald-500",
+  failed: "border-l-destructive",
 };
 
 const DAYS_NL = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
