@@ -48,6 +48,17 @@
   --color-honey: var(--honey);
   --color-bark: var(--bark);
 
+  --color-signal: var(--signal);
+  --color-signal-soft: var(--signal-soft);
+  --color-signal-deep: var(--signal-deep);
+  --color-ink-shell: var(--ink-shell);
+  --color-ink-shell-soft: var(--ink-shell-soft);
+  --color-paper: var(--paper);
+  --color-sage: var(--sage);
+  --color-sage-soft: var(--sage-soft);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
