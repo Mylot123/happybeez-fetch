@@ -120,6 +120,18 @@
   --chart-4: oklch(0.6 0.118 184);
   --chart-5: oklch(0.769 0.188 70);
 
+  /* SocialMotor shell tokens */
+  --signal: #6C4CE0;
+  --signal-soft: #EFEAFB;
+  --signal-deep: #4C2FB0;
+  --ink-shell: #12151C;
+  --ink-shell-soft: #1C202A;
+  --paper: #F4F3F0;
+  --sage: #1F7A5C;
+  --sage-soft: #E7F4EE;
+  --line: #E7E4DE;
+  --line-soft: #EDEBE6;
+
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.255 0.018 50);
   --sidebar-primary: oklch(0.395 0.135 8);
