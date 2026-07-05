@@ -39,18 +39,15 @@ Multi-tenant + rollen       single-user                  → Sprint 1 fundament
 - Status-transities RLS-afgedwongen: alleen `org_admin`/`agency_admin` mogen naar `approved`.
 - Content-studio herzien: platform-tabs (FB/IG/LI/YT), karakter-tellers, live-preview per platform, "Naar review"/"Keur goed"-knoppen.
 
-### Sprint 4 — Auto-publish via Ayrshare
-- Ayrshare als publishing-layer (gehoste OAuth, wij bewaren geen tokens).
-- Secret `AYRSHARE_API_KEY` via `add_secret`.
-- Server routes onder `/api/public/hooks/` voor Ayrshare-webhooks (post-status).
-- pg_cron elke 5 min → server route die `status='scheduled' AND scheduled_at <= now()` posts pakt en naar Ayrshare stuurt.
-- Kalender toont statuskleuren + fouten met retry-knop.
+### Sprint 4+5 — Auto-publish (Ayrshare) + Videostudio (Creatomate) + AI-beeld in merkstijl ✅ gecombineerd opgeleverd
+- Ayrshare als publishing-layer; secret `AYRSHARE_API_KEY` (nog te leveren).
+- Server route `POST /api/public/cron/publish` — pg_cron elke 5 min pakt `status=scheduled AND scheduled_at<=now()`.
+- Webhook `POST /api/public/hooks/ayrshare` — status-updates (success/failed) landen in `content_calendar_items` + `publish_attempts`-log.
+- Handmatige `publishPostNow` + `retryFailedPost` server-fn's (alleen `org_admin`/`agency_admin`).
+- Creatomate videostudio: tabel `video_templates` (agency-breed) + `media_assets` (per org). `renderVideo` → Creatomate; webhook `POST /api/public/hooks/creatomate` vult `media_assets.url/status`.
+- Nieuwe route `/videostudio`: template-grid, variabelen-modal, recente renders met live polling.
+- `generatePostImage` uitgebreid: formaat-presets (1:1, 4:5, 9:16, 16:9) + optioneel `org_id` → brand_profile-stijl (tone, kleuren, pijlers) als prompt-prefix i.p.v. hardcoded HB-stijl.
 
-### Sprint 5 — Videostudio (Creatomate) + AI-beeld in merkstijl
-- Secret `CREATOMATE_API_KEY`.
-- Tabel `video_templates` (agency-breed, geen org_id), `media_assets` (org_id, type, url, source).
-- Server function `renderVideo` → Creatomate → webhook update `media_assets.url`.
-- Image-generator uitbreiden met formaat-presets (1:1, 4:5, 9:16, 16:9) + merkstijl-prompt-prefix uit `brand_profiles`.
 
 ### Sprint 6 — Analytics + feedback-loop
 - pg_cron daily → Ayrshare Analytics API → `post_metrics`-tabel.
