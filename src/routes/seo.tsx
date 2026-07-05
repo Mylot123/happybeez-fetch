@@ -29,6 +29,13 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
 import { analyzeDomain, auditPage, discoverRankedKeywords, researchKeyword, trackKeywordScrape } from "@/lib/seo.functions";
+import {
+  addSeoCompetitor,
+  listSeoCompetitors,
+  refreshDfsRankings,
+  removeSeoCompetitor,
+  researchDfsKeywords,
+} from "@/lib/dataforseo.functions";
 
 type SeoRow = Database["public"]["Tables"]["seo_keywords"]["Row"];
 type Snapshot = Database["public"]["Tables"]["seo_domain_snapshots"]["Row"];
@@ -158,19 +165,33 @@ function Seo() {
   const [rankedFilter, setRankedFilter] = useState<"all" | "top3" | "top10" | "p11_20" | "p21" | "quickwins">("all");
   const [rankedSort, setRankedSort] = useState<"rank" | "volume" | "delta">("rank");
 
+  // DataForSEO: tracked competitors & competitor rank history
+  type CompetitorRow = { id: string; competitor_domain: string; label: string | null; database_code: string; own_domain: string };
+  type CompetitorHistRow = { keyword: string; competitor_domain: string; rank: number | null; checked_at: string };
+  const [dfsCompetitors, setDfsCompetitors] = useState<CompetitorRow[]>([]);
+  const [dfsCompHist, setDfsCompHist] = useState<CompetitorHistRow[]>([]);
+  const [newCompetitor, setNewCompetitor] = useState("");
+  const [newCompetitorLabel, setNewCompetitorLabel] = useState("");
+  const [dfsBusy, setDfsBusy] = useState(false);
+  const [dfsRefreshing, setDfsRefreshing] = useState(false);
 
   useEffect(() => {
     void loadAll();
   }, []);
 
+  useEffect(() => {
+    if (!domain) return;
+    void loadCompetitors();
+  }, [domain, database]);
 
   async function loadAll() {
     setLoadingSnap(true);
-    const [snaps, kws, aud, hist] = await Promise.all([
+    const [snaps, kws, aud, hist, ch] = await Promise.all([
       supabase.from("seo_domain_snapshots").select("*").order("created_at", { ascending: false }).limit(30),
       supabase.from("seo_keywords").select("*").order("created_at", { ascending: false }),
       supabase.from("seo_page_audits").select("*").order("created_at", { ascending: false }).limit(10),
       supabase.from("seo_keyword_history").select("*").order("checked_at", { ascending: false }).limit(500),
+      supabase.from("seo_competitor_history").select("keyword,competitor_domain,rank,checked_at").order("checked_at", { ascending: false }).limit(1000),
     ]);
     setLoadingSnap(false);
     const snapList = (snaps.data ?? []) as ExtendedSnapshot[];
@@ -183,7 +204,81 @@ function Seo() {
     setTracked((kws.data ?? []) as SeoRow[]);
     setAudits((aud.data ?? []) as Audit[]);
     setHistory((hist.data ?? []) as KwHistory[]);
+    setDfsCompHist((ch.data ?? []) as CompetitorHistRow[]);
   }
+
+  async function loadCompetitors() {
+    try {
+      const rows = await listSeoCompetitors({ data: { own_domain: domain.trim(), database } });
+      setDfsCompetitors(rows as CompetitorRow[]);
+    } catch {
+      setDfsCompetitors([]);
+    }
+  }
+
+  async function addCompetitor() {
+    if (!newCompetitor.trim()) return toast.error("Vul een concurrent-domein in.");
+    setDfsBusy(true);
+    try {
+      await addSeoCompetitor({
+        data: {
+          own_domain: domain.trim(),
+          competitor_domain: newCompetitor.trim(),
+          label: newCompetitorLabel.trim() || undefined,
+          database,
+        },
+      });
+      setNewCompetitor("");
+      setNewCompetitorLabel("");
+      await loadCompetitors();
+      toast.success("Concurrent toegevoegd.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Toevoegen mislukt.");
+    } finally {
+      setDfsBusy(false);
+    }
+  }
+
+  async function delCompetitor(id: string) {
+    try {
+      await removeSeoCompetitor({ data: { id } });
+      setDfsCompetitors((p) => p.filter((c) => c.id !== id));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Verwijderen mislukt.");
+    }
+  }
+
+  async function refreshDfs() {
+    setDfsRefreshing(true);
+    try {
+      const res = await refreshDfsRankings({ data: { own_domain: domain.trim(), database } });
+      if (res.soft_error) toast.info(res.soft_error);
+      else toast.success(`DataForSEO check: ${res.checked}/${res.keywords} keywords · ${res.own_found ?? 0} in top-100.`);
+      await loadAll();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "DataForSEO refresh mislukt.");
+    } finally {
+      setDfsRefreshing(false);
+    }
+  }
+
+  async function runDfsResearch() {
+    if (seed.trim().length < 2) return toast.error("Vul een seed keyword in.");
+    setResearching(true);
+    try {
+      const res = await researchDfsKeywords({ data: { seed: seed.trim(), database, limit: 30 } });
+      if (res.soft_error) toast.info(res.soft_error);
+      else {
+        setIdeas(res.ideas as Idea[]);
+        toast.success(`${res.ideas.length} DataForSEO ideeën gevonden.`);
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Research mislukt.");
+    } finally {
+      setResearching(false);
+    }
+  }
+
 
   async function runAnalyze() {
     if (!domain.trim()) return toast.error("Vul een domein in.");
@@ -658,7 +753,10 @@ function Seo() {
                 className="flex-1 min-w-[14rem]"
               />
               <Button onClick={() => void runResearch()} disabled={researching} className="bg-wine text-white hover:bg-wine/90">
-                {researching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} Onderzoek
+                {researching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} AI + Semrush
+              </Button>
+              <Button onClick={() => void runDfsResearch()} disabled={researching} variant="outline" className="border-signal text-signal">
+                {researching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} DataForSEO
               </Button>
             </div>
             <div className="flex flex-wrap gap-1.5 mb-4">
@@ -888,38 +986,120 @@ function Seo() {
 
       {/* ──────────────── Competitors ──────────────── */}
       {tab === "competitors" ? (
-        <Section title="Concurrentie-overzicht" subtitle="Domeinen die op dezelfde keywords ranken als jij." icon={Compass}>
-          {competitors.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Run eerst een domeinanalyse op het tabblad "Domein-overzicht".</p>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {competitors.map((c) => (
-                <div key={c.domain} className="border border-border rounded-lg p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-heading text-lg text-ink">{c.domain}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{fmtNum(c.common_keywords)} gedeelde keywords</p>
-                    </div>
-                    <a href={`https://${c.domain}`} target="_blank" rel="noreferrer" className="text-wine text-xs inline-flex items-center gap-1">
-                      bezoek <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <span className="text-muted-foreground">Organische KW</span>
-                      <p className="font-medium tabular-nums">{fmtNum(c.organic_keywords)}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Organisch verkeer</span>
-                      <p className="font-medium tabular-nums">{fmtNum(c.organic_traffic)}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+        <div className="space-y-6">
+          <Section title="Beheer concurrenten" subtitle="Volg de posities van je concurrenten op dezelfde keywords via DataForSEO." icon={Compass}>
+            <div className="flex flex-wrap items-end gap-3 mb-4">
+              <div className="flex-1 min-w-[14rem] space-y-1.5">
+                <Label className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Concurrent domein</Label>
+                <Input value={newCompetitor} onChange={(e) => setNewCompetitor(e.target.value)} placeholder="bijv. concurrent.nl" />
+              </div>
+              <div className="flex-1 min-w-[10rem] space-y-1.5">
+                <Label className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Label (optioneel)</Label>
+                <Input value={newCompetitorLabel} onChange={(e) => setNewCompetitorLabel(e.target.value)} placeholder="bijv. grootste speler" />
+              </div>
+              <Button onClick={addCompetitor} disabled={dfsBusy} className="bg-signal text-white hover:bg-signal/90">
+                {dfsBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Toevoegen"}
+              </Button>
+              <Button variant="outline" onClick={refreshDfs} disabled={dfsRefreshing || dfsCompetitors.length === 0 && tracked.length === 0}>
+                {dfsRefreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                Ververs rankings
+              </Button>
             </div>
-          )}
-        </Section>
+
+            {dfsCompetitors.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nog geen concurrenten. Voeg er hierboven één toe om posities per keyword te vergelijken.</p>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {dfsCompetitors.map((c) => (
+                  <div key={c.id} className="border border-border rounded-lg p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-heading text-base text-ink truncate">{c.competitor_domain}</p>
+                        {c.label ? <p className="text-xs text-muted-foreground mt-0.5">{c.label}</p> : null}
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <a href={`https://${c.competitor_domain}`} target="_blank" rel="noreferrer" className="text-signal p-1">
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                        <button onClick={() => delCompetitor(c.id)} className="text-muted-foreground hover:text-destructive p-1">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Section>
+
+          {dfsCompetitors.length > 0 && tracked.length > 0 ? (
+            <Section title="Positie-matrix" subtitle="Laatste bekende ranking per keyword, jij vs concurrenten." icon={Trophy}>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left">
+                      <th className="py-2 pr-4 font-medium text-muted-foreground">Keyword</th>
+                      <th className="py-2 px-2 font-medium text-ink">Jij</th>
+                      {dfsCompetitors.map((c) => (
+                        <th key={c.id} className="py-2 px-2 font-medium text-muted-foreground truncate max-w-[10rem]">{c.competitor_domain}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tracked.map((row) => {
+                      const latestByComp: Record<string, number | null> = {};
+                      for (const c of dfsCompetitors) {
+                        const hit = dfsCompHist.find((h) => h.keyword === row.keyword && h.competitor_domain === c.competitor_domain);
+                        latestByComp[c.competitor_domain] = hit?.rank ?? null;
+                      }
+                      return (
+                        <tr key={row.id} className="border-b border-border/50">
+                          <td className="py-2 pr-4">{row.keyword}</td>
+                          <td className="py-2 px-2">{positionBadge(row.current_rank)}</td>
+                          {dfsCompetitors.map((c) => (
+                            <td key={c.id} className="py-2 px-2">{positionBadge(latestByComp[c.competitor_domain])}</td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-xs text-muted-foreground mt-3">
+                Positie = laatste check. Klik op "Ververs rankings" of laat de dagelijkse cron alle keywords bijhouden.
+              </p>
+            </Section>
+          ) : null}
+
+          {competitors.length > 0 ? (
+            <Section title="Semrush-suggesties" subtitle="Domeinen die op dezelfde keywords ranken (uit domeinanalyse)." icon={Compass}>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {competitors.map((c) => (
+                  <div key={c.domain} className="border border-border rounded-lg p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-heading text-base text-ink">{c.domain}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{fmtNum(c.common_keywords)} gedeelde keywords · {fmtNum(c.organic_traffic)} verkeer</p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setNewCompetitor(c.domain);
+                          void addCompetitor();
+                        }}
+                      >
+                        Volg
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          ) : null}
+        </div>
       ) : null}
+
 
       <p className="mt-8 text-xs text-muted-foreground border-t border-border pt-4">
         Exacte volumes, posities en concurrentiecijfers komen uit Semrush wanneer beschikbaar. Als die limiet bereikt is, gebruikt HappyBeez eigen audits,

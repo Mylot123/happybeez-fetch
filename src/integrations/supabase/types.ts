@@ -921,6 +921,94 @@ export type Database = {
           },
         ]
       }
+      seo_competitor_history: {
+        Row: {
+          checked_at: string
+          competitor_domain: string
+          database_code: string
+          id: string
+          keyword: string
+          org_id: string
+          position_url: string | null
+          rank: number | null
+          user_id: string
+        }
+        Insert: {
+          checked_at?: string
+          competitor_domain: string
+          database_code?: string
+          id?: string
+          keyword: string
+          org_id: string
+          position_url?: string | null
+          rank?: number | null
+          user_id: string
+        }
+        Update: {
+          checked_at?: string
+          competitor_domain?: string
+          database_code?: string
+          id?: string
+          keyword?: string
+          org_id?: string
+          position_url?: string | null
+          rank?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_competitor_history_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_competitors: {
+        Row: {
+          competitor_domain: string
+          created_at: string
+          database_code: string
+          id: string
+          label: string | null
+          org_id: string
+          own_domain: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          competitor_domain: string
+          created_at?: string
+          database_code?: string
+          id?: string
+          label?: string | null
+          org_id: string
+          own_domain: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          competitor_domain?: string
+          created_at?: string
+          database_code?: string
+          id?: string
+          label?: string | null
+          org_id?: string
+          own_domain?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_competitors_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seo_domain_snapshots: {
         Row: {
           ai_actions: Json
@@ -997,11 +1085,13 @@ export type Database = {
           difficulty: number | null
           domain: string
           id: string
+          intent: string | null
           keyword: string
           org_id: string
           position_url: string | null
           rank: number | null
           search_volume: number | null
+          serp_features: Json | null
           user_id: string
         }
         Insert: {
@@ -1011,11 +1101,13 @@ export type Database = {
           difficulty?: number | null
           domain: string
           id?: string
+          intent?: string | null
           keyword: string
           org_id?: string
           position_url?: string | null
           rank?: number | null
           search_volume?: number | null
+          serp_features?: Json | null
           user_id: string
         }
         Update: {
@@ -1025,11 +1117,13 @@ export type Database = {
           difficulty?: number | null
           domain?: string
           id?: string
+          intent?: string | null
           keyword?: string
           org_id?: string
           position_url?: string | null
           rank?: number | null
           search_volume?: number | null
+          serp_features?: Json | null
           user_id?: string
         }
         Relationships: [
