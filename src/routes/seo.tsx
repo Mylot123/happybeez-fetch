@@ -1207,60 +1207,47 @@ function Seo() {
 
       {/* ──────────────── Audit ──────────────── */}
       {tab === "audit" ? (
-        <div className="grid gap-6 lg:grid-cols-[24rem_1fr]">
-          <Section title="Nieuwe audit" subtitle="On-page SEO-check met AI-advies." icon={FileSearch}>
-            <div className="space-y-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="au-url">Pagina URL</Label>
-                <Input id="au-url" value={auditUrl} onChange={(e) => setAuditUrl(e.target.value)} placeholder="https://…" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="au-kw">Doel-keyword</Label>
-                <Input id="au-kw" value={auditKw} onChange={(e) => setAuditKw(e.target.value)} placeholder="bv. bijenhotel" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="au-goal">Zakelijk doel</Label>
-                <Input id="au-goal" value={auditGoal} onChange={(e) => setAuditGoal(e.target.value)} placeholder="bv. verkoop / autoriteit" />
-              </div>
-              <Button onClick={runAudit} disabled={auditing} className="w-full bg-wine text-white hover:bg-wine/90">
-                {auditing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} {auditing ? "Audit loopt…" : "Start audit"}
+        <div className="space-y-6">
+          <div>
+            <h2 className="font-heading text-2xl text-ink">On-page Audit</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Analyseer meta, content, techniek, snelheid en Core Web Vitals.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+              <Input
+                value={auditUrl}
+                onChange={(e) => setAuditUrl(e.target.value)}
+                placeholder="https://voorbeeld.nl/pagina"
+              />
+              <Input
+                value={auditKw}
+                onChange={(e) => setAuditKw(e.target.value)}
+                placeholder="Focus keyword"
+              />
+              <Button onClick={runAudit} disabled={auditing} className="bg-wine text-white hover:bg-wine/90">
+                {auditing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Run audit
               </Button>
             </div>
-            {audits.length > 0 ? (
-              <div className="mt-6">
-                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-2">Eerdere audits</p>
-                <div className="space-y-1.5">
-                  {audits.map((a) => (
-                    <button
-                      key={a.id}
-                      onClick={() => setActiveAudit(a)}
-                      className={`w-full text-left text-xs p-2 rounded border transition-colors ${
-                        activeAudit?.id === a.id ? "border-wine bg-secondary/40" : "border-border hover:bg-secondary/30"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="truncate">{a.url.replace(/^https?:\/\//, "")}</span>
-                        <span className={`tabular-nums font-semibold ${scoreColor(a.score)}`}>{a.score ?? "—"}</span>
-                      </div>
-                      <span className="text-muted-foreground">{new Date(a.created_at).toLocaleString("nl-NL")}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </Section>
-
-          <div className="space-y-6">
-            {activeAudit ? (
-              <AuditView audit={activeAudit} />
-            ) : (
-              <div className="bg-card border border-dashed border-border rounded-lg p-10 text-center">
-                <Eye className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                <p className="font-heading text-lg text-ink">Nog geen audit geopend</p>
-                <p className="text-sm text-muted-foreground mt-1">Start een nieuwe audit links, of kies een eerdere.</p>
-              </div>
-            )}
           </div>
+
+          {audits.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center">
+              <Eye className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+              <p className="font-heading text-lg text-ink">Nog geen audits</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Vul een URL + focus keyword in hierboven en klik Run audit.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {audits.map((a) => (
+                <AuditCard key={a.id} audit={a} />
+              ))}
+            </div>
+          )}
         </div>
       ) : null}
 
