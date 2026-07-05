@@ -432,7 +432,7 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
       title: topic || `${contentType} — ${channel}`,
       channel,
       content_type: contentType,
-      status: "idee",
+      status: "draft",
       publish_date: saveDate,
       content_text: generated,
       image_url: selectedPhoto?.image_url ?? null,

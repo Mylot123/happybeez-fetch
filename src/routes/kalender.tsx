@@ -153,7 +153,7 @@ const blankForm = (date: string): FormState => ({
   title: "",
   channel: "instagram",
   content_type: "tip",
-  status: "idee",
+  status: "draft",
   publish_date: date,
   content_text: "",
   notes: "",
@@ -230,7 +230,7 @@ function Kalender() {
       title: item.title,
       channel: (item.channel as Channel) ?? "instagram",
       content_type: (item.content_type as ContentType) ?? "tip",
-      status: (item.status as Status) ?? "idee",
+      status: (item.status as Status) ?? "draft",
       publish_date: item.publish_date ?? "",
       content_text: item.content_text ?? "",
       notes: item.notes ?? "",
@@ -498,7 +498,7 @@ function Kalender() {
                         }}
                         className={cn(
                           "text-xs px-1.5 py-0.5 rounded border-l-2 flex items-center gap-1 cursor-pointer hover:bg-secondary/60 transition-colors bg-card text-ink group/item",
-                          statusBorder[(item.status as Status) ?? "idee"],
+                          statusBorder[(item.status as Status) ?? "draft"],
                         )}
                         title={`Ga naar ${itemRoute === "/nieuws" ? "Nieuws" : "Content Studio"}`}
                       >
