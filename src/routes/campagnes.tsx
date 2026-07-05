@@ -226,7 +226,7 @@ function CampagnesPage() {
           <p className="text-xs text-muted-foreground">
             Bouwt of vervangt het plan voor <span className="capitalize font-medium">{MONTHS[month - 1]} {year}</span>.
           </p>
-          <Button onClick={onGenerate} disabled={busy || !currentOrgId}>
+          <Button onClick={onGenerateClick} disabled={busy || !currentOrgId}>
             {busy ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Sparkles className="w-4 h-4 mr-1" />}
             {plan ? "Opnieuw genereren" : "Genereer maandplan"}
           </Button>
