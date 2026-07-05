@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VideostudioRouteImport } from './routes/videostudio'
 import { Route as SocialProfielenRouteImport } from './routes/social-profielen'
 import { Route as SeoRouteImport } from './routes/seo'
 import { Route as PlanningRouteImport } from './routes/planning'
@@ -22,7 +23,15 @@ import { Route as BoekRouteImport } from './routes/boek'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AgentRouteImport } from './routes/agent'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicHooksCreatomateRouteImport } from './routes/api/public/hooks/creatomate'
+import { Route as ApiPublicHooksAyrshareRouteImport } from './routes/api/public/hooks/ayrshare'
+import { Route as ApiPublicCronPublishRouteImport } from './routes/api/public/cron/publish'
 
+const VideostudioRoute = VideostudioRouteImport.update({
+  id: '/videostudio',
+  path: '/videostudio',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SocialProfielenRoute = SocialProfielenRouteImport.update({
   id: '/social-profielen',
   path: '/social-profielen',
@@ -88,6 +97,22 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksCreatomateRoute =
+  ApiPublicHooksCreatomateRouteImport.update({
+    id: '/api/public/hooks/creatomate',
+    path: '/api/public/hooks/creatomate',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksAyrshareRoute = ApiPublicHooksAyrshareRouteImport.update({
+  id: '/api/public/hooks/ayrshare',
+  path: '/api/public/hooks/ayrshare',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicCronPublishRoute = ApiPublicCronPublishRouteImport.update({
+  id: '/api/public/cron/publish',
+  path: '/api/public/cron/publish',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -103,6 +128,10 @@ export interface FileRoutesByFullPath {
   '/planning': typeof PlanningRoute
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
+  '/videostudio': typeof VideostudioRoute
+  '/api/public/cron/publish': typeof ApiPublicCronPublishRoute
+  '/api/public/hooks/ayrshare': typeof ApiPublicHooksAyrshareRoute
+  '/api/public/hooks/creatomate': typeof ApiPublicHooksCreatomateRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -118,6 +147,10 @@ export interface FileRoutesByTo {
   '/planning': typeof PlanningRoute
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
+  '/videostudio': typeof VideostudioRoute
+  '/api/public/cron/publish': typeof ApiPublicCronPublishRoute
+  '/api/public/hooks/ayrshare': typeof ApiPublicHooksAyrshareRoute
+  '/api/public/hooks/creatomate': typeof ApiPublicHooksCreatomateRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -134,6 +167,10 @@ export interface FileRoutesById {
   '/planning': typeof PlanningRoute
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
+  '/videostudio': typeof VideostudioRoute
+  '/api/public/cron/publish': typeof ApiPublicCronPublishRoute
+  '/api/public/hooks/ayrshare': typeof ApiPublicHooksAyrshareRoute
+  '/api/public/hooks/creatomate': typeof ApiPublicHooksCreatomateRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,6 +188,10 @@ export interface FileRouteTypes {
     | '/planning'
     | '/seo'
     | '/social-profielen'
+    | '/videostudio'
+    | '/api/public/cron/publish'
+    | '/api/public/hooks/ayrshare'
+    | '/api/public/hooks/creatomate'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -166,6 +207,10 @@ export interface FileRouteTypes {
     | '/planning'
     | '/seo'
     | '/social-profielen'
+    | '/videostudio'
+    | '/api/public/cron/publish'
+    | '/api/public/hooks/ayrshare'
+    | '/api/public/hooks/creatomate'
   id:
     | '__root__'
     | '/'
@@ -181,6 +226,10 @@ export interface FileRouteTypes {
     | '/planning'
     | '/seo'
     | '/social-profielen'
+    | '/videostudio'
+    | '/api/public/cron/publish'
+    | '/api/public/hooks/ayrshare'
+    | '/api/public/hooks/creatomate'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -197,10 +246,21 @@ export interface RootRouteChildren {
   PlanningRoute: typeof PlanningRoute
   SeoRoute: typeof SeoRoute
   SocialProfielenRoute: typeof SocialProfielenRoute
+  VideostudioRoute: typeof VideostudioRoute
+  ApiPublicCronPublishRoute: typeof ApiPublicCronPublishRoute
+  ApiPublicHooksAyrshareRoute: typeof ApiPublicHooksAyrshareRoute
+  ApiPublicHooksCreatomateRoute: typeof ApiPublicHooksCreatomateRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/videostudio': {
+      id: '/videostudio'
+      path: '/videostudio'
+      fullPath: '/videostudio'
+      preLoaderRoute: typeof VideostudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/social-profielen': {
       id: '/social-profielen'
       path: '/social-profielen'
@@ -292,6 +352,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/creatomate': {
+      id: '/api/public/hooks/creatomate'
+      path: '/api/public/hooks/creatomate'
+      fullPath: '/api/public/hooks/creatomate'
+      preLoaderRoute: typeof ApiPublicHooksCreatomateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/ayrshare': {
+      id: '/api/public/hooks/ayrshare'
+      path: '/api/public/hooks/ayrshare'
+      fullPath: '/api/public/hooks/ayrshare'
+      preLoaderRoute: typeof ApiPublicHooksAyrshareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/publish': {
+      id: '/api/public/cron/publish'
+      path: '/api/public/cron/publish'
+      fullPath: '/api/public/cron/publish'
+      preLoaderRoute: typeof ApiPublicCronPublishRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -309,6 +390,10 @@ const rootRouteChildren: RootRouteChildren = {
   PlanningRoute: PlanningRoute,
   SeoRoute: SeoRoute,
   SocialProfielenRoute: SocialProfielenRoute,
+  VideostudioRoute: VideostudioRoute,
+  ApiPublicCronPublishRoute: ApiPublicCronPublishRoute,
+  ApiPublicHooksAyrshareRoute: ApiPublicHooksAyrshareRoute,
+  ApiPublicHooksCreatomateRoute: ApiPublicHooksCreatomateRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
