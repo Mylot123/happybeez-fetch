@@ -3,15 +3,26 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Sparkles, Loader2, CalendarRange, Check, Archive } from "lucide-react";
+import { Sparkles, Loader2, CalendarRange, Check, Archive, History, RotateCcw, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrg } from "@/hooks/use-current-org";
-import { generateCampaignPlan, setCampaignPlanStatus } from "@/lib/campaigns.functions";
+import { generateCampaignPlan, setCampaignPlanStatus, restoreCampaignPlanVersion } from "@/lib/campaigns.functions";
+
 
 export const Route = createFileRoute("/campagnes")({
   head: () => ({
@@ -46,8 +57,11 @@ function CampagnesPage() {
   const [year, setYear] = useState(now.getFullYear());
   const [extra, setExtra] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [restoringId, setRestoringId] = useState<string | null>(null);
   const gen = useServerFn(generateCampaignPlan);
   const setStatus = useServerFn(setCampaignPlanStatus);
+  const restoreFn = useServerFn(restoreCampaignPlanVersion);
   const qc = useQueryClient();
 
   const planQuery = useQuery({
@@ -80,6 +94,21 @@ function CampagnesPage() {
     },
   });
 
+  const versionsQuery = useQuery({
+    queryKey: ["campaign-plan-versions", planQuery.data?.id],
+    enabled: !!planQuery.data?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("campaign_plan_versions")
+        .select("id, created_at, prev_status, snapshot")
+        .eq("plan_id", planQuery.data!.id)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const years = useMemo(() => {
     const y = now.getFullYear();
     return [y - 1, y, y + 1];
@@ -88,9 +117,10 @@ function CampagnesPage() {
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["campaign-plan", currentOrgId, year, month] });
     qc.invalidateQueries({ queryKey: ["campaign-blocks"] });
+    qc.invalidateQueries({ queryKey: ["campaign-plan-versions"] });
   };
 
-  const onGenerate = async () => {
+  const runGenerate = async () => {
     if (!currentOrgId) return;
     setBusy(true);
     try {
@@ -105,6 +135,20 @@ function CampagnesPage() {
     }
   };
 
+  const onGenerateClick = () => {
+    const status = planQuery.data?.status;
+    if (status === "approved" || status === "active") {
+      setConfirmOpen(true);
+      return;
+    }
+    void runGenerate();
+  };
+
+  const onConfirmRegenerate = async () => {
+    setConfirmOpen(false);
+    await runGenerate();
+  };
+
   const changeStatus = async (status: "concept" | "approved" | "active" | "archived") => {
     if (!planQuery.data?.id) return;
     try {
@@ -116,8 +160,22 @@ function CampagnesPage() {
     }
   };
 
+  const onRestore = async (versionId: string) => {
+    setRestoringId(versionId);
+    try {
+      await restoreFn({ data: { version_id: versionId } });
+      toast.success("Vorige versie hersteld");
+      invalidate();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Herstellen mislukt");
+    } finally {
+      setRestoringId(null);
+    }
+  };
+
   const plan = planQuery.data;
   const blocks = blocksQuery.data ?? [];
+  const versions = versionsQuery.data ?? [];
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
@@ -168,7 +226,7 @@ function CampagnesPage() {
           <p className="text-xs text-muted-foreground">
             Bouwt of vervangt het plan voor <span className="capitalize font-medium">{MONTHS[month - 1]} {year}</span>.
           </p>
-          <Button onClick={onGenerate} disabled={busy || !currentOrgId}>
+          <Button onClick={onGenerateClick} disabled={busy || !currentOrgId}>
             {busy ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Sparkles className="w-4 h-4 mr-1" />}
             {plan ? "Opnieuw genereren" : "Genereer maandplan"}
           </Button>
@@ -238,8 +296,70 @@ function CampagnesPage() {
               </article>
             ))}
           </section>
+
+          {versions.length > 0 && (
+            <section className="mt-8">
+              <div className="flex items-center gap-2 mb-3">
+                <History className="w-4 h-4 text-muted-foreground" />
+                <h3 className="text-sm font-semibold text-ink uppercase tracking-widest">Vorige versies</h3>
+              </div>
+              <ul className="divide-y divide-border/60 border border-border/60 rounded-lg overflow-hidden">
+                {versions.map((v) => {
+                  const snap = (v.snapshot ?? {}) as { theme?: string; blocks?: unknown[] };
+                  const blockCount = Array.isArray(snap.blocks) ? snap.blocks.length : 0;
+                  return (
+                    <li key={v.id} className="flex items-center justify-between gap-4 px-4 py-3 bg-card">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-ink truncate">{snap.theme ?? "Onbekend thema"}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {new Date(v.created_at).toLocaleString("nl-NL", { dateStyle: "short", timeStyle: "short" })}
+                          {" · "}{blockCount} blokken
+                          {v.prev_status ? ` · was ${STATUS_LABEL[v.prev_status] ?? v.prev_status}` : ""}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onRestore(v.id)}
+                        disabled={restoringId === v.id}
+                      >
+                        {restoringId === v.id ? (
+                          <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                        ) : (
+                          <RotateCcw className="w-3.5 h-3.5 mr-1" />
+                        )}
+                        Herstel
+                      </Button>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="text-xs text-muted-foreground mt-2">
+                Bij herstel wordt het huidige plan ook opgeslagen als versie, zodat je altijd terug kunt.
+              </p>
+            </section>
+          )}
         </>
       )}
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-600" />
+              Bestaand plan overschrijven?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Het huidige maandplan heeft status <span className="font-semibold">{STATUS_LABEL[plan?.status ?? ""] ?? plan?.status}</span>.
+              Opnieuw genereren vervangt het thema en alle contentblokken. De huidige versie wordt bewaard onder "Vorige versies" zodat je hem kunt herstellen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuleren</AlertDialogCancel>
+            <AlertDialogAction onClick={onConfirmRegenerate}>Ja, overschrijf</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -287,6 +287,51 @@ export type Database = {
           },
         ]
       }
+      campaign_plan_versions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          org_id: string
+          plan_id: string
+          prev_status: string | null
+          snapshot: Json
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          org_id: string
+          plan_id: string
+          prev_status?: string | null
+          snapshot: Json
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          org_id?: string
+          plan_id?: string
+          prev_status?: string | null
+          snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_plan_versions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_plan_versions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_plans: {
         Row: {
           created_at: string
