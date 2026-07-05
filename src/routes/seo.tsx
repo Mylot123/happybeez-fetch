@@ -165,10 +165,16 @@ function Seo() {
   const [rankedFilter, setRankedFilter] = useState<"all" | "top3" | "top10" | "p11_20" | "p21" | "quickwins">("all");
   const [rankedSort, setRankedSort] = useState<"rank" | "volume" | "delta">("rank");
 
+  // DataForSEO: tracked competitors & competitor rank history
+  type CompetitorRow = { id: string; competitor_domain: string; label: string | null; database_code: string; own_domain: string };
+  type CompetitorHistRow = { keyword: string; competitor_domain: string; rank: number | null; checked_at: string };
+  const [dfsCompetitors, setDfsCompetitors] = useState<CompetitorRow[]>([]);
+  const [dfsCompHist, setDfsCompHist] = useState<CompetitorHistRow[]>([]);
+  const [newCompetitor, setNewCompetitor] = useState("");
+  const [newCompetitorLabel, setNewCompetitorLabel] = useState("");
+  const [dfsBusy, setDfsBusy] = useState(false);
+  const [dfsRefreshing, setDfsRefreshing] = useState(false);
 
-  useEffect(() => {
-    void loadAll();
-  }, []);
 
 
   async function loadAll() {
