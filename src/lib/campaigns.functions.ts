@@ -78,10 +78,35 @@ export const generateCampaignPlan = createServerFn({ method: "POST" })
       ? `Merk: branche=${brand.industry ?? "onbekend"}; doelgroep=${brand.audience ?? "onbekend"}; tone=${brand.tone ?? "warm & deskundig"}; pijlers=${(brand.pillars ?? []).join(" | ")}; USPs=${(brand.usps ?? []).join(" | ")}.`
       : "Merk: (nog geen merkprofiel — kies veilige generieke thema's).";
 
+    // Feedback-loop: haal analytics-samenvatting laatste 30 dagen op
+    const since30 = new Date(Date.now() - 30 * 86400_000).toISOString();
+    const { data: metrics } = await context.supabase
+      .from("post_metrics")
+      .select("platform, reach, engagement_rate")
+      .eq("org_id", data.org_id)
+      .gte("recorded_at", since30);
+
+    let analyticsLine = "";
+    if (metrics && metrics.length) {
+      const byP: Record<string, { r: number; e: number; n: number }> = {};
+      for (const m of metrics as any[]) {
+        const k = m.platform;
+        if (!byP[k]) byP[k] = { r: 0, e: 0, n: 0 };
+        byP[k].r += Number(m.reach) || 0;
+        byP[k].e += Number(m.engagement_rate) || 0;
+        byP[k].n += 1;
+      }
+      const summary = Object.entries(byP)
+        .map(([p, v]) => `${p}: ${v.r} bereik, ${((v.e / v.n) * 100).toFixed(1)}% engagement`)
+        .join(" | ");
+      analyticsLine = `Analytics laatste 30 dagen: ${summary}. Zet de best-presterende kanalen vaker in.`;
+    }
+
     const prompt = [
       brandLine,
       `Maand: ${monthName} ${data.year}.`,
       "Denk aan seizoen, NL-feestdagen en actuele momenten in die maand.",
+      analyticsLine,
       data.extraContext ? `Extra context: ${data.extraContext}` : "",
     ].filter(Boolean).join("\n");
 

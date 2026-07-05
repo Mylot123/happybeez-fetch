@@ -21,11 +21,13 @@ import { Route as ContentStudioRouteImport } from './routes/content-studio'
 import { Route as CampagnesRouteImport } from './routes/campagnes'
 import { Route as BoekRouteImport } from './routes/boek'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AgentRouteImport } from './routes/agent'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicHooksCreatomateRouteImport } from './routes/api/public/hooks/creatomate'
 import { Route as ApiPublicHooksAyrshareRouteImport } from './routes/api/public/hooks/ayrshare'
 import { Route as ApiPublicCronPublishRouteImport } from './routes/api/public/cron/publish'
+import { Route as ApiPublicCronAnalyticsRouteImport } from './routes/api/public/cron/analytics'
 
 const VideostudioRoute = VideostudioRouteImport.update({
   id: '/videostudio',
@@ -87,6 +89,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AnalyticsRoute = AnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AgentRoute = AgentRouteImport.update({
   id: '/agent',
   path: '/agent',
@@ -113,10 +120,16 @@ const ApiPublicCronPublishRoute = ApiPublicCronPublishRouteImport.update({
   path: '/api/public/cron/publish',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCronAnalyticsRoute = ApiPublicCronAnalyticsRouteImport.update({
+  id: '/api/public/cron/analytics',
+  path: '/api/public/cron/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/agent': typeof AgentRoute
+  '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/boek': typeof BoekRoute
   '/campagnes': typeof CampagnesRoute
@@ -129,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
   '/videostudio': typeof VideostudioRoute
+  '/api/public/cron/analytics': typeof ApiPublicCronAnalyticsRoute
   '/api/public/cron/publish': typeof ApiPublicCronPublishRoute
   '/api/public/hooks/ayrshare': typeof ApiPublicHooksAyrshareRoute
   '/api/public/hooks/creatomate': typeof ApiPublicHooksCreatomateRoute
@@ -136,6 +150,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/agent': typeof AgentRoute
+  '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/boek': typeof BoekRoute
   '/campagnes': typeof CampagnesRoute
@@ -148,6 +163,7 @@ export interface FileRoutesByTo {
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
   '/videostudio': typeof VideostudioRoute
+  '/api/public/cron/analytics': typeof ApiPublicCronAnalyticsRoute
   '/api/public/cron/publish': typeof ApiPublicCronPublishRoute
   '/api/public/hooks/ayrshare': typeof ApiPublicHooksAyrshareRoute
   '/api/public/hooks/creatomate': typeof ApiPublicHooksCreatomateRoute
@@ -156,6 +172,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/agent': typeof AgentRoute
+  '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/boek': typeof BoekRoute
   '/campagnes': typeof CampagnesRoute
@@ -168,6 +185,7 @@ export interface FileRoutesById {
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
   '/videostudio': typeof VideostudioRoute
+  '/api/public/cron/analytics': typeof ApiPublicCronAnalyticsRoute
   '/api/public/cron/publish': typeof ApiPublicCronPublishRoute
   '/api/public/hooks/ayrshare': typeof ApiPublicHooksAyrshareRoute
   '/api/public/hooks/creatomate': typeof ApiPublicHooksCreatomateRoute
@@ -177,6 +195,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/agent'
+    | '/analytics'
     | '/auth'
     | '/boek'
     | '/campagnes'
@@ -189,6 +208,7 @@ export interface FileRouteTypes {
     | '/seo'
     | '/social-profielen'
     | '/videostudio'
+    | '/api/public/cron/analytics'
     | '/api/public/cron/publish'
     | '/api/public/hooks/ayrshare'
     | '/api/public/hooks/creatomate'
@@ -196,6 +216,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/agent'
+    | '/analytics'
     | '/auth'
     | '/boek'
     | '/campagnes'
@@ -208,6 +229,7 @@ export interface FileRouteTypes {
     | '/seo'
     | '/social-profielen'
     | '/videostudio'
+    | '/api/public/cron/analytics'
     | '/api/public/cron/publish'
     | '/api/public/hooks/ayrshare'
     | '/api/public/hooks/creatomate'
@@ -215,6 +237,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/agent'
+    | '/analytics'
     | '/auth'
     | '/boek'
     | '/campagnes'
@@ -227,6 +250,7 @@ export interface FileRouteTypes {
     | '/seo'
     | '/social-profielen'
     | '/videostudio'
+    | '/api/public/cron/analytics'
     | '/api/public/cron/publish'
     | '/api/public/hooks/ayrshare'
     | '/api/public/hooks/creatomate'
@@ -235,6 +259,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AgentRoute: typeof AgentRoute
+  AnalyticsRoute: typeof AnalyticsRoute
   AuthRoute: typeof AuthRoute
   BoekRoute: typeof BoekRoute
   CampagnesRoute: typeof CampagnesRoute
@@ -247,6 +272,7 @@ export interface RootRouteChildren {
   SeoRoute: typeof SeoRoute
   SocialProfielenRoute: typeof SocialProfielenRoute
   VideostudioRoute: typeof VideostudioRoute
+  ApiPublicCronAnalyticsRoute: typeof ApiPublicCronAnalyticsRoute
   ApiPublicCronPublishRoute: typeof ApiPublicCronPublishRoute
   ApiPublicHooksAyrshareRoute: typeof ApiPublicHooksAyrshareRoute
   ApiPublicHooksCreatomateRoute: typeof ApiPublicHooksCreatomateRoute
@@ -338,6 +364,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/analytics': {
+      id: '/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/agent': {
       id: '/agent'
       path: '/agent'
@@ -373,12 +406,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronPublishRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/analytics': {
+      id: '/api/public/cron/analytics'
+      path: '/api/public/cron/analytics'
+      fullPath: '/api/public/cron/analytics'
+      preLoaderRoute: typeof ApiPublicCronAnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AgentRoute: AgentRoute,
+  AnalyticsRoute: AnalyticsRoute,
   AuthRoute: AuthRoute,
   BoekRoute: BoekRoute,
   CampagnesRoute: CampagnesRoute,
@@ -391,6 +432,7 @@ const rootRouteChildren: RootRouteChildren = {
   SeoRoute: SeoRoute,
   SocialProfielenRoute: SocialProfielenRoute,
   VideostudioRoute: VideostudioRoute,
+  ApiPublicCronAnalyticsRoute: ApiPublicCronAnalyticsRoute,
   ApiPublicCronPublishRoute: ApiPublicCronPublishRoute,
   ApiPublicHooksAyrshareRoute: ApiPublicHooksAyrshareRoute,
   ApiPublicHooksCreatomateRoute: ApiPublicHooksCreatomateRoute,
