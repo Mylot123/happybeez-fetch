@@ -983,38 +983,120 @@ function Seo() {
 
       {/* ──────────────── Competitors ──────────────── */}
       {tab === "competitors" ? (
-        <Section title="Concurrentie-overzicht" subtitle="Domeinen die op dezelfde keywords ranken als jij." icon={Compass}>
-          {competitors.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Run eerst een domeinanalyse op het tabblad "Domein-overzicht".</p>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {competitors.map((c) => (
-                <div key={c.domain} className="border border-border rounded-lg p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-heading text-lg text-ink">{c.domain}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{fmtNum(c.common_keywords)} gedeelde keywords</p>
-                    </div>
-                    <a href={`https://${c.domain}`} target="_blank" rel="noreferrer" className="text-wine text-xs inline-flex items-center gap-1">
-                      bezoek <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <span className="text-muted-foreground">Organische KW</span>
-                      <p className="font-medium tabular-nums">{fmtNum(c.organic_keywords)}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Organisch verkeer</span>
-                      <p className="font-medium tabular-nums">{fmtNum(c.organic_traffic)}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+        <div className="space-y-6">
+          <Section title="Beheer concurrenten" subtitle="Volg de posities van je concurrenten op dezelfde keywords via DataForSEO." icon={Compass}>
+            <div className="flex flex-wrap items-end gap-3 mb-4">
+              <div className="flex-1 min-w-[14rem] space-y-1.5">
+                <Label className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Concurrent domein</Label>
+                <Input value={newCompetitor} onChange={(e) => setNewCompetitor(e.target.value)} placeholder="bijv. concurrent.nl" />
+              </div>
+              <div className="flex-1 min-w-[10rem] space-y-1.5">
+                <Label className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Label (optioneel)</Label>
+                <Input value={newCompetitorLabel} onChange={(e) => setNewCompetitorLabel(e.target.value)} placeholder="bijv. grootste speler" />
+              </div>
+              <Button onClick={addCompetitor} disabled={dfsBusy} className="bg-signal text-white hover:bg-signal/90">
+                {dfsBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Toevoegen"}
+              </Button>
+              <Button variant="outline" onClick={refreshDfs} disabled={dfsRefreshing || dfsCompetitors.length === 0 && tracked.length === 0}>
+                {dfsRefreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                Ververs rankings
+              </Button>
             </div>
-          )}
-        </Section>
+
+            {dfsCompetitors.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nog geen concurrenten. Voeg er hierboven één toe om posities per keyword te vergelijken.</p>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {dfsCompetitors.map((c) => (
+                  <div key={c.id} className="border border-border rounded-lg p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-heading text-base text-ink truncate">{c.competitor_domain}</p>
+                        {c.label ? <p className="text-xs text-muted-foreground mt-0.5">{c.label}</p> : null}
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <a href={`https://${c.competitor_domain}`} target="_blank" rel="noreferrer" className="text-signal p-1">
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                        <button onClick={() => delCompetitor(c.id)} className="text-muted-foreground hover:text-destructive p-1">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Section>
+
+          {dfsCompetitors.length > 0 && tracked.length > 0 ? (
+            <Section title="Positie-matrix" subtitle="Laatste bekende ranking per keyword, jij vs concurrenten." icon={Trophy}>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left">
+                      <th className="py-2 pr-4 font-medium text-muted-foreground">Keyword</th>
+                      <th className="py-2 px-2 font-medium text-ink">Jij</th>
+                      {dfsCompetitors.map((c) => (
+                        <th key={c.id} className="py-2 px-2 font-medium text-muted-foreground truncate max-w-[10rem]">{c.competitor_domain}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tracked.map((row) => {
+                      const latestByComp: Record<string, number | null> = {};
+                      for (const c of dfsCompetitors) {
+                        const hit = dfsCompHist.find((h) => h.keyword === row.keyword && h.competitor_domain === c.competitor_domain);
+                        latestByComp[c.competitor_domain] = hit?.rank ?? null;
+                      }
+                      return (
+                        <tr key={row.id} className="border-b border-border/50">
+                          <td className="py-2 pr-4">{row.keyword}</td>
+                          <td className="py-2 px-2">{positionBadge(row.current_rank)}</td>
+                          {dfsCompetitors.map((c) => (
+                            <td key={c.id} className="py-2 px-2">{positionBadge(latestByComp[c.competitor_domain])}</td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-xs text-muted-foreground mt-3">
+                Positie = laatste check. Klik op "Ververs rankings" of laat de dagelijkse cron alle keywords bijhouden.
+              </p>
+            </Section>
+          ) : null}
+
+          {competitors.length > 0 ? (
+            <Section title="Semrush-suggesties" subtitle="Domeinen die op dezelfde keywords ranken (uit domeinanalyse)." icon={Compass}>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {competitors.map((c) => (
+                  <div key={c.domain} className="border border-border rounded-lg p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-heading text-base text-ink">{c.domain}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{fmtNum(c.common_keywords)} gedeelde keywords · {fmtNum(c.organic_traffic)} verkeer</p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setNewCompetitor(c.domain);
+                          void addCompetitor();
+                        }}
+                      >
+                        Volg
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          ) : null}
+        </div>
       ) : null}
+
 
       <p className="mt-8 text-xs text-muted-foreground border-t border-border pt-4">
         Exacte volumes, posities en concurrentiecijfers komen uit Semrush wanneer beschikbaar. Als die limiet bereikt is, gebruikt HappyBeez eigen audits,
