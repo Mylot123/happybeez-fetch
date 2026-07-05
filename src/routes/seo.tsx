@@ -31,10 +31,14 @@ import { useAuth } from "@/lib/auth";
 import { analyzeDomain, auditPage, discoverRankedKeywords, researchKeyword, trackKeywordScrape } from "@/lib/seo.functions";
 import {
   addSeoCompetitor,
+  bulkAddSeoKeywords,
+  deleteSeoKeywords,
+  enrichSeoKeywords,
   listSeoCompetitors,
   refreshDfsRankings,
   removeSeoCompetitor,
   researchDfsKeywords,
+  toggleSeoKeyword,
 } from "@/lib/dataforseo.functions";
 
 type SeoRow = Database["public"]["Tables"]["seo_keywords"]["Row"];
@@ -140,6 +144,10 @@ function Seo() {
   // Tracking add
   const [newKw, setNewKw] = useState("");
   const [trackingBusy, setTrackingBusy] = useState(false);
+  const [bulkKw, setBulkKw] = useState("");
+  const [enriching, setEnriching] = useState(false);
+  const [selectedKwIds, setSelectedKwIds] = useState<Set<string>>(new Set());
+  const [rankFilter, setRankFilter] = useState<"all" | "top3" | "top10" | "top100" | "none">("all");
 
   // Audit
   const [audits, setAudits] = useState<Audit[]>([]);
