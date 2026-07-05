@@ -134,6 +134,37 @@ function MerkprofielPage() {
     }
   };
 
+  const onAnalyzeWebsite = async () => {
+    const url = form.website.trim();
+    if (!url) {
+      toast.error("Vul eerst een website-URL in (stap 1).");
+      setStep(0);
+      return;
+    }
+    setAnalyzing(true);
+    setAnalysis(null);
+    try {
+      const result = await analyze({ data: { url } });
+      setAnalysis(result);
+      toast.success("Website-analyse klaar");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Analyse mislukt");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const applyAnalysis = (opts: { colors?: boolean; tone?: boolean }) => {
+    if (!analysis) return;
+    setForm((f) => ({
+      ...f,
+      primary_color: opts.colors && analysis.suggested_primary ? analysis.suggested_primary : f.primary_color,
+      secondary_color: opts.colors && analysis.suggested_secondary ? analysis.suggested_secondary : f.secondary_color,
+      tone: opts.tone && analysis.tone_of_voice ? analysis.tone_of_voice : f.tone,
+    }));
+    toast.success("Overgenomen in het profiel");
+  };
+
   return (
     <div className="max-w-3xl mx-auto px-6 py-10">
       <header className="mb-8">
