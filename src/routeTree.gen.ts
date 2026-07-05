@@ -26,6 +26,7 @@ import { Route as AgentRouteImport } from './routes/agent'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicHooksCreatomateRouteImport } from './routes/api/public/hooks/creatomate'
 import { Route as ApiPublicHooksAyrshareRouteImport } from './routes/api/public/hooks/ayrshare'
+import { Route as ApiPublicCronSeoTrackingRouteImport } from './routes/api/public/cron/seo-tracking'
 import { Route as ApiPublicCronPublishRouteImport } from './routes/api/public/cron/publish'
 import { Route as ApiPublicCronAnalyticsRouteImport } from './routes/api/public/cron/analytics'
 
@@ -115,6 +116,12 @@ const ApiPublicHooksAyrshareRoute = ApiPublicHooksAyrshareRouteImport.update({
   path: '/api/public/hooks/ayrshare',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCronSeoTrackingRoute =
+  ApiPublicCronSeoTrackingRouteImport.update({
+    id: '/api/public/cron/seo-tracking',
+    path: '/api/public/cron/seo-tracking',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronPublishRoute = ApiPublicCronPublishRouteImport.update({
   id: '/api/public/cron/publish',
   path: '/api/public/cron/publish',
@@ -144,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/videostudio': typeof VideostudioRoute
   '/api/public/cron/analytics': typeof ApiPublicCronAnalyticsRoute
   '/api/public/cron/publish': typeof ApiPublicCronPublishRoute
+  '/api/public/cron/seo-tracking': typeof ApiPublicCronSeoTrackingRoute
   '/api/public/hooks/ayrshare': typeof ApiPublicHooksAyrshareRoute
   '/api/public/hooks/creatomate': typeof ApiPublicHooksCreatomateRoute
 }
@@ -165,6 +173,7 @@ export interface FileRoutesByTo {
   '/videostudio': typeof VideostudioRoute
   '/api/public/cron/analytics': typeof ApiPublicCronAnalyticsRoute
   '/api/public/cron/publish': typeof ApiPublicCronPublishRoute
+  '/api/public/cron/seo-tracking': typeof ApiPublicCronSeoTrackingRoute
   '/api/public/hooks/ayrshare': typeof ApiPublicHooksAyrshareRoute
   '/api/public/hooks/creatomate': typeof ApiPublicHooksCreatomateRoute
 }
@@ -187,6 +196,7 @@ export interface FileRoutesById {
   '/videostudio': typeof VideostudioRoute
   '/api/public/cron/analytics': typeof ApiPublicCronAnalyticsRoute
   '/api/public/cron/publish': typeof ApiPublicCronPublishRoute
+  '/api/public/cron/seo-tracking': typeof ApiPublicCronSeoTrackingRoute
   '/api/public/hooks/ayrshare': typeof ApiPublicHooksAyrshareRoute
   '/api/public/hooks/creatomate': typeof ApiPublicHooksCreatomateRoute
 }
@@ -210,6 +220,7 @@ export interface FileRouteTypes {
     | '/videostudio'
     | '/api/public/cron/analytics'
     | '/api/public/cron/publish'
+    | '/api/public/cron/seo-tracking'
     | '/api/public/hooks/ayrshare'
     | '/api/public/hooks/creatomate'
   fileRoutesByTo: FileRoutesByTo
@@ -231,6 +242,7 @@ export interface FileRouteTypes {
     | '/videostudio'
     | '/api/public/cron/analytics'
     | '/api/public/cron/publish'
+    | '/api/public/cron/seo-tracking'
     | '/api/public/hooks/ayrshare'
     | '/api/public/hooks/creatomate'
   id:
@@ -252,6 +264,7 @@ export interface FileRouteTypes {
     | '/videostudio'
     | '/api/public/cron/analytics'
     | '/api/public/cron/publish'
+    | '/api/public/cron/seo-tracking'
     | '/api/public/hooks/ayrshare'
     | '/api/public/hooks/creatomate'
   fileRoutesById: FileRoutesById
@@ -274,6 +287,7 @@ export interface RootRouteChildren {
   VideostudioRoute: typeof VideostudioRoute
   ApiPublicCronAnalyticsRoute: typeof ApiPublicCronAnalyticsRoute
   ApiPublicCronPublishRoute: typeof ApiPublicCronPublishRoute
+  ApiPublicCronSeoTrackingRoute: typeof ApiPublicCronSeoTrackingRoute
   ApiPublicHooksAyrshareRoute: typeof ApiPublicHooksAyrshareRoute
   ApiPublicHooksCreatomateRoute: typeof ApiPublicHooksCreatomateRoute
 }
@@ -399,6 +413,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksAyrshareRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/seo-tracking': {
+      id: '/api/public/cron/seo-tracking'
+      path: '/api/public/cron/seo-tracking'
+      fullPath: '/api/public/cron/seo-tracking'
+      preLoaderRoute: typeof ApiPublicCronSeoTrackingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/publish': {
       id: '/api/public/cron/publish'
       path: '/api/public/cron/publish'
@@ -434,6 +455,7 @@ const rootRouteChildren: RootRouteChildren = {
   VideostudioRoute: VideostudioRoute,
   ApiPublicCronAnalyticsRoute: ApiPublicCronAnalyticsRoute,
   ApiPublicCronPublishRoute: ApiPublicCronPublishRoute,
+  ApiPublicCronSeoTrackingRoute: ApiPublicCronSeoTrackingRoute,
   ApiPublicHooksAyrshareRoute: ApiPublicHooksAyrshareRoute,
   ApiPublicHooksCreatomateRoute: ApiPublicHooksCreatomateRoute,
 }

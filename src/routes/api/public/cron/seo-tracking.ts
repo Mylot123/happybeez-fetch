@@ -49,7 +49,7 @@ export const Route = createFileRoute("/api/public/cron/seo-tracking")({
           groups.set(key, g);
         }
 
-        const { runDfsGroupRefresh } = await import("./_dfs-runner");
+        const { runDfsGroupRefresh } = await import("./_dfs-runner.server");
         const results: Array<{ domain: string; checked: number; error?: string }> = [];
         for (const g of groups.values()) {
           try {
