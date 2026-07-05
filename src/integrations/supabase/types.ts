@@ -17,34 +17,40 @@ export type Database = {
       agent_conversations: {
         Row: {
           agent_id: string
+          category: string | null
           created_at: string
           elevenlabs_conversation_id: string | null
           ended_at: string | null
           id: string
           org_id: string
           started_at: string
+          summary: string | null
           title: string | null
           user_id: string
         }
         Insert: {
           agent_id: string
+          category?: string | null
           created_at?: string
           elevenlabs_conversation_id?: string | null
           ended_at?: string | null
           id?: string
           org_id?: string
           started_at?: string
+          summary?: string | null
           title?: string | null
           user_id: string
         }
         Update: {
           agent_id?: string
+          category?: string | null
           created_at?: string
           elevenlabs_conversation_id?: string | null
           ended_at?: string | null
           id?: string
           org_id?: string
           started_at?: string
+          summary?: string | null
           title?: string | null
           user_id?: string
         }
