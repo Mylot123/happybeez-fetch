@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.enforce_post_status_transition() FROM PUBLIC, anon, authenticated;
