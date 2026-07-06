@@ -287,14 +287,26 @@ function PhotoCard({ photo, displayUrl }: { photo: Photo; displayUrl: string }) 
           ))}
         </div>
         <div className="flex gap-2 mt-auto pt-2">
-          <Button size="sm" variant="outline" onClick={copyUrl} className="flex-1">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={copyUrl}
+            className="flex-1"
+            disabled={!displayUrl}
+          >
             <Copy className="h-3 w-3" /> URL
           </Button>
-          <Button size="sm" variant="outline" asChild>
-            <a href={displayUrl} download>
+          {displayUrl ? (
+            <Button size="sm" variant="outline" asChild>
+              <a href={displayUrl} download>
+                <Download className="h-3 w-3" />
+              </a>
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" disabled>
               <Download className="h-3 w-3" />
-            </a>
-          </Button>
+            </Button>
+          )}
           <Button
             size="sm"
             onClick={addToCalendar}
