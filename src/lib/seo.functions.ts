@@ -27,9 +27,8 @@ function isSemrushLimitError(e: unknown) {
 }
 
 
-function fallbackNotice(e: unknown) {
-  const msg = e instanceof Error ? e.message : "Semrush is nu niet beschikbaar.";
-  return `${msg} Ik heb daarom een alternatief SEO-plan gemaakt zonder Semrush-data.`;
+function fallbackNotice(_e: unknown) {
+  return `Alternatief SEO-plan gemaakt met AI + DataForSEO-data.`;
 }
 
 function cleanKeyword(value: string) {
@@ -305,17 +304,17 @@ async function callSemrush(path: string, params: Record<string, string | number 
       if (j?.error) msg = j.error;
     } catch {}
     if (/TOTAL LIMIT EXCEEDED|limit exceeded/i.test(msg)) {
-      throw new Error("Semrush dagelijkse limiet bereikt. Upgrade je Semrush-plan of probeer morgen opnieuw.");
+      throw new Error("SEO-databron dagelijkse limiet bereikt. Probeer later opnieuw.");
     }
-    throw new Error(`Semrush fout (${res.status}): ${msg}`);
+    throw new Error(`SEO-databron fout (${res.status}): ${msg}`);
   }
   let j: { data?: SemRow; error?: string };
   try {
     j = JSON.parse(text);
   } catch {
-    throw new Error(`Onleesbare Semrush-response.`);
+    throw new Error(`Onleesbare SEO-databron response.`);
   }
-  if (j.error) throw new Error(`Semrush: ${j.error}`);
+  if (j.error) throw new Error(`SEO-databron: ${j.error}`);
   return j.data ?? { columnNames: [], rows: [] };
 }
 
@@ -386,7 +385,7 @@ export const analyzeDomain = createServerFn({ method: "POST" })
 
     try {
       if (data.skip_semrush) {
-        throw new Error("Semrush is uitgeschakeld — alternatief SEO-plan gemaakt.");
+        throw new Error("Externe SEO-databron overgeslagen — plan opgesteld met AI + DataForSEO.");
       }
 
       const ranks = rowsToObjects(
@@ -554,7 +553,7 @@ export const researchKeyword = createServerFn({ method: "POST" })
     let soft_error: string | null = null;
 
     try {
-      if (data.skip_semrush) throw new Error("Semrush uitgeschakeld.");
+      if (data.skip_semrush) throw new Error("Externe SEO-databron overgeslagen.");
 
       const related = rowsToObjects(
         await callSemrush(
@@ -639,7 +638,7 @@ export const trackKeyword = createServerFn({ method: "POST" })
     let soft_error: string | null = null;
 
     try {
-      if (data.skip_semrush) throw new Error("Semrush uitgeschakeld.");
+      if (data.skip_semrush) throw new Error("Externe SEO-databron overgeslagen.");
 
       // Metrics for the keyword
       const metricsRows = rowsToObjects(
