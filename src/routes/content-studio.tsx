@@ -669,15 +669,25 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
                           uit bibliotheek
                         </span>
                       </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) void runUploadPhoto(f);
+                        }}
+                      />
                       {rankedPhotos.length === 0 ? (
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                           <p className="text-xs" style={{ color: "var(--hb-dark)", opacity: 0.6 }}>
-                            Geen relevante foto's in je bibliotheek. Laat de AI er één maken in HappyBeez-stijl.
+                            Geen relevante foto's in je bibliotheek. Genereer er één, of upload er zelf een.
                           </p>
                           <Button
                             type="button"
                             onClick={runGenerateImage}
-                            disabled={generatingImage}
+                            disabled={generatingImage || uploading}
                             className="w-full rounded-full font-semibold hover:brightness-110"
                             style={{ background: "var(--hb-honey)", color: "var(--hb-dark)" }}
                           >
@@ -685,6 +695,20 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
                               <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Beeld maken…</>
                             ) : (
                               <><Sparkles className="w-4 h-4 mr-2" /> Genereer beeld met AI</>
+                            )}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploading || generatingImage}
+                            className="w-full rounded-full font-semibold"
+                            style={{ borderColor: "var(--hb-border)", color: "var(--hb-dark)" }}
+                          >
+                            {uploading ? (
+                              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Uploaden…</>
+                            ) : (
+                              <><Upload className="w-4 h-4 mr-2" /> Eigen foto uploaden</>
                             )}
                           </Button>
                         </div>
@@ -710,17 +734,30 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
                               );
                             })}
                           </div>
-                          <button
-                            type="button"
-                            onClick={runGenerateImage}
-                            disabled={generatingImage}
-                            className="mt-2 text-[11px] underline disabled:opacity-50"
-                            style={{ color: "var(--hb-green-dark)" }}
-                          >
-                            {generatingImage ? "Beeld maken…" : "Niets past? Genereer AI-beeld"}
-                          </button>
+                          <div className="mt-2 flex items-center gap-3 text-[11px]">
+                            <button
+                              type="button"
+                              onClick={runGenerateImage}
+                              disabled={generatingImage || uploading}
+                              className="underline disabled:opacity-50"
+                              style={{ color: "var(--hb-green-dark)" }}
+                            >
+                              {generatingImage ? "Beeld maken…" : "Genereer AI-beeld"}
+                            </button>
+                            <span style={{ color: "var(--hb-dark)", opacity: 0.4 }}>·</span>
+                            <button
+                              type="button"
+                              onClick={() => fileInputRef.current?.click()}
+                              disabled={uploading || generatingImage}
+                              className="underline disabled:opacity-50"
+                              style={{ color: "var(--hb-green-dark)" }}
+                            >
+                              {uploading ? "Uploaden…" : "Eigen foto uploaden"}
+                            </button>
+                          </div>
                         </>
                       )}
+
                     </div>
                   )}
 
