@@ -638,7 +638,7 @@ export const trackKeyword = createServerFn({ method: "POST" })
     let soft_error: string | null = null;
 
     try {
-      if (data.skip_semrush) throw new Error("Semrush uitgeschakeld.");
+      if (data.skip_semrush) throw new Error("Externe SEO-databron overgeslagen.");
 
       // Metrics for the keyword
       const metricsRows = rowsToObjects(
