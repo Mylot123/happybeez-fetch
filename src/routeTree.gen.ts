@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as VideostudioRouteImport } from './routes/videostudio'
 import { Route as SocialProfielenRouteImport } from './routes/social-profielen'
 import { Route as SeoRouteImport } from './routes/seo'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PlanningRouteImport } from './routes/planning'
 import { Route as NieuwsRouteImport } from './routes/nieuws'
 import { Route as MerkprofielRouteImport } from './routes/merkprofiel'
@@ -43,6 +44,11 @@ const SocialProfielenRoute = SocialProfielenRouteImport.update({
 const SeoRoute = SeoRouteImport.update({
   id: '/seo',
   path: '/seo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlanningRoute = PlanningRouteImport.update({
@@ -146,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/merkprofiel': typeof MerkprofielRoute
   '/nieuws': typeof NieuwsRoute
   '/planning': typeof PlanningRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
   '/videostudio': typeof VideostudioRoute
@@ -168,6 +175,7 @@ export interface FileRoutesByTo {
   '/merkprofiel': typeof MerkprofielRoute
   '/nieuws': typeof NieuwsRoute
   '/planning': typeof PlanningRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
   '/videostudio': typeof VideostudioRoute
@@ -191,6 +199,7 @@ export interface FileRoutesById {
   '/merkprofiel': typeof MerkprofielRoute
   '/nieuws': typeof NieuwsRoute
   '/planning': typeof PlanningRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
   '/videostudio': typeof VideostudioRoute
@@ -215,6 +224,7 @@ export interface FileRouteTypes {
     | '/merkprofiel'
     | '/nieuws'
     | '/planning'
+    | '/reset-password'
     | '/seo'
     | '/social-profielen'
     | '/videostudio'
@@ -237,6 +247,7 @@ export interface FileRouteTypes {
     | '/merkprofiel'
     | '/nieuws'
     | '/planning'
+    | '/reset-password'
     | '/seo'
     | '/social-profielen'
     | '/videostudio'
@@ -259,6 +270,7 @@ export interface FileRouteTypes {
     | '/merkprofiel'
     | '/nieuws'
     | '/planning'
+    | '/reset-password'
     | '/seo'
     | '/social-profielen'
     | '/videostudio'
@@ -282,6 +294,7 @@ export interface RootRouteChildren {
   MerkprofielRoute: typeof MerkprofielRoute
   NieuwsRoute: typeof NieuwsRoute
   PlanningRoute: typeof PlanningRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SeoRoute: typeof SeoRoute
   SocialProfielenRoute: typeof SocialProfielenRoute
   VideostudioRoute: typeof VideostudioRoute
@@ -313,6 +326,13 @@ declare module '@tanstack/react-router' {
       path: '/seo'
       fullPath: '/seo'
       preLoaderRoute: typeof SeoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/planning': {
@@ -450,6 +470,7 @@ const rootRouteChildren: RootRouteChildren = {
   MerkprofielRoute: MerkprofielRoute,
   NieuwsRoute: NieuwsRoute,
   PlanningRoute: PlanningRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SeoRoute: SeoRoute,
   SocialProfielenRoute: SocialProfielenRoute,
   VideostudioRoute: VideostudioRoute,

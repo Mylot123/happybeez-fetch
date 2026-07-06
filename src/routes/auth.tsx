@@ -26,12 +26,33 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
 
   useEffect(() => {
     if (!loading && user) {
       navigate({ to: "/", replace: true });
     }
   }, [loading, user, navigate]);
+
+  const handleForgot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail) {
+      toast.error("Vul je e-mailadres in.");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Als dit e-mailadres bestaat, is er een herstel-link verstuurd.");
+    setForgotOpen(false);
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,8 +145,51 @@ function AuthPage() {
                 <Button type="submit" className="w-full" disabled={busy}>
                   {busy ? "Bezig…" : "Inloggen"}
                 </Button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForgotEmail(email);
+                    setForgotOpen((v) => !v);
+                  }}
+                  className="text-xs text-muted-foreground hover:text-foreground w-full text-center"
+                >
+                  Wachtwoord vergeten?
+                </button>
               </form>
+
+              {forgotOpen && (
+                <form
+                  onSubmit={handleForgot}
+                  className="mt-4 space-y-3 rounded-md border border-border bg-muted/30 p-3"
+                >
+                  <p className="text-xs text-muted-foreground">
+                    Vul je e-mailadres in. We sturen een link om een nieuw wachtwoord te kiezen.
+                  </p>
+                  <Input
+                    type="email"
+                    required
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    placeholder="jij@voorbeeld.nl"
+                    autoComplete="email"
+                  />
+                  <div className="flex gap-2">
+                    <Button type="submit" size="sm" disabled={busy}>
+                      {busy ? "Bezig…" : "Stuur herstel-link"}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setForgotOpen(false)}
+                    >
+                      Annuleer
+                    </Button>
+                  </div>
+                </form>
+              )}
             </TabsContent>
+
 
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
