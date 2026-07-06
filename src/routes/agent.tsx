@@ -60,8 +60,8 @@ function pageLabelFor(url: string): string {
 export const Route = createFileRoute("/agent")({
   head: () => ({
     meta: [
-      { title: "Josef — HappyBeez Agent" },
-      { name: "description", content: "Praat met Josef, je HappyBeez AI-assistent." },
+      { title: "De Bijenspecialist — HappyBeez Agent" },
+      { name: "description", content: "Praat met de Bijenspecialist, je HappyBeez AI-assistent." },
     ],
   }),
   component: () => (
@@ -105,7 +105,7 @@ function AgentPage() {
   const backfilledRef = useRef(false);
 
   const conversation = useConversation({
-    onConnect: () => toast.success("Verbonden met Josef"),
+    onConnect: () => toast.success("Verbonden met de Bijenspecialist"),
     onDisconnect: () => toast.info("Gesprek beëindigd"),
     onError: (e: unknown) => toast.error(typeof e === "string" ? e : "Verbindingsfout"),
     clientTools: {
@@ -298,10 +298,10 @@ function AgentPage() {
           AI-Assistent
         </span>
         <h1 className="font-heading font-bold text-ink text-3xl mt-1 ruled-heading">
-          Josef
+          De Bijenspecialist
         </h1>
         <p className="text-muted-foreground text-sm mt-2">
-          Praat met Josef, je HappyBeez assistent. Alles wat je vraagt en zijn
+          Praat met de Bijenspecialist, je HappyBeez assistent. Alles wat je vraagt en zijn
           antwoorden worden opgeslagen.
         </p>
       </div>
@@ -323,7 +323,7 @@ function AgentPage() {
             </div>
             <div>
               <p className="font-semibold text-ink text-sm">
-                {isConnected ? (isSpeaking ? "Josef praat…" : "Josef luistert…") : "Niet verbonden"}
+                {isConnected ? (isSpeaking ? "De Bijenspecialist praat…" : "De Bijenspecialist luistert…") : "Niet verbonden"}
               </p>
               <p className="text-xs text-muted-foreground">Status: {conversation.status}</p>
             </div>
@@ -355,8 +355,8 @@ function AgentPage() {
           {messages.length === 0 ? (
             <p className="text-sm text-muted-foreground italic text-center py-8">
               {isConnected
-                ? "Begin gewoon te praten — Josef luistert."
-                : "Klik op Start gesprek om met Josef te praten."}
+                ? "Begin gewoon te praten — de Bijenspecialist luistert."
+                : "Klik op Start gesprek om met de Bijenspecialist te praten."}
             </p>
           ) : (
             <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
@@ -372,7 +372,7 @@ function AgentPage() {
                       >
                         <ExternalLink className="w-4 h-4 text-forest shrink-0" />
                         <div className="min-w-0">
-                          <p className="font-medium text-ink">Josef opent: {m.label ?? m.content}</p>
+                          <p className="font-medium text-ink">De Bijenspecialist opent: {m.label ?? m.content}</p>
                           <p className="text-xs text-muted-foreground truncate">{m.url}</p>
                         </div>
                       </a>
@@ -520,7 +520,7 @@ function AgentPage() {
                                   m.role === "user" ? "text-wine" : "text-gold",
                                 )}
                               >
-                                {m.role === "user" ? "Jij:" : "Josef:"}
+                                {m.role === "user" ? "Jij:" : "De Bijenspecialist:"}
                               </span>
                               <span className="text-ink">{m.content}</span>
                             </div>

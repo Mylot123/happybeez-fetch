@@ -186,7 +186,7 @@ function CampagnesPage() {
           </div>
           <h1 className="text-3xl font-heading font-bold text-ink mt-2">Campagneplanner</h1>
           <p className="text-muted-foreground text-sm mt-2 max-w-xl">
-            Elke maand een thema en 4 contentblokken. Josef gebruikt jullie merkprofiel en de kalender om suggesties te doen.
+            Elke maand een thema en 4 contentblokken. de Bijenspecialist gebruikt jullie merkprofiel en de kalender om suggesties te doen.
           </p>
         </div>
         <div className="flex items-center gap-2">

@@ -59,7 +59,7 @@ const navGroups: NavGroup[] = [
       { path: "/analytics", label: "Analytics", icon: BarChart3 },
       { path: "/seo", label: "SEO & Ranking", icon: Search },
       { path: "/social-profielen", label: "Social Profielen", icon: Users },
-      { path: "/agent", label: "Josef (AI)", icon: Mic, ai: true },
+      { path: "/agent", label: "De Bijenspecialist (AI)", icon: Mic, ai: true },
     ],
   },
 ];

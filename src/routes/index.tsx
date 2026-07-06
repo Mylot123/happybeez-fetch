@@ -94,7 +94,7 @@ function Dashboard() {
             <span className="relative w-1.5 h-1.5 rounded-full bg-[#3DDC84]">
               <span className="absolute -inset-1 rounded-full border border-[#3DDC84]/60 animate-ping" />
             </span>
-            <b className="text-ink font-bold">Josef</b> actief
+            <b className="text-ink font-bold">de Bijenspecialist</b> actief
           </span>
           <span className="text-line">·</span>
           <span><b className="text-ink font-bold">6</b> posts deze week</span>

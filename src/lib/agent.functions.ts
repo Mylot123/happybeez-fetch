@@ -84,7 +84,7 @@ async function summarizeOne(
     .limit(200);
 
   const transcript = (msgs ?? [])
-    .map((m) => `${m.role === "user" ? "Gebruiker" : "Josef"}: ${m.content}`)
+    .map((m) => `${m.role === "user" ? "Gebruiker" : "De Bijenspecialist"}: ${m.content}`)
     .join("\n")
     .slice(0, 6000);
 
@@ -96,7 +96,7 @@ async function summarizeOne(
     return { summary: "Leeg gesprek.", category: "Overig" as Category };
   }
 
-  const prompt = `Hieronder een transcript van een spraakgesprek tussen een gebruiker en assistent Josef.
+  const prompt = `Hieronder een transcript van een spraakgesprek tussen een gebruiker en assistent de Bijenspecialist.
 Geef terug: (1) een korte samenvatting van 1 zin (max 200 tekens) waar het over ging, in het Nederlands.
 (2) één categorie, exact een van: ${CATEGORIES.join(", ")}.
 
