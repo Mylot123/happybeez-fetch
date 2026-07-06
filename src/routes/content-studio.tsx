@@ -381,7 +381,7 @@ function ContentStudio() {
     }
   }
 
-  }
+
 
   async function runGenerate() {
     if (generating) return;
