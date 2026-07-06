@@ -304,17 +304,17 @@ async function callSemrush(path: string, params: Record<string, string | number 
       if (j?.error) msg = j.error;
     } catch {}
     if (/TOTAL LIMIT EXCEEDED|limit exceeded/i.test(msg)) {
-      throw new Error("Semrush dagelijkse limiet bereikt. Upgrade je Semrush-plan of probeer morgen opnieuw.");
+      throw new Error("SEO-databron dagelijkse limiet bereikt. Probeer later opnieuw.");
     }
-    throw new Error(`Semrush fout (${res.status}): ${msg}`);
+    throw new Error(`SEO-databron fout (${res.status}): ${msg}`);
   }
   let j: { data?: SemRow; error?: string };
   try {
     j = JSON.parse(text);
   } catch {
-    throw new Error(`Onleesbare Semrush-response.`);
+    throw new Error(`Onleesbare SEO-databron response.`);
   }
-  if (j.error) throw new Error(`Semrush: ${j.error}`);
+  if (j.error) throw new Error(`SEO-databron: ${j.error}`);
   return j.data ?? { columnNames: [], rows: [] };
 }
 
