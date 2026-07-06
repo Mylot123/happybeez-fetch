@@ -276,3 +276,113 @@ export const uploadUserPhoto = createServerFn({ method: "POST" })
 
     return { ...row, image_url: signed?.signedUrl ?? row.image_url };
   });
+
+// -----------------------------------------------------------------------------
+// Dev check: verify a photo upload with org_id passes RLS end-to-end.
+// Uses the USER-scoped Supabase client so any RLS violation surfaces here
+// exactly as it would for a real upload. Cleans up via admin to guarantee no
+// leftover test rows/objects.
+// -----------------------------------------------------------------------------
+const verifySchema = z.object({ org_id: z.string().uuid() });
+
+// 1x1 transparent PNG
+const TINY_PNG_B64 =
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+
+export const verifyPhotoUploadRls = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => verifySchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const steps: Array<{ step: string; ok: boolean; detail?: string }> = [];
+    const orgId = data.org_id;
+
+    // Step 1: caller must be an org member (matches upload path).
+    try {
+      await assertOrgMember(context.supabase, context.userId, orgId);
+      steps.push({ step: "org-membership", ok: true });
+    } catch (e: any) {
+      steps.push({ step: "org-membership", ok: false, detail: e?.message });
+      return { ok: false, steps };
+    }
+
+    const { supabaseAdmin } = await import(
+      "@/integrations/supabase/client.server"
+    );
+
+    const path = `uploads/${orgId}/_rls-check-${Date.now()}.png`;
+    const bytes = Uint8Array.from(atob(TINY_PNG_B64), (c) => c.charCodeAt(0));
+
+    // Step 2: storage upload via admin (bucket is private; storage RLS not the
+    // subject of this check).
+    const { error: upErr } = await supabaseAdmin.storage
+      .from("library-photos")
+      .upload(path, bytes, { contentType: "image/png", upsert: false });
+    if (upErr) {
+      steps.push({ step: "storage-upload", ok: false, detail: upErr.message });
+      return { ok: false, steps };
+    }
+    steps.push({ step: "storage-upload", ok: true, detail: path });
+
+    let insertedId: string | null = null;
+    try {
+      // Step 3: THE CRITICAL CHECK — insert into library_photos as the
+      // authenticated user, so RLS policies are enforced.
+      const { data: row, error: insErr } = await context.supabase
+        .from("library_photos")
+        .insert({
+          org_id: orgId,
+          title: "[dev-check] RLS verification",
+          caption: "auto-generated, safe to ignore",
+          tags: ["dev-check"],
+          suggested_channels: [],
+          storage_path: path,
+          image_url: path,
+        })
+        .select("id, org_id")
+        .single();
+
+      if (insErr || !row) {
+        steps.push({
+          step: "library_photos-insert-user-rls",
+          ok: false,
+          detail: insErr?.message ?? "no row returned",
+        });
+        return { ok: false, steps };
+      }
+      insertedId = row.id;
+      const orgMatches = row.org_id === orgId;
+      steps.push({
+        step: "library_photos-insert-user-rls",
+        ok: orgMatches,
+        detail: orgMatches
+          ? `inserted id=${row.id} org_id matches`
+          : `org_id mismatch: got ${row.org_id}`,
+      });
+
+      // Step 4: read it back through user RLS to prove SELECT policy also
+      // accepts org-scoped rows.
+      const { data: readBack, error: readErr } = await context.supabase
+        .from("library_photos")
+        .select("id, org_id")
+        .eq("id", row.id)
+        .maybeSingle();
+      steps.push({
+        step: "library_photos-select-user-rls",
+        ok: !readErr && !!readBack && readBack.org_id === orgId,
+        detail: readErr?.message,
+      });
+    } finally {
+      // Cleanup (admin, so it always succeeds regardless of RLS).
+      if (insertedId) {
+        await supabaseAdmin
+          .from("library_photos")
+          .delete()
+          .eq("id", insertedId);
+      }
+      await supabaseAdmin.storage.from("library-photos").remove([path]);
+      steps.push({ step: "cleanup", ok: true });
+    }
+
+    const ok = steps.every((s) => s.ok);
+    return { ok, steps };
+  });
