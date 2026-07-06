@@ -241,8 +241,8 @@ function PhotoCard({ photo, displayUrl }: { photo: Photo; displayUrl: string }) 
       user_id: user.id,
       title: photo.title,
       channel: "instagram",
-      content_type: "foto",
-      status: "idee",
+      content_type: "behind_scenes",
+      status: "draft",
       notes: `Foto: ${displayUrl}\nBron: ${photo.credit ?? ""}`,
     });
     setSaving(false);
