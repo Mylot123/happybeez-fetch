@@ -298,7 +298,7 @@ function AgentPage() {
           AI-Assistent
         </span>
         <h1 className="font-heading font-bold text-ink text-3xl mt-1 ruled-heading">
-          de Bijenspecialist
+          De Bijenspecialist
         </h1>
         <p className="text-muted-foreground text-sm mt-2">
           Praat met de Bijenspecialist, je HappyBeez assistent. Alles wat je vraagt en zijn
