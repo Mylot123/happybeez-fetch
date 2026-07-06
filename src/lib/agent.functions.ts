@@ -84,7 +84,7 @@ async function summarizeOne(
     .limit(200);
 
   const transcript = (msgs ?? [])
-    .map((m) => `${m.role === "user" ? "Gebruiker" : "de Bijenspecialist"}: ${m.content}`)
+    .map((m) => `${m.role === "user" ? "Gebruiker" : "De Bijenspecialist"}: ${m.content}`)
     .join("\n")
     .slice(0, 6000);
 

@@ -60,7 +60,7 @@ function pageLabelFor(url: string): string {
 export const Route = createFileRoute("/agent")({
   head: () => ({
     meta: [
-      { title: "de Bijenspecialist — HappyBeez Agent" },
+      { title: "De Bijenspecialist — HappyBeez Agent" },
       { name: "description", content: "Praat met de Bijenspecialist, je HappyBeez AI-assistent." },
     ],
   }),
@@ -323,7 +323,7 @@ function AgentPage() {
             </div>
             <div>
               <p className="font-semibold text-ink text-sm">
-                {isConnected ? (isSpeaking ? "de Bijenspecialist praat…" : "de Bijenspecialist luistert…") : "Niet verbonden"}
+                {isConnected ? (isSpeaking ? "De Bijenspecialist praat…" : "De Bijenspecialist luistert…") : "Niet verbonden"}
               </p>
               <p className="text-xs text-muted-foreground">Status: {conversation.status}</p>
             </div>
@@ -372,7 +372,7 @@ function AgentPage() {
                       >
                         <ExternalLink className="w-4 h-4 text-forest shrink-0" />
                         <div className="min-w-0">
-                          <p className="font-medium text-ink">de Bijenspecialist opent: {m.label ?? m.content}</p>
+                          <p className="font-medium text-ink">De Bijenspecialist opent: {m.label ?? m.content}</p>
                           <p className="text-xs text-muted-foreground truncate">{m.url}</p>
                         </div>
                       </a>
@@ -520,7 +520,7 @@ function AgentPage() {
                                   m.role === "user" ? "text-wine" : "text-gold",
                                 )}
                               >
-                                {m.role === "user" ? "Jij:" : "de Bijenspecialist:"}
+                                {m.role === "user" ? "Jij:" : "De Bijenspecialist:"}
                               </span>
                               <span className="text-ink">{m.content}</span>
                             </div>
