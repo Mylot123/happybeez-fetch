@@ -178,8 +178,10 @@ function ContentStudioPage() {
 
 function ContentStudio() {
   const { user } = useAuth();
+  const { currentOrg } = useCurrentOrg();
   const generate = useServerFn(generateText);
   const generateImage = useServerFn(generatePostImage);
+  const uploadPhoto = useServerFn(uploadUserPhoto);
   const search = Route.useSearch();
 
   const [channel, setChannel] = useState<Channel>("instagram");
@@ -196,16 +198,17 @@ function ContentStudio() {
   );
 
   const [photos, setPhotos] = useState<Photo[]>([]);
-  // Per-channel selection so switching channel doesn't reuse the same image
   const [photoByChannel, setPhotoByChannel] = useState<Record<string, string>>({});
-  // Recently used photo IDs per channel — so successive generations rotate
   const [recentByChannel, setRecentByChannel] = useState<Record<string, string[]>>({});
   const selectedPhotoId = photoByChannel[channel] ?? null;
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function setSelectedPhotoId(id: string) {
     setPhotoByChannel((prev) => ({ ...prev, [channel]: id }));
   }
+
 
 
   useEffect(() => {
