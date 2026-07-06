@@ -26,12 +26,33 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
 
   useEffect(() => {
     if (!loading && user) {
       navigate({ to: "/", replace: true });
     }
   }, [loading, user, navigate]);
+
+  const handleForgot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail) {
+      toast.error("Vul je e-mailadres in.");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Als dit e-mailadres bestaat, is er een herstel-link verstuurd.");
+    setForgotOpen(false);
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
