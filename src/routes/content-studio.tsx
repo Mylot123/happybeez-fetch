@@ -286,6 +286,10 @@ function ContentStudio() {
 
   async function runGenerateImage() {
     if (!user) return;
+    if (!currentOrg) {
+      toast.error("Geen organisatie geselecteerd.");
+      return;
+    }
     const subject = [topic, keywords].filter(Boolean).join(", ");
     if (!subject && !generated) {
       toast.error("Vul eerst een onderwerp in of genereer eerst de tekst.");
@@ -296,53 +300,87 @@ function ContentStudio() {
       const prompt = subject
         ? `Een natuurfoto die past bij: ${subject}.`
         : `Een natuurfoto die past bij deze post: ${generated.slice(0, 400)}`;
-      const { b64 } = await generateImage({ data: { prompt } });
-
-      // upload to library bucket
-      const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-      const blob = new Blob([bin], { type: "image/png" });
-      const filename = `generated/${user.id}/${Date.now()}.png`;
-      const { error: upErr } = await supabase.storage
-        .from("library-photos")
-        .upload(filename, blob, { contentType: "image/png" });
-      if (upErr) throw upErr;
-
-      const { data: signed } = await supabase.storage
-        .from("library-photos")
-        .createSignedUrl(filename, 60 * 60 * 8);
-      const signedUrl = signed?.signedUrl ?? "";
-
-      // save to library so it's reusable later
+      const format = CHANNEL_FORMAT[channel] ?? "1:1";
       const title = (topic || subject || "AI-beeld").slice(0, 120);
-      const { data: inserted, error: insErr } = await supabase
-        .from("library_photos")
-        .insert({
+      const result = await generateImage({
+        data: {
+          prompt,
+          format,
+          org_id: currentOrg.id,
+          channel,
           title,
-          caption: subject || null,
-          tags: ["ai-gegenereerd", channel],
-          storage_path: filename,
-          image_url: signedUrl,
-        })
-        .select("id,title,caption,tags,storage_path,image_url")
-        .single();
-      if (insErr) throw insErr;
-
+          caption: subject || undefined,
+          save: true,
+        },
+      });
+      if (!result.photo) throw new Error("Beeld niet opgeslagen.");
       const newPhoto: Photo = {
-        id: inserted.id,
-        title: inserted.title,
-        caption: inserted.caption,
-        tags: (inserted.tags as string[] | null) ?? [],
-        storage_path: inserted.storage_path,
-        image_url: signedUrl,
+        id: result.photo.id,
+        title: result.photo.title,
+        caption: result.photo.caption,
+        tags: (result.photo.tags as string[] | null) ?? [],
+        storage_path: result.photo.storage_path,
+        image_url: result.photo.image_url,
       };
-      setPhotos((prev) => [newPhoto, ...prev]);
+      setPhotos((prev) => [newPhoto, ...prev.filter((p) => p.id !== newPhoto.id)]);
       setSelectedPhotoId(newPhoto.id);
       toast.success("Beeld gegenereerd en toegevoegd aan bibliotheek.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Beeldgeneratie mislukt.");
+      toast.error(err instanceof Error ? err.message : "Beeldgeneratie mislukt.", {
+        action: { label: "Probeer opnieuw", onClick: () => void runGenerateImage() },
+      });
     } finally {
       setGeneratingImage(false);
     }
+  }
+
+  async function runUploadPhoto(file: File) {
+    if (!currentOrg) {
+      toast.error("Geen organisatie geselecteerd.");
+      return;
+    }
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      toast.error("Alleen JPG, PNG of WEBP toegestaan.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Bestand is te groot (max 10 MB).");
+      return;
+    }
+    setUploading(true);
+    try {
+      const b64 = await fileToBase64(file);
+      const title = (topic || file.name.replace(/\.[^.]+$/, "")).slice(0, 120);
+      const photo = await uploadPhoto({
+        data: {
+          org_id: currentOrg.id,
+          filename: file.name,
+          content_type: file.type as "image/png" | "image/jpeg" | "image/webp",
+          b64,
+          title,
+          caption: [topic, keywords].filter(Boolean).join(", ") || undefined,
+          channel,
+        },
+      });
+      const newPhoto: Photo = {
+        id: photo.id,
+        title: photo.title,
+        caption: photo.caption,
+        tags: (photo.tags as string[] | null) ?? [],
+        storage_path: photo.storage_path,
+        image_url: photo.image_url,
+      };
+      setPhotos((prev) => [newPhoto, ...prev.filter((p) => p.id !== newPhoto.id)]);
+      setSelectedPhotoId(newPhoto.id);
+      toast.success("Foto geüpload en toegevoegd aan bibliotheek.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload mislukt.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
   }
 
   async function runGenerate() {
