@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { PhotoUploadButton } from "@/components/PhotoUploadButton";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
@@ -130,13 +131,20 @@ function Boekbibliotheek() {
 
   return (
     <div className="px-4 py-8 sm:px-8 max-w-6xl mx-auto">
-      <div className="mb-6">
-        <span className="text-xs tracking-[0.2em] uppercase text-muted-foreground font-medium">
-          Bronnen
-        </span>
-        <h1 className="font-heading font-bold text-ink text-3xl mt-1 ruled-heading">
-          Boekbibliotheek
-        </h1>
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <span className="text-xs tracking-[0.2em] uppercase text-muted-foreground font-medium">
+            Bronnen
+          </span>
+          <h1 className="font-heading font-bold text-ink text-3xl mt-1 ruled-heading">
+            Boekbibliotheek
+          </h1>
+          <p className="text-xs text-muted-foreground mt-2 max-w-lg">
+            Upload ook eigen foto's bij je kennisbank — automatisch voorzien van
+            een licht HappyBeez-watermerk.
+          </p>
+        </div>
+        <PhotoUploadButton />
       </div>
 
       {/* Google-stijl Q&A zoekbalk */}
