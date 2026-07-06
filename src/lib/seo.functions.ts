@@ -27,9 +27,8 @@ function isSemrushLimitError(e: unknown) {
 }
 
 
-function fallbackNotice(e: unknown) {
-  const msg = e instanceof Error ? e.message : "Semrush is nu niet beschikbaar.";
-  return `${msg} Ik heb daarom een alternatief SEO-plan gemaakt zonder Semrush-data.`;
+function fallbackNotice(_e: unknown) {
+  return `Alternatief SEO-plan gemaakt met AI + DataForSEO-data.`;
 }
 
 function cleanKeyword(value: string) {
