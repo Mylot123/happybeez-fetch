@@ -9,7 +9,7 @@ import {
   Loader2,
   RefreshCw,
   Sparkles,
-  ExternalLink,
+  
   Image as ImageIcon,
   Heart,
   MessageCircle,
@@ -566,19 +566,6 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
                 </Button>
               </div>
             </div>
-
-            <a
-              href={`https://www.canva.com/templates/?query=${channel}+bee+nature`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-between p-4 rounded-xl transition-colors hover:brightness-105"
-              style={{ background: "rgba(210, 161, 58, 0.12)", border: "1px solid rgba(210, 161, 58, 0.35)" }}
-            >
-              <span className="text-sm font-medium" style={{ color: "var(--hb-dark)" }}>
-                🎨 Canva templates voor {channel}
-              </span>
-              <ExternalLink className="w-4 h-4" style={{ color: "var(--hb-wood)" }} />
-            </a>
           </div>
 
           {/* Generated post column */}
