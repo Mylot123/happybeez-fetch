@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -9,7 +9,7 @@ import {
   Loader2,
   RefreshCw,
   Sparkles,
-  
+  Upload,
   Image as ImageIcon,
   Heart,
   MessageCircle,
@@ -33,9 +33,30 @@ import {
 } from "@/components/ui/select";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { generateText } from "@/lib/ai.functions";
-import { generatePostImage } from "@/lib/image.functions";
+import { generatePostImage, uploadUserPhoto } from "@/lib/image.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useCurrentOrg } from "@/hooks/use-current-org";
+
+const CHANNEL_FORMAT: Record<string, "1:1" | "9:16" | "16:9" | "4:5"> = {
+  instagram: "1:1",
+  facebook: "1:1",
+  linkedin: "16:9",
+  blog: "16:9",
+  website: "16:9",
+};
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result.split(",")[1] ?? "");
+    };
+    reader.onerror = () => reject(new Error("Kon bestand niet lezen."));
+    reader.readAsDataURL(file);
+  });
+}
 
 type Channel = "instagram" | "linkedin" | "facebook" | "blog" | "website";
 type ContentType =
@@ -157,8 +178,10 @@ function ContentStudioPage() {
 
 function ContentStudio() {
   const { user } = useAuth();
+  const { currentOrg } = useCurrentOrg();
   const generate = useServerFn(generateText);
   const generateImage = useServerFn(generatePostImage);
+  const uploadPhoto = useServerFn(uploadUserPhoto);
   const search = Route.useSearch();
 
   const [channel, setChannel] = useState<Channel>("instagram");
@@ -175,16 +198,17 @@ function ContentStudio() {
   );
 
   const [photos, setPhotos] = useState<Photo[]>([]);
-  // Per-channel selection so switching channel doesn't reuse the same image
   const [photoByChannel, setPhotoByChannel] = useState<Record<string, string>>({});
-  // Recently used photo IDs per channel — so successive generations rotate
   const [recentByChannel, setRecentByChannel] = useState<Record<string, string[]>>({});
   const selectedPhotoId = photoByChannel[channel] ?? null;
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function setSelectedPhotoId(id: string) {
     setPhotoByChannel((prev) => ({ ...prev, [channel]: id }));
   }
+
 
 
   useEffect(() => {
@@ -262,6 +286,10 @@ function ContentStudio() {
 
   async function runGenerateImage() {
     if (!user) return;
+    if (!currentOrg) {
+      toast.error("Geen organisatie geselecteerd.");
+      return;
+    }
     const subject = [topic, keywords].filter(Boolean).join(", ");
     if (!subject && !generated) {
       toast.error("Vul eerst een onderwerp in of genereer eerst de tekst.");
@@ -272,54 +300,88 @@ function ContentStudio() {
       const prompt = subject
         ? `Een natuurfoto die past bij: ${subject}.`
         : `Een natuurfoto die past bij deze post: ${generated.slice(0, 400)}`;
-      const { b64 } = await generateImage({ data: { prompt } });
-
-      // upload to library bucket
-      const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-      const blob = new Blob([bin], { type: "image/png" });
-      const filename = `generated/${user.id}/${Date.now()}.png`;
-      const { error: upErr } = await supabase.storage
-        .from("library-photos")
-        .upload(filename, blob, { contentType: "image/png" });
-      if (upErr) throw upErr;
-
-      const { data: signed } = await supabase.storage
-        .from("library-photos")
-        .createSignedUrl(filename, 60 * 60 * 8);
-      const signedUrl = signed?.signedUrl ?? "";
-
-      // save to library so it's reusable later
+      const format = CHANNEL_FORMAT[channel] ?? "1:1";
       const title = (topic || subject || "AI-beeld").slice(0, 120);
-      const { data: inserted, error: insErr } = await supabase
-        .from("library_photos")
-        .insert({
+      const result = await generateImage({
+        data: {
+          prompt,
+          format,
+          org_id: currentOrg.id,
+          channel,
           title,
-          caption: subject || null,
-          tags: ["ai-gegenereerd", channel],
-          storage_path: filename,
-          image_url: signedUrl,
-        })
-        .select("id,title,caption,tags,storage_path,image_url")
-        .single();
-      if (insErr) throw insErr;
-
+          caption: subject || undefined,
+          save: true,
+        },
+      });
+      if (!result.photo) throw new Error("Beeld niet opgeslagen.");
       const newPhoto: Photo = {
-        id: inserted.id,
-        title: inserted.title,
-        caption: inserted.caption,
-        tags: (inserted.tags as string[] | null) ?? [],
-        storage_path: inserted.storage_path,
-        image_url: signedUrl,
+        id: result.photo.id,
+        title: result.photo.title,
+        caption: result.photo.caption,
+        tags: (result.photo.tags as string[] | null) ?? [],
+        storage_path: result.photo.storage_path,
+        image_url: result.photo.image_url,
       };
-      setPhotos((prev) => [newPhoto, ...prev]);
+      setPhotos((prev) => [newPhoto, ...prev.filter((p) => p.id !== newPhoto.id)]);
       setSelectedPhotoId(newPhoto.id);
       toast.success("Beeld gegenereerd en toegevoegd aan bibliotheek.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Beeldgeneratie mislukt.");
+      toast.error(err instanceof Error ? err.message : "Beeldgeneratie mislukt.", {
+        action: { label: "Probeer opnieuw", onClick: () => void runGenerateImage() },
+      });
     } finally {
       setGeneratingImage(false);
     }
   }
+
+  async function runUploadPhoto(file: File) {
+    if (!currentOrg) {
+      toast.error("Geen organisatie geselecteerd.");
+      return;
+    }
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      toast.error("Alleen JPG, PNG of WEBP toegestaan.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Bestand is te groot (max 10 MB).");
+      return;
+    }
+    setUploading(true);
+    try {
+      const b64 = await fileToBase64(file);
+      const title = (topic || file.name.replace(/\.[^.]+$/, "")).slice(0, 120);
+      const photo = await uploadPhoto({
+        data: {
+          org_id: currentOrg.id,
+          filename: file.name,
+          content_type: file.type as "image/png" | "image/jpeg" | "image/webp",
+          b64,
+          title,
+          caption: [topic, keywords].filter(Boolean).join(", ") || undefined,
+          channel,
+        },
+      });
+      const newPhoto: Photo = {
+        id: photo.id,
+        title: photo.title,
+        caption: photo.caption,
+        tags: (photo.tags as string[] | null) ?? [],
+        storage_path: photo.storage_path,
+        image_url: photo.image_url,
+      };
+      setPhotos((prev) => [newPhoto, ...prev.filter((p) => p.id !== newPhoto.id)]);
+      setSelectedPhotoId(newPhoto.id);
+      toast.success("Foto geüpload en toegevoegd aan bibliotheek.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload mislukt.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+
 
   async function runGenerate() {
     if (generating) return;
@@ -607,15 +669,25 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
                           uit bibliotheek
                         </span>
                       </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) void runUploadPhoto(f);
+                        }}
+                      />
                       {rankedPhotos.length === 0 ? (
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                           <p className="text-xs" style={{ color: "var(--hb-dark)", opacity: 0.6 }}>
-                            Geen relevante foto's in je bibliotheek. Laat de AI er één maken in HappyBeez-stijl.
+                            Geen relevante foto's in je bibliotheek. Genereer er één, of upload er zelf een.
                           </p>
                           <Button
                             type="button"
                             onClick={runGenerateImage}
-                            disabled={generatingImage}
+                            disabled={generatingImage || uploading}
                             className="w-full rounded-full font-semibold hover:brightness-110"
                             style={{ background: "var(--hb-honey)", color: "var(--hb-dark)" }}
                           >
@@ -623,6 +695,20 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
                               <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Beeld maken…</>
                             ) : (
                               <><Sparkles className="w-4 h-4 mr-2" /> Genereer beeld met AI</>
+                            )}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploading || generatingImage}
+                            className="w-full rounded-full font-semibold"
+                            style={{ borderColor: "var(--hb-border)", color: "var(--hb-dark)" }}
+                          >
+                            {uploading ? (
+                              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Uploaden…</>
+                            ) : (
+                              <><Upload className="w-4 h-4 mr-2" /> Eigen foto uploaden</>
                             )}
                           </Button>
                         </div>
@@ -648,17 +734,30 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
                               );
                             })}
                           </div>
-                          <button
-                            type="button"
-                            onClick={runGenerateImage}
-                            disabled={generatingImage}
-                            className="mt-2 text-[11px] underline disabled:opacity-50"
-                            style={{ color: "var(--hb-green-dark)" }}
-                          >
-                            {generatingImage ? "Beeld maken…" : "Niets past? Genereer AI-beeld"}
-                          </button>
+                          <div className="mt-2 flex items-center gap-3 text-[11px]">
+                            <button
+                              type="button"
+                              onClick={runGenerateImage}
+                              disabled={generatingImage || uploading}
+                              className="underline disabled:opacity-50"
+                              style={{ color: "var(--hb-green-dark)" }}
+                            >
+                              {generatingImage ? "Beeld maken…" : "Genereer AI-beeld"}
+                            </button>
+                            <span style={{ color: "var(--hb-dark)", opacity: 0.4 }}>·</span>
+                            <button
+                              type="button"
+                              onClick={() => fileInputRef.current?.click()}
+                              disabled={uploading || generatingImage}
+                              className="underline disabled:opacity-50"
+                              style={{ color: "var(--hb-green-dark)" }}
+                            >
+                              {uploading ? "Uploaden…" : "Eigen foto uploaden"}
+                            </button>
+                          </div>
                         </>
                       )}
+
                     </div>
                   )}
 
