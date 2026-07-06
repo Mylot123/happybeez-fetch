@@ -9,7 +9,7 @@ import {
   Loader2,
   RefreshCw,
   Sparkles,
-  ExternalLink,
+  
   Image as ImageIcon,
   Heart,
   MessageCircle,
