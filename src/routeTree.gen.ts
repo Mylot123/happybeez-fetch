@@ -24,7 +24,6 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AgentRouteImport } from './routes/agent'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DevUploadCheckRouteImport } from './routes/dev.upload-check'
 import { Route as ApiPublicHooksCreatomateRouteImport } from './routes/api/public/hooks/creatomate'
 import { Route as ApiPublicHooksAyrshareRouteImport } from './routes/api/public/hooks/ayrshare'
 import { Route as ApiPublicCronSeoTrackingRouteImport } from './routes/api/public/cron/seo-tracking'
@@ -106,11 +105,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DevUploadCheckRoute = DevUploadCheckRouteImport.update({
-  id: '/dev/upload-check',
-  path: '/dev/upload-check',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicHooksCreatomateRoute =
   ApiPublicHooksCreatomateRouteImport.update({
     id: '/api/public/hooks/creatomate',
@@ -155,7 +149,6 @@ export interface FileRoutesByFullPath {
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
   '/videostudio': typeof VideostudioRoute
-  '/dev/upload-check': typeof DevUploadCheckRoute
   '/api/public/cron/analytics': typeof ApiPublicCronAnalyticsRoute
   '/api/public/cron/publish': typeof ApiPublicCronPublishRoute
   '/api/public/cron/seo-tracking': typeof ApiPublicCronSeoTrackingRoute
@@ -178,7 +171,6 @@ export interface FileRoutesByTo {
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
   '/videostudio': typeof VideostudioRoute
-  '/dev/upload-check': typeof DevUploadCheckRoute
   '/api/public/cron/analytics': typeof ApiPublicCronAnalyticsRoute
   '/api/public/cron/publish': typeof ApiPublicCronPublishRoute
   '/api/public/cron/seo-tracking': typeof ApiPublicCronSeoTrackingRoute
@@ -202,7 +194,6 @@ export interface FileRoutesById {
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
   '/videostudio': typeof VideostudioRoute
-  '/dev/upload-check': typeof DevUploadCheckRoute
   '/api/public/cron/analytics': typeof ApiPublicCronAnalyticsRoute
   '/api/public/cron/publish': typeof ApiPublicCronPublishRoute
   '/api/public/cron/seo-tracking': typeof ApiPublicCronSeoTrackingRoute
@@ -227,7 +218,6 @@ export interface FileRouteTypes {
     | '/seo'
     | '/social-profielen'
     | '/videostudio'
-    | '/dev/upload-check'
     | '/api/public/cron/analytics'
     | '/api/public/cron/publish'
     | '/api/public/cron/seo-tracking'
@@ -250,7 +240,6 @@ export interface FileRouteTypes {
     | '/seo'
     | '/social-profielen'
     | '/videostudio'
-    | '/dev/upload-check'
     | '/api/public/cron/analytics'
     | '/api/public/cron/publish'
     | '/api/public/cron/seo-tracking'
@@ -273,7 +262,6 @@ export interface FileRouteTypes {
     | '/seo'
     | '/social-profielen'
     | '/videostudio'
-    | '/dev/upload-check'
     | '/api/public/cron/analytics'
     | '/api/public/cron/publish'
     | '/api/public/cron/seo-tracking'
@@ -297,7 +285,6 @@ export interface RootRouteChildren {
   SeoRoute: typeof SeoRoute
   SocialProfielenRoute: typeof SocialProfielenRoute
   VideostudioRoute: typeof VideostudioRoute
-  DevUploadCheckRoute: typeof DevUploadCheckRoute
   ApiPublicCronAnalyticsRoute: typeof ApiPublicCronAnalyticsRoute
   ApiPublicCronPublishRoute: typeof ApiPublicCronPublishRoute
   ApiPublicCronSeoTrackingRoute: typeof ApiPublicCronSeoTrackingRoute
@@ -412,13 +399,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dev/upload-check': {
-      id: '/dev/upload-check'
-      path: '/dev/upload-check'
-      fullPath: '/dev/upload-check'
-      preLoaderRoute: typeof DevUploadCheckRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/hooks/creatomate': {
       id: '/api/public/hooks/creatomate'
       path: '/api/public/hooks/creatomate'
@@ -473,7 +453,6 @@ const rootRouteChildren: RootRouteChildren = {
   SeoRoute: SeoRoute,
   SocialProfielenRoute: SocialProfielenRoute,
   VideostudioRoute: VideostudioRoute,
-  DevUploadCheckRoute: DevUploadCheckRoute,
   ApiPublicCronAnalyticsRoute: ApiPublicCronAnalyticsRoute,
   ApiPublicCronPublishRoute: ApiPublicCronPublishRoute,
   ApiPublicCronSeoTrackingRoute: ApiPublicCronSeoTrackingRoute,
