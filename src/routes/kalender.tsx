@@ -347,16 +347,59 @@ function Kalender() {
         </Button>
       </div>
 
-      <div className="flex flex-wrap gap-3 mb-5">
-        {CHANNELS.map((ch) => (
-          <div
-            key={ch}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground"
-          >
-            <div className={cn("w-2.5 h-2.5 rounded-full", channelDot[ch])} />
-            <span className="capitalize">{ch}</span>
-          </div>
-        ))}
+      <div className="mb-5 rounded-lg border border-border bg-card p-5">
+        <h2 className="font-heading text-base font-semibold text-ink mb-2">
+          Zo werkt de kalender
+        </h2>
+        <ul className="text-sm text-muted-foreground space-y-1.5 list-disc list-inside">
+          <li>
+            <span className="text-ink font-medium">Weekritme:</span> elk hokje toont
+            een suggestie op basis van het weekplan (bijv. dinsdag = IG tip,
+            woensdag = LinkedIn kennis, zaterdag = rustdag). Klik op de suggestie
+            om direct naar de <span className="font-medium">Content Studio</span> of{" "}
+            <span className="font-medium">Nieuws</span> te gaan met de juiste
+            datum, kanaal en type al ingevuld.
+          </li>
+          <li>
+            <span className="text-ink font-medium">Nieuw item:</span> klik op een
+            lege dag of op <span className="font-medium">"Nieuw item"</span> rechtsboven
+            om zelf een post in te plannen (titel, kanaal, type, datum, tekst,
+            status en optioneel een Canva-link).
+          </li>
+          <li>
+            <span className="text-ink font-medium">Bewerken:</span> klik op een
+            bestaand item om het te openen — daar kun je tekst kopiëren, foto
+            downloaden of naar Instagram springen, en de status wijzigen.
+          </li>
+          <li>
+            <span className="text-ink font-medium">Statussen:</span> de gekleurde
+            balk links van een item toont de status (concept, ter beoordeling,
+            goedgekeurd, ingepland, gepubliceerd, mislukt). De volledige
+            goedkeuringsflow beheer je op de{" "}
+            <span className="font-medium">Planning &amp; goedkeuring</span>-pagina.
+          </li>
+          <li>
+            <span className="text-ink font-medium">Advies onder de kalender:</span>{" "}
+            per kanaal de beste tijden en dagen, plus een seizoenstip voor deze
+            maand.
+          </li>
+        </ul>
+        <div className="flex flex-wrap gap-3 mt-4 pt-3 border-t border-border/60">
+          <span className="text-xs text-muted-foreground font-medium mr-1">
+            Kanalen:
+          </span>
+          {CHANNELS.map((ch) => (
+            <div
+              key={ch}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground"
+            >
+              <div className={cn("w-2.5 h-2.5 rounded-full", channelDot[ch])} />
+              <span className="capitalize">
+                {channelEmoji[ch]} {ch}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
 
       <PostingAdvice month={month} />
