@@ -172,7 +172,8 @@ function Kennisbank() {
                   photo={photo}
                   displayUrl={
                     (photo.storage_path && signedUrls[photo.storage_path]) ||
-                    photo.image_url
+                    photo.image_url ||
+                    ""
                   }
                 />
               ))}
@@ -251,19 +252,25 @@ function PhotoCard({ photo, displayUrl }: { photo: Photo; displayUrl: string }) 
 
   return (
     <article className="bg-card border border-border rounded-lg overflow-hidden shadow-sm flex flex-col">
-      <a
-        href={displayUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block aspect-[4/3] bg-muted overflow-hidden"
-      >
-        <img
-          src={displayUrl}
-          alt={photo.title}
-          loading="lazy"
-          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-        />
-      </a>
+      {displayUrl ? (
+        <a
+          href={displayUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block aspect-[4/3] bg-muted overflow-hidden"
+        >
+          <img
+            src={displayUrl}
+            alt={photo.title}
+            loading="lazy"
+            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+          />
+        </a>
+      ) : (
+        <div className="block aspect-[4/3] bg-muted flex items-center justify-center text-xs text-muted-foreground">
+          Foto laden…
+        </div>
+      )}
       <div className="p-3 flex flex-col gap-2 flex-1">
         <h3 className="font-heading text-sm font-semibold text-ink">{photo.title}</h3>
         {photo.caption ? (
@@ -280,14 +287,26 @@ function PhotoCard({ photo, displayUrl }: { photo: Photo; displayUrl: string }) 
           ))}
         </div>
         <div className="flex gap-2 mt-auto pt-2">
-          <Button size="sm" variant="outline" onClick={copyUrl} className="flex-1">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={copyUrl}
+            className="flex-1"
+            disabled={!displayUrl}
+          >
             <Copy className="h-3 w-3" /> URL
           </Button>
-          <Button size="sm" variant="outline" asChild>
-            <a href={displayUrl} download>
+          {displayUrl ? (
+            <Button size="sm" variant="outline" asChild>
+              <a href={displayUrl} download>
+                <Download className="h-3 w-3" />
+              </a>
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" disabled>
               <Download className="h-3 w-3" />
-            </a>
-          </Button>
+            </Button>
+          )}
           <Button
             size="sm"
             onClick={addToCalendar}
