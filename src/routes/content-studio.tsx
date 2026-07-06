@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -9,7 +9,7 @@ import {
   Loader2,
   RefreshCw,
   Sparkles,
-  
+  Upload,
   Image as ImageIcon,
   Heart,
   MessageCircle,
@@ -33,9 +33,30 @@ import {
 } from "@/components/ui/select";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { generateText } from "@/lib/ai.functions";
-import { generatePostImage } from "@/lib/image.functions";
+import { generatePostImage, uploadUserPhoto } from "@/lib/image.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useCurrentOrg } from "@/hooks/use-current-org";
+
+const CHANNEL_FORMAT: Record<string, "1:1" | "9:16" | "16:9" | "4:5"> = {
+  instagram: "1:1",
+  facebook: "1:1",
+  linkedin: "16:9",
+  blog: "16:9",
+  website: "16:9",
+};
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result.split(",")[1] ?? "");
+    };
+    reader.onerror = () => reject(new Error("Kon bestand niet lezen."));
+    reader.readAsDataURL(file);
+  });
+}
 
 type Channel = "instagram" | "linkedin" | "facebook" | "blog" | "website";
 type ContentType =
