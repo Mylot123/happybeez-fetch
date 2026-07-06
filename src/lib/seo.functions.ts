@@ -385,7 +385,7 @@ export const analyzeDomain = createServerFn({ method: "POST" })
 
     try {
       if (data.skip_semrush) {
-        throw new Error("Semrush is uitgeschakeld — alternatief SEO-plan gemaakt.");
+        throw new Error("Externe SEO-databron overgeslagen — plan opgesteld met AI + DataForSEO.");
       }
 
       const ranks = rowsToObjects(
