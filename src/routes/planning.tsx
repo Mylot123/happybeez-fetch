@@ -11,8 +11,6 @@ import {
   Undo2,
   CalendarClock,
   Rocket,
-  AlertTriangle,
-  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -247,54 +245,162 @@ function PostCard({
       {/* Actions per status */}
       <div className="flex flex-wrap gap-1.5 pt-1">
         {post.status === "draft" && (
-          <ActionBtn busy={busy} onClick={() => wrap(onSubmit)} icon={<Send className="w-3 h-3" />} label="Ter beoordeling" />
+          <ActionBtn busy={busy} variant="primary" onClick={() => wrap(onSubmit)} icon={<Send className="w-3 h-3" />} label="Ter beoordeling" />
         )}
         {post.status === "review" && (
           <>
-            {isAdmin && <ActionBtn busy={busy} variant="primary" onClick={() => wrap(onApprove)} icon={<Check className="w-3 h-3" />} label="Keur goed" />}
-            {isAdmin && (
-              rejecting ? (
-                <div className="flex gap-1 w-full">
-                  <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Feedback…" className="h-7 text-xs" />
-                  <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => wrap(async () => { await onReject(notes); setRejecting(false); setNotes(""); })}>
-                    <X className="w-3 h-3" />
-                  </Button>
-                </div>
-              ) : (
-                <ActionBtn busy={busy} onClick={async () => setRejecting(true)} icon={<Undo2 className="w-3 h-3" />} label="Wijs af" />
-              )
+            {isAdmin ? (
+              <>
+                <ActionBtn busy={busy} variant="primary" onClick={() => wrap(onApprove)} icon={<Check className="w-3 h-3" />} label="Keur goed" />
+                {rejecting ? (
+                  <div className="flex flex-col gap-1 w-full">
+                    <Input
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Feedback voor de auteur…"
+                      className="h-7 text-xs"
+                      autoFocus
+                    />
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="h-7 px-2 text-xs flex-1"
+                        disabled={busy}
+                        onClick={() => wrap(async () => { await onReject(notes); setRejecting(false); setNotes(""); })}
+                      >
+                        <Undo2 className="w-3 h-3 mr-1" /> Terugsturen
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => { setRejecting(false); setNotes(""); }}
+                      >
+                        Annuleer
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <ActionBtn busy={busy} onClick={async () => setRejecting(true)} icon={<Undo2 className="w-3 h-3" />} label="Wijs af met feedback" />
+                )}
+              </>
+            ) : (
+              <p className="text-[11px] text-muted-foreground italic w-full">
+                Wacht op beheerder voor goedkeuring.
+              </p>
             )}
-            <ActionBtn busy={busy} onClick={() => wrap(onRevert)} icon={<Undo2 className="w-3 h-3" />} label="Concept" />
+            <ActionBtn busy={busy} onClick={() => wrap(onRevert)} icon={<Undo2 className="w-3 h-3" />} label="Terug naar concept" />
           </>
         )}
         {post.status === "approved" && isAdmin && (
           scheduling ? (
-            <div className="flex gap-1 w-full">
-              <Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} className="h-7 text-xs" />
-              <Button size="sm" className="h-7 px-2" disabled={!when} onClick={() => wrap(async () => {
-                await onSchedule(new Date(when).toISOString());
-                setScheduling(false); setWhen("");
-              })}>
-                <CalendarClock className="w-3 h-3" />
-              </Button>
+            <div className="flex flex-col gap-1 w-full">
+              <Input
+                type="datetime-local"
+                value={when}
+                onChange={(e) => setWhen(e.target.value)}
+                className="h-7 text-xs"
+                autoFocus
+              />
+              <div className="flex gap-1">
+                <Button
+                  size="sm"
+                  className="h-7 px-2 text-xs flex-1"
+                  disabled={!when || busy}
+                  onClick={() => wrap(async () => {
+                    await onSchedule(new Date(when).toISOString());
+                    setScheduling(false); setWhen("");
+                  })}
+                >
+                  <CalendarClock className="w-3 h-3 mr-1" /> Bevestig
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => { setScheduling(false); setWhen(""); }}
+                >
+                  Annuleer
+                </Button>
+              </div>
             </div>
           ) : (
             <>
-              <ActionBtn busy={busy} variant="primary" onClick={async () => setScheduling(true)} icon={<CalendarClock className="w-3 h-3" />} label="Inplannen" />
-              <ActionBtn busy={busy} onClick={() => wrap(onRevert)} icon={<Undo2 className="w-3 h-3" />} label="Concept" />
+              <ActionBtn
+                busy={busy}
+                variant="primary"
+                onClick={async () => {
+                  if (!when && post.publish_date) {
+                    // Prefill datetime-local with target date at 09:00 local
+                    setWhen(`${post.publish_date}T09:00`);
+                  }
+                  setScheduling(true);
+                }}
+                icon={<CalendarClock className="w-3 h-3" />}
+                label="Inplannen"
+              />
+              <ActionBtn busy={busy} onClick={() => wrap(onRevert)} icon={<Undo2 className="w-3 h-3" />} label="Terug naar concept" />
             </>
           )
         )}
         {post.status === "scheduled" && isAdmin && (
           <>
-            <ActionBtn busy={busy} variant="primary" onClick={() => wrap(onPublish)} icon={<Rocket className="w-3 h-3" />} label="Markeer gepubliceerd" />
-            <ActionBtn busy={busy} onClick={() => wrap(onRevert)} icon={<Undo2 className="w-3 h-3" />} label="Concept" />
+            <ActionBtn
+              busy={busy}
+              onClick={() => wrap(onPublish)}
+              icon={<Rocket className="w-3 h-3" />}
+              label="Handmatig als gepubliceerd markeren"
+            />
+            <ActionBtn busy={busy} onClick={() => wrap(onRevert)} icon={<Undo2 className="w-3 h-3" />} label="Annuleer inplanning" />
+            <p className="text-[10px] text-muted-foreground w-full">
+              Publiceert automatisch op het geplande tijdstip.
+            </p>
           </>
         )}
-        {post.status === "failed" && (
+        {post.status === "failed" && isAdmin && (
           <>
-            {isAdmin && <ActionBtn busy={busy} onClick={() => wrap(onSchedule.bind(null, new Date(Date.now() + 60_000).toISOString()))} icon={<CalendarClock className="w-3 h-3" />} label="Herplan" />}
-            <ActionBtn busy={busy} onClick={() => wrap(onRevert)} icon={<Undo2 className="w-3 h-3" />} label="Concept" />
+            {scheduling ? (
+              <div className="flex flex-col gap-1 w-full">
+                <Input
+                  type="datetime-local"
+                  value={when}
+                  onChange={(e) => setWhen(e.target.value)}
+                  className="h-7 text-xs"
+                  autoFocus
+                />
+                <div className="flex gap-1">
+                  <Button
+                    size="sm"
+                    className="h-7 px-2 text-xs flex-1"
+                    disabled={!when || busy}
+                    onClick={() => wrap(async () => {
+                      await onSchedule(new Date(when).toISOString());
+                      setScheduling(false); setWhen("");
+                    })}
+                  >
+                    <CalendarClock className="w-3 h-3 mr-1" /> Herplan
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => { setScheduling(false); setWhen(""); }}
+                  >
+                    Annuleer
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <ActionBtn
+                busy={busy}
+                variant="primary"
+                onClick={async () => setScheduling(true)}
+                icon={<CalendarClock className="w-3 h-3" />}
+                label="Herplan"
+              />
+            )}
+            <ActionBtn busy={busy} onClick={() => wrap(onRevert)} icon={<Undo2 className="w-3 h-3" />} label="Terug naar concept" />
           </>
         )}
         {post.status === "published" && (
@@ -337,6 +443,3 @@ function ActionBtn({
     </button>
   );
 }
-
-// (unused import guard)
-void AlertTriangle;
