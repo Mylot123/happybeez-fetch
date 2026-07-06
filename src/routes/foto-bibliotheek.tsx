@@ -288,8 +288,14 @@ function PhotoCard({ photo, displayUrl }: { photo: Photo; displayUrl: string }) 
               <Download className="h-3 w-3" />
             </a>
           </Button>
-          <Button size="sm" onClick={addToCalendar} disabled={saving} className="flex-1">
-            +Kal
+          <Button
+            size="sm"
+            onClick={addToCalendar}
+            disabled={saving}
+            className="flex-1"
+            title="Voeg deze foto als concept-item toe aan de content-kalender"
+          >
+            + Kalender
           </Button>
         </div>
       </div>
