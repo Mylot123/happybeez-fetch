@@ -1,7 +1,7 @@
 import watermarkAsset from "@/assets/happybeez-watermark.png";
 
 const WM_URL = watermarkAsset as unknown as string;
-const MAX_DIM = 2400; // downscale huge photos before watermarking
+const MAX_DIM = 2400;
 
 let cachedLogo: Promise<HTMLImageElement> | null = null;
 function loadLogo() {
@@ -16,7 +16,7 @@ function loadLogo() {
   return cachedLogo;
 }
 
-function loadFileImage(file: File): Promise<HTMLImageElement> {
+function loadFileImage(file: File | Blob): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
@@ -32,19 +32,14 @@ function loadFileImage(file: File): Promise<HTMLImageElement> {
   });
 }
 
-/**
- * Bakes the HappyBeez logo as a light watermark into a photo, bottom-right.
- * Returns a base64-encoded JPEG (without the data-url prefix) plus its mime.
- */
-export async function watermarkImage(file: File): Promise<{
-  b64: string;
-  contentType: "image/jpeg";
-  filename: string;
-}> {
-  const [photo, logo] = await Promise.all([loadFileImage(file), loadLogo()]);
+async function renderWatermarked(
+  photo: HTMLImageElement,
+  filenameBase: string,
+): Promise<{ b64: string; contentType: "image/jpeg"; filename: string }> {
+  const logo = await loadLogo();
 
-  // Downscale if huge
-  let { width, height } = photo;
+  let width = photo.naturalWidth || photo.width;
+  let height = photo.naturalHeight || photo.height;
   const scale = Math.min(1, MAX_DIM / Math.max(width, height));
   width = Math.round(width * scale);
   height = Math.round(height * scale);
@@ -57,7 +52,6 @@ export async function watermarkImage(file: File): Promise<{
 
   ctx.drawImage(photo, 0, 0, width, height);
 
-  // Logo width ~28% of shorter dim, min 140px
   const wmTargetW = Math.max(140, Math.round(Math.min(width, height) * 0.28));
   const wmRatio = logo.naturalHeight / logo.naturalWidth;
   const wmW = wmTargetW;
@@ -66,7 +60,6 @@ export async function watermarkImage(file: File): Promise<{
   const x = width - wmW - margin;
   const y = height - wmH - margin;
 
-  // Subtle dark scrim behind the logo for legibility on light photos
   ctx.save();
   ctx.globalAlpha = 0.18;
   const pad = Math.round(wmH * 0.25);
@@ -82,7 +75,26 @@ export async function watermarkImage(file: File): Promise<{
 
   const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
   const b64 = dataUrl.split(",")[1] ?? "";
-
-  const base = file.name.replace(/\.[^.]+$/, "") || "foto";
+  const base = filenameBase.replace(/\.[^.]+$/, "") || "foto";
   return { b64, contentType: "image/jpeg", filename: `${base}.jpg` };
+}
+
+/** Watermarks a user-uploaded File and returns base64 JPEG. */
+export async function watermarkImage(file: File) {
+  const photo = await loadFileImage(file);
+  return renderWatermarked(photo, file.name);
+}
+
+/** Watermarks a base64 image (any mime) and returns base64 JPEG. */
+export async function watermarkBase64(
+  b64: string,
+  mime: string,
+  filenameBase: string,
+) {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const blob = new Blob([bytes], { type: mime });
+  const photo = await loadFileImage(blob);
+  return renderWatermarked(photo, filenameBase);
 }
