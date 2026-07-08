@@ -792,9 +792,14 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
                 </div>
               ) : generated ? (
                 <div className="flex-1 flex flex-col">
-                  <div className="flex-1 p-5 whitespace-pre-wrap text-[15px] leading-[1.6]" style={{ color: "var(--hb-dark)" }}>
-                    {generated}
-                  </div>
+                  <textarea
+                    value={generated}
+                    onChange={(e) => setGenerated(e.target.value)}
+                    spellCheck
+                    className="flex-1 min-h-[280px] w-full resize-y p-5 whitespace-pre-wrap text-[15px] leading-[1.6] bg-transparent outline-none focus:ring-0 border-0"
+                    style={{ color: "var(--hb-dark)" }}
+                    aria-label="Bewerk de gegenereerde post"
+                  />
 
                   {hasPreview && (
                     <div className="p-4 border-t" style={{ borderColor: "var(--hb-border)" }}>
