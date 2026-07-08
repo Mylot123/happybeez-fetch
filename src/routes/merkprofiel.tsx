@@ -213,7 +213,7 @@ function MerkprofielPage() {
                     rows={3}
                     value={form.industry}
                     onChange={(e) => setField("industry", e.target.value)}
-                    placeholder="Bv. Imkerij met eigen honing, bijenhotels en workshops."
+                    placeholder="Bv. Natuurvriendelijke bijenhotels voor solitaire (wilde) bijen."
                   />
                 </div>
                 <div>
@@ -271,7 +271,7 @@ function MerkprofielPage() {
                   hint="Waarom klanten voor jullie kiezen."
                   values={form.usps}
                   onChange={(v) => setField("usps", v)}
-                  placeholder="Bv. Honing uit eigen imkerij in Brabant"
+                  placeholder="Bv. Verwisselbare cassettes, gebaseerd op 40+ jaar onderzoek"
                 />
               </div>
             )}
