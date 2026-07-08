@@ -233,12 +233,49 @@ function ContentStudio() {
     setPhotoByChannel((prev) => ({ ...prev, [channel]: id }));
   }
 
+  async function runFetchIdeas() {
+    if (!currentOrg) {
+      toast.error("Geen organisatie geselecteerd.");
+      return;
+    }
+    setIdeasLoading(true);
+    try {
+      const toneLabel = TONES.find((t) => t.value === tone)?.label ?? "warm & educatief";
+      const res = await fetchIdeas({
+        data: {
+          org_id: currentOrg.id,
+          date: saveDate,
+          channel,
+          content_type: contentType,
+          tone: toneLabel,
+          extraContext: [topic, keywords].filter(Boolean).join(" — ") || undefined,
+        },
+      });
+      setIdeas(res.ideas);
+      setIdeasCampaign(res.campaign);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Kon geen ideeën genereren.");
+    } finally {
+      setIdeasLoading(false);
+    }
+  }
 
+  // Auto-genereer ideeën als de gebruiker vanuit de kalender komt (date + channel + type in URL)
+  const autoIdeasRef = useRef(false);
+  useEffect(() => {
+    if (autoIdeasRef.current) return;
+    if (!currentOrg) return;
+    if (!search.date || !search.channel || !search.type) return;
+    autoIdeasRef.current = true;
+    void runFetchIdeas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentOrg, search.date, search.channel, search.type]);
 
   useEffect(() => {
     void loadPhotos();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   async function loadPhotos() {
     const { data, error } = await supabase
