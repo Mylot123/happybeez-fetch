@@ -34,6 +34,7 @@ import {
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { generateText } from "@/lib/ai.functions";
 import { generatePostImage, uploadUserPhoto } from "@/lib/image.functions";
+import { watermarkImage, watermarkBase64 } from "@/lib/watermark";
 import { generateContentIdeas } from "@/lib/ideas.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
