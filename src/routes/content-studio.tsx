@@ -49,17 +49,6 @@ const CHANNEL_FORMAT: Record<string, "1:1" | "9:16" | "16:9" | "4:5"> = {
   website: "16:9",
 };
 
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      resolve(result.split(",")[1] ?? "");
-    };
-    reader.onerror = () => reject(new Error("Kon bestand niet lezen."));
-    reader.readAsDataURL(file);
-  });
-}
 
 type Channel = "instagram" | "linkedin" | "facebook" | "blog" | "website";
 type ContentType =
