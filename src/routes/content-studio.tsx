@@ -960,6 +960,7 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
                         Naar kalender
                       </Button>
                     </div>
+                    <SaveAdvice channel={channel} date={saveDate} />
                   </div>
                 </div>
               ) : (
