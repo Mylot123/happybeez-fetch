@@ -424,14 +424,14 @@ function ContentStudio() {
     }
     setUploading(true);
     try {
-      const b64 = await fileToBase64(file);
+      const wm = await watermarkImage(file);
       const title = (topic || file.name.replace(/\.[^.]+$/, "")).slice(0, 120);
       const photo = await uploadPhoto({
         data: {
           org_id: currentOrg.id,
-          filename: file.name,
-          content_type: file.type as "image/png" | "image/jpeg" | "image/webp",
-          b64,
+          filename: wm.filename,
+          content_type: wm.contentType,
+          b64: wm.b64,
           title,
           caption: [topic, keywords].filter(Boolean).join(", ") || undefined,
           channel,
