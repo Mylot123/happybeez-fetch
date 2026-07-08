@@ -995,6 +995,10 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
             </div>
           )}
         </div>
+
+        <div className="mt-6 max-w-3xl">
+          <StrategyPanel channel={channel} />
+        </div>
       </div>
     </div>
   );
