@@ -19,6 +19,12 @@ import {
   ThumbsUp,
   Globe,
   Share2,
+  Lightbulb,
+  Clock,
+  AlertCircle,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -39,6 +45,17 @@ import { generateContentIdeas } from "@/lib/ideas.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useCurrentOrg } from "@/hooks/use-current-org";
+import {
+  CHANNEL_RULES,
+  countWords,
+  firstLineWordCount,
+  wordFeedback,
+  hookFeedback,
+  hashtagFeedback,
+  levelColor,
+  levelBg,
+  type Channel as StrategyChannel,
+} from "@/lib/content-strategy";
 
 
 const CHANNEL_FORMAT: Record<string, "1:1" | "9:16" | "16:9" | "4:5"> = {
