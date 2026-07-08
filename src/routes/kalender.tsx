@@ -869,29 +869,29 @@ function Kalender() {
 
 const BEST_TIMES: Record<Channel, { slots: string; weekdays: string; note: string }> = {
   instagram: {
-    slots: "11:00–13:00 en 19:00–21:00",
-    weekdays: "di, wo, do, zo",
-    note: "Reels presteren beter 's avonds; carrousels rond lunch.",
+    slots: "12:00–16:00 (Reels + carrousels) · 18:00–21:00 (Reels avond)",
+    weekdays: "ma, di, wo, do",
+    note: "Reels = bereik, carrousels = saves & shares. Max 5 hashtags. Sterke hook in eerste seconde, ondertitels altijd aan. Reageer in het eerste uur.",
   },
   linkedin: {
-    slots: "07:30–09:00 en 12:00–13:00",
+    slots: "11:00–17:00 (test 12:00–14:00 én 15:00–17:00)",
     weekdays: "di, wo, do",
-    note: "Zakelijk publiek leest vóór werk en in lunchpauze.",
+    note: "Persoonlijk profiel > bedrijfspagina. Standpunt in eerste 2 regels. 3000 tekens max, 3–5 hashtags. Reageer in het eerste uur op comments.",
   },
   facebook: {
-    slots: "09:00–11:00 en 19:00–21:00",
-    weekdays: "wo, do, vr, zo",
-    note: "Oudere doelgroep — ochtend koffie & avond TV-moment.",
+    slots: "12:00–14:00 (lunch) · 19:00–21:00 (avond)",
+    weekdays: "di, wo, do",
+    note: "Native > links. Afbeelding en Reel scoren beste; deel-CTA werkt beter dan like-CTA. Max 3 hashtags, community-toon.",
   },
   blog: {
-    slots: "Publiceer di of wo ochtend (08:00–10:00)",
-    weekdays: "di, wo",
-    note: "Google-indexering + delen via socials op zelfde dag.",
+    slots: "06:00–10:00 publiceren (di/do/vr), zelfde dag delen op social + nieuwsbrief",
+    weekdays: "di, do, vr",
+    note: "People-first, unieke title + meta, OG-image, structured data, alt-tekst. Bouw interne links + backlinks; refresh oude toppers.",
   },
   website: {
-    slots: "Update vóór nieuwsbrief / campagne",
+    slots: "Vóór nieuwsbrief of campagne (ma/di ochtend)",
     weekdays: "ma, di",
-    note: "Verkeer piekt op werkdagen vroeg in de week.",
+    note: "Zorg dat CTA + hero-beeld actueel zijn vóór je verkeer stuurt. Mobile-first check.",
   },
 };
 
