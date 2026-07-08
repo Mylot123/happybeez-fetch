@@ -34,9 +34,11 @@ import {
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { generateText } from "@/lib/ai.functions";
 import { generatePostImage, uploadUserPhoto } from "@/lib/image.functions";
+import { generateContentIdeas } from "@/lib/ideas.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useCurrentOrg } from "@/hooks/use-current-org";
+
 
 const CHANNEL_FORMAT: Record<string, "1:1" | "9:16" | "16:9" | "4:5"> = {
   instagram: "1:1",
@@ -155,6 +157,10 @@ export const Route = createFileRoute("/content-studio")({
     topic: typeof search.topic === "string" ? search.topic : "",
     keywords: typeof search.keywords === "string" ? search.keywords : "",
     source: typeof search.source === "string" ? search.source : "",
+    date: typeof search.date === "string" ? search.date : "",
+    channel: typeof search.channel === "string" ? search.channel : "",
+    type: typeof search.type === "string" ? search.type : "",
+    item: typeof search.item === "string" ? search.item : "",
   }),
   head: () => ({
     meta: [
@@ -167,6 +173,7 @@ export const Route = createFileRoute("/content-studio")({
   }),
   component: ContentStudioPage,
 });
+
 
 function ContentStudioPage() {
   return (
@@ -184,8 +191,18 @@ function ContentStudio() {
   const uploadPhoto = useServerFn(uploadUserPhoto);
   const search = Route.useSearch();
 
-  const [channel, setChannel] = useState<Channel>("instagram");
-  const [contentType, setContentType] = useState<ContentType>("tip");
+  const initialChannel: Channel =
+    (["instagram","linkedin","facebook","blog","website"] as const).includes(search.channel as Channel)
+      ? (search.channel as Channel)
+      : "instagram";
+  const initialType: ContentType =
+    (["tip","citaat","educatief","product","seizoen","behind_scenes","nieuws","boekfragment"] as const)
+      .includes(search.type as ContentType)
+      ? (search.type as ContentType)
+      : "tip";
+
+  const [channel, setChannel] = useState<Channel>(initialChannel);
+  const [contentType, setContentType] = useState<ContentType>(initialType);
   const [tone, setTone] = useState<Tone>("warm_educatief");
   const [topic, setTopic] = useState(search.topic ?? "");
   const [keywords, setKeywords] = useState(search.keywords ?? "");
@@ -194,13 +211,20 @@ function ContentStudio() {
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveDate, setSaveDate] = useState(
-    new Date().toISOString().split("T")[0]!,
+    search.date || new Date().toISOString().split("T")[0]!,
   );
+
+  type IdeaItem = { title: string; hook: string; angle?: string };
+  const [ideas, setIdeas] = useState<IdeaItem[]>([]);
+  const [ideasLoading, setIdeasLoading] = useState(false);
+  const [ideasCampaign, setIdeasCampaign] = useState<{ theme: string; goal: string | null; week: number; block: string | null } | null>(null);
+  const fetchIdeas = useServerFn(generateContentIdeas);
 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [photoByChannel, setPhotoByChannel] = useState<Record<string, string>>({});
   const [recentByChannel, setRecentByChannel] = useState<Record<string, string[]>>({});
   const selectedPhotoId = photoByChannel[channel] ?? null;
+
   const [generatingImage, setGeneratingImage] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -209,12 +233,49 @@ function ContentStudio() {
     setPhotoByChannel((prev) => ({ ...prev, [channel]: id }));
   }
 
+  async function runFetchIdeas() {
+    if (!currentOrg) {
+      toast.error("Geen organisatie geselecteerd.");
+      return;
+    }
+    setIdeasLoading(true);
+    try {
+      const toneLabel = TONES.find((t) => t.value === tone)?.label ?? "warm & educatief";
+      const res = await fetchIdeas({
+        data: {
+          org_id: currentOrg.id,
+          date: saveDate,
+          channel,
+          content_type: contentType,
+          tone: toneLabel,
+          extraContext: [topic, keywords].filter(Boolean).join(" — ") || undefined,
+        },
+      });
+      setIdeas(res.ideas);
+      setIdeasCampaign(res.campaign);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Kon geen ideeën genereren.");
+    } finally {
+      setIdeasLoading(false);
+    }
+  }
 
+  // Auto-genereer ideeën als de gebruiker vanuit de kalender komt (date + channel + type in URL)
+  const autoIdeasRef = useRef(false);
+  useEffect(() => {
+    if (autoIdeasRef.current) return;
+    if (!currentOrg) return;
+    if (!search.date || !search.channel || !search.type) return;
+    autoIdeasRef.current = true;
+    void runFetchIdeas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentOrg, search.date, search.channel, search.type]);
 
   useEffect(() => {
     void loadPhotos();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   async function loadPhotos() {
     const { data, error } = await supabase
@@ -618,6 +679,58 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
                   <Input id="kw" value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="bijenhotel, bestuiving, biodiversiteit…" />
                 </div>
 
+                <div className="space-y-2 pt-2" style={{ borderTop: "1px dashed var(--hb-border)" }}>
+                  <div className="flex items-center justify-between pt-2">
+                    <Label className="mb-0">Ideeën voor deze post</Label>
+                    <button
+                      type="button"
+                      onClick={runFetchIdeas}
+                      disabled={ideasLoading}
+                      className="text-[11px] underline disabled:opacity-50"
+                      style={{ color: "var(--hb-green-dark)" }}
+                    >
+                      {ideasLoading ? "Ideeën ophalen…" : ideas.length ? "Ververs 5 ideeën" : "Genereer 5 ideeën"}
+                    </button>
+                  </div>
+                  {ideasCampaign && (
+                    <div className="text-[11px] rounded-md px-2 py-1.5" style={{ background: "var(--hb-offwhite)", border: "1px solid var(--hb-border)", color: "var(--hb-dark)" }}>
+                      Campagne: <span className="font-semibold">{ideasCampaign.theme}</span>
+                      {ideasCampaign.block ? <> · week {ideasCampaign.week}: {ideasCampaign.block}</> : null}
+                    </div>
+                  )}
+                  {ideas.length > 0 && (
+                    <ul className="space-y-1.5">
+                      {ideas.map((idea, i) => (
+                        <li key={i}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTopic(idea.title);
+                              toast.success("Idee overgenomen als onderwerp.");
+                            }}
+                            className="w-full text-left rounded-lg px-3 py-2 text-xs transition-colors hover:bg-[var(--hb-offwhite)]"
+                            style={{ border: "1px solid var(--hb-border)", background: "#fff", color: "var(--hb-dark)" }}
+                            title="Klik om dit idee als onderwerp te gebruiken"
+                          >
+                            <div className="font-semibold leading-snug">{idea.title}</div>
+                            {idea.hook && (
+                              <div className="mt-0.5 opacity-80 leading-snug">{idea.hook}</div>
+                            )}
+                            {idea.angle && (
+                              <div className="mt-1 text-[10px] opacity-60 italic">{idea.angle}</div>
+                            )}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {!ideas.length && !ideasLoading && (
+                    <p className="text-[11px]" style={{ color: "var(--hb-dark)", opacity: 0.6 }}>
+                      Krijg 5 concrete ideeën op basis van de actieve maandcampagne, het gekozen kanaal en type. Klik op een idee om het over te nemen.
+                    </p>
+                  )}
+                </div>
+
                 <Button
                   onClick={runGenerate}
                   disabled={generating}
@@ -626,6 +739,7 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
                 >
                   {generating ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />AI schrijft…</>) : (<><Wand2 className="w-4 h-4 mr-2" />Content genereren</>)}
                 </Button>
+
               </div>
             </div>
           </div>
