@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as VideostudioRouteImport } from './routes/videostudio'
 import { Route as SocialProfielenRouteImport } from './routes/social-profielen'
 import { Route as SeoRouteImport } from './routes/seo'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -31,11 +30,6 @@ import { Route as ApiPublicCronSeoTrackingRouteImport } from './routes/api/publi
 import { Route as ApiPublicCronPublishRouteImport } from './routes/api/public/cron/publish'
 import { Route as ApiPublicCronAnalyticsRouteImport } from './routes/api/public/cron/analytics'
 
-const VideostudioRoute = VideostudioRouteImport.update({
-  id: '/videostudio',
-  path: '/videostudio',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SocialProfielenRoute = SocialProfielenRouteImport.update({
   id: '/social-profielen',
   path: '/social-profielen',
@@ -155,7 +149,6 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
-  '/videostudio': typeof VideostudioRoute
   '/api/public/cron/analytics': typeof ApiPublicCronAnalyticsRoute
   '/api/public/cron/publish': typeof ApiPublicCronPublishRoute
   '/api/public/cron/seo-tracking': typeof ApiPublicCronSeoTrackingRoute
@@ -178,7 +171,6 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
-  '/videostudio': typeof VideostudioRoute
   '/api/public/cron/analytics': typeof ApiPublicCronAnalyticsRoute
   '/api/public/cron/publish': typeof ApiPublicCronPublishRoute
   '/api/public/cron/seo-tracking': typeof ApiPublicCronSeoTrackingRoute
@@ -202,7 +194,6 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
-  '/videostudio': typeof VideostudioRoute
   '/api/public/cron/analytics': typeof ApiPublicCronAnalyticsRoute
   '/api/public/cron/publish': typeof ApiPublicCronPublishRoute
   '/api/public/cron/seo-tracking': typeof ApiPublicCronSeoTrackingRoute
@@ -227,7 +218,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/seo'
     | '/social-profielen'
-    | '/videostudio'
     | '/api/public/cron/analytics'
     | '/api/public/cron/publish'
     | '/api/public/cron/seo-tracking'
@@ -250,7 +240,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/seo'
     | '/social-profielen'
-    | '/videostudio'
     | '/api/public/cron/analytics'
     | '/api/public/cron/publish'
     | '/api/public/cron/seo-tracking'
@@ -273,7 +262,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/seo'
     | '/social-profielen'
-    | '/videostudio'
     | '/api/public/cron/analytics'
     | '/api/public/cron/publish'
     | '/api/public/cron/seo-tracking'
@@ -297,7 +285,6 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SeoRoute: typeof SeoRoute
   SocialProfielenRoute: typeof SocialProfielenRoute
-  VideostudioRoute: typeof VideostudioRoute
   ApiPublicCronAnalyticsRoute: typeof ApiPublicCronAnalyticsRoute
   ApiPublicCronPublishRoute: typeof ApiPublicCronPublishRoute
   ApiPublicCronSeoTrackingRoute: typeof ApiPublicCronSeoTrackingRoute
@@ -307,13 +294,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/videostudio': {
-      id: '/videostudio'
-      path: '/videostudio'
-      fullPath: '/videostudio'
-      preLoaderRoute: typeof VideostudioRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/social-profielen': {
       id: '/social-profielen'
       path: '/social-profielen'
@@ -473,7 +453,6 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SeoRoute: SeoRoute,
   SocialProfielenRoute: SocialProfielenRoute,
-  VideostudioRoute: VideostudioRoute,
   ApiPublicCronAnalyticsRoute: ApiPublicCronAnalyticsRoute,
   ApiPublicCronPublishRoute: ApiPublicCronPublishRoute,
   ApiPublicCronSeoTrackingRoute: ApiPublicCronSeoTrackingRoute,
