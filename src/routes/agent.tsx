@@ -209,7 +209,22 @@ function AgentPage() {
     if (!user) return;
     setStarting(true);
     try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (mediaErr) {
+        const name = mediaErr instanceof Error ? mediaErr.name : "";
+        if (name === "NotAllowedError" || name === "SecurityError" || name === "PermissionDeniedError") {
+          toast.error(
+            "Microfoon geblokkeerd. Klik op het slotje links van de URL → Micro­foon → Toestaan, en herlaad de pagina.",
+            { duration: 8000 },
+          );
+        } else if (name === "NotFoundError" || name === "OverconstrainedError") {
+          toast.error("Geen microfoon gevonden. Sluit een microfoon aan en probeer opnieuw.");
+        } else {
+          toast.error(mediaErr instanceof Error ? mediaErr.message : "Kon microfoon niet openen");
+        }
+        return;
+      }
       const { data, error } = await supabase
         .from("agent_conversations")
         .insert({
