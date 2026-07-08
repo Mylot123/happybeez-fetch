@@ -19,6 +19,12 @@ import {
   ThumbsUp,
   Globe,
   Share2,
+  Lightbulb,
+  Clock,
+  AlertCircle,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -39,6 +45,15 @@ import { generateContentIdeas } from "@/lib/ideas.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useCurrentOrg } from "@/hooks/use-current-org";
+import {
+  CHANNEL_RULES,
+  wordFeedback,
+  hookFeedback,
+  hashtagFeedback,
+  levelColor,
+  levelBg,
+  type Channel as StrategyChannel,
+} from "@/lib/content-strategy";
 
 
 const CHANNEL_FORMAT: Record<string, "1:1" | "9:16" | "16:9" | "4:5"> = {
@@ -519,6 +534,24 @@ LINKEDIN PLAYBOOK (verplicht volgen voor LinkedIn):
 • Relevant voor: bedrijven met groen terrein, scholen, zorginstellingen, gemeenten, hoveniers, vastgoed, recreatieparken, duurzame ondernemers, HR/CSR/ESG-verantwoordelijken én tuinliefhebbers.
 `;
 
+      const blogPlaybook = `
+BLOG PLAYBOOK (verplicht volgen voor Blog):
+• Doel: organisch verkeer, Google Discover, backlinks, nieuwsbriefrecirculatie. "Viraal" = distributie-architectuur, geen social spike.
+• TOON: people-first, bewijsgericht, helder, deskundig. Geen overtrokken claims.
+• STRUCTUUR:
+  1. TITEL: uniek, concreet, belofte aan lezer (max ~60 tekens).
+  2. INTRO: vraag of probleem in 2-3 zinnen, beloof de oplossing.
+  3. BODY: tussenkoppen (H2/H3), korte alinea's, bullets/tabellen, eigen inzichten of observaties.
+  4. HappyBeez-koppeling: productdetails alleen waar relevant (handgemaakt in Boekel, materialen, nestgangen).
+  5. CONCLUSIE: samenvatting + duidelijke CTA (nieuwsbrief, gerelateerd artikel, delen).
+• SEO: gebruik kernwoord natuurlijk in titel, intro en tussenkoppen. Geen keyword-stuffing.
+• META: unieke meta description (~150-160 tekens), beschrijvende alt-tekst voor beelden.
+• INTERN: link naar 1-2 gerelateerde artikelen of productpagina's.
+• DISTRIBUTIE: social snippets en quote-cards publiceren op dag van publicatie, push via nieuwsbrief.
+• LENGTE: 600-1200 woorden. Elke zin moet waarde toevoegen.
+• GEEN hashtags.
+`;
+
       const prompt = `Je schrijft een ${contentType.replace("_", " ")} post voor ${channel} namens HappyBeez — handgemaakte natuurvriendelijke bijenhotels uit Boekel.
 
 Toon: ${toneLabel}
@@ -530,7 +563,7 @@ MERKSTIJL: rustig, deskundig, natuurvriendelijk. Gebruik termen: solitaire/wilde
 
 VERMIJD: absolute claims, generiek "bijen", suggestie dat een hotel voedsel biedt, garanties.
 
-${channel === "instagram" ? instagramPlaybook : channel === "facebook" ? facebookPlaybook : channel === "linkedin" ? linkedinPlaybook : `CTA kort en neutraal. Geen hashtags.`}
+${channel === "instagram" ? instagramPlaybook : channel === "facebook" ? facebookPlaybook : channel === "linkedin" ? linkedinPlaybook : channel === "blog" ? blogPlaybook : `CTA kort en neutraal. Geen hashtags.`}
 
 Geef ALLEEN de posttekst terug, in het Nederlands.`;
       const { text } = await generate({ data: { prompt } });
@@ -804,6 +837,8 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
                     aria-label="Bewerk de gegenereerde post"
                   />
 
+                  <GeneratedFeedback channel={channel} text={generated} />
+
                   {hasPreview && (
                     <div className="p-4 border-t" style={{ borderColor: "var(--hb-border)" }}>
                       <div className="flex items-center justify-between mb-2">
@@ -923,6 +958,7 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
                         Naar kalender
                       </Button>
                     </div>
+                    <SaveAdvice channel={channel} date={saveDate} />
                   </div>
                 </div>
               ) : (
@@ -956,6 +992,187 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
               )}
             </div>
           )}
+        </div>
+
+        <div className="mt-6 max-w-3xl">
+          <StrategyPanel channel={channel} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FeedbackChip({
+  icon: Icon,
+  level,
+  label,
+  message,
+}: {
+  icon: typeof AlertCircle;
+  level: "good" | "warning" | "bad";
+  label: string;
+  message: string;
+}) {
+  return (
+    <div
+      className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs"
+      style={{ background: levelBg(level), color: levelColor(level) }}
+    >
+      <Icon className="w-3.5 h-3.5 shrink-0" />
+      <span className="font-medium">{label}:</span>
+      <span>{message}</span>
+    </div>
+  );
+}
+
+function GeneratedFeedback({ channel, text }: { channel: StrategyChannel; text: string }) {
+  const word = wordFeedback(channel, text);
+  const hook = hookFeedback(channel, text);
+  const tag = hashtagFeedback(channel, text);
+  const rules = CHANNEL_RULES[channel];
+
+  return (
+    <div className="px-5 pb-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <FeedbackChip
+          icon={word.level === "good" ? CheckCircle2 : word.level === "warning" ? Clock : AlertCircle}
+          level={word.level}
+          label="Lengte"
+          message={word.message || `${rules.wordRange[0]}-${rules.wordRange[1]} woorden`}
+        />
+        <FeedbackChip
+          icon={hook.level === "good" ? CheckCircle2 : AlertCircle}
+          level={hook.level}
+          label="Hook"
+          message={hook.message || `max ${rules.hookMaxWords} woorden`}
+        />
+        <FeedbackChip
+          icon={tag.level === "good" ? CheckCircle2 : tag.level === "warning" ? Clock : AlertCircle}
+          level={tag.level}
+          label="Hashtags"
+          message={tag.message || `${rules.hashtagRange[0]}-${rules.hashtagRange[1]}`}
+        />
+      </div>
+    </div>
+  );
+}
+
+function StrategyPanel({ channel }: { channel: StrategyChannel }) {
+  const [open, setOpen] = useState(false);
+  const rules = CHANNEL_RULES[channel];
+
+  return (
+    <div
+      className="rounded-2xl overflow-hidden shadow-sm"
+      style={{ background: "#fff", border: "1px solid var(--hb-border)" }}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-5 py-4 text-left"
+      >
+        <div className="flex items-center gap-2">
+          <Lightbulb className="w-4 h-4" style={{ color: "var(--hb-green)" }} />
+          <span className="font-semibold text-sm" style={{ color: "var(--hb-dark)" }}>
+            Strategie voor {rules.emoji} {rules.label}
+          </span>
+        </div>
+        {open ? (
+          <ChevronUp className="w-4 h-4" style={{ color: "var(--hb-dark)", opacity: 0.6 }} />
+        ) : (
+          <ChevronDown className="w-4 h-4" style={{ color: "var(--hb-dark)", opacity: 0.6 }} />
+        )}
+      </button>
+
+      {open && (
+        <div className="px-5 pb-5 pt-1 space-y-3 text-sm" style={{ color: "var(--hb-dark)" }}>
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="rounded-lg p-3" style={{ background: "var(--hb-offwhite)" }}>
+              <div className="font-semibold mb-1">Doel</div>
+              <div style={{ opacity: 0.85 }}>{rules.goal}</div>
+            </div>
+            <div className="rounded-lg p-3" style={{ background: "var(--hb-offwhite)" }}>
+              <div className="font-semibold mb-1">Aanbevolen format</div>
+              <div style={{ opacity: 0.85 }}>{rules.format}</div>
+            </div>
+            <div className="rounded-lg p-3" style={{ background: "var(--hb-offwhite)" }}>
+              <div className="font-semibold mb-1">Beste tijd</div>
+              <div style={{ opacity: 0.85 }}>{rules.bestTimes}</div>
+            </div>
+            <div className="rounded-lg p-3" style={{ background: "var(--hb-offwhite)" }}>
+              <div className="font-semibold mb-1">Beste dagen</div>
+              <div style={{ opacity: 0.85 }}>{rules.bestDays}</div>
+            </div>
+          </div>
+
+          <div>
+            <div className="font-semibold mb-1.5">Tips</div>
+            <ul className="space-y-1 text-xs" style={{ opacity: 0.85 }}>
+              {rules.tips.map((t, i) => (
+                <li key={i} className="flex gap-2">
+                  <span>•</span>
+                  <span>{t}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <div className="font-semibold mb-1.5">Vermijd</div>
+            <ul className="space-y-1 text-xs" style={{ opacity: 0.85 }}>
+              {rules.avoid.map((a, i) => (
+                <li key={i} className="flex gap-2">
+                  <span>✕</span>
+                  <span>{a}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <div className="font-semibold mb-1.5">CTA-voorbeelden</div>
+            <div className="flex flex-wrap gap-2">
+              {rules.ctaExamples.map((cta, i) => (
+                <span
+                  key={i}
+                  className="text-[11px] rounded-full px-2.5 py-1"
+                  style={{ background: "var(--hb-offwhite)", border: "1px solid var(--hb-border)" }}
+                >
+                  {cta}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SaveAdvice({ channel, date }: { channel: StrategyChannel; date: string }) {
+  const rules = CHANNEL_RULES[channel];
+  const dayName = date
+    ? new Date(date + "T12:00:00").toLocaleDateString("nl-NL", { weekday: "short" })
+    : "";
+
+  return (
+    <div
+      className="rounded-xl px-4 py-3 text-xs"
+      style={{ background: "rgba(111, 138, 58, 0.10)", color: "var(--hb-dark)" }}
+    >
+      <div className="flex items-start gap-2">
+        <Clock className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "var(--hb-green)" }} />
+        <div className="space-y-1">
+          <div className="font-semibold">Advies bij opslaan</div>
+          <div>
+            Voor {rules.label} gebruik je best een <span className="font-medium">{rules.format}</span>.
+            {rules.bestTimes !== "n.v.t." && (
+              <> Ideale posttijd: <span className="font-medium">{rules.bestTimes}</span>.</>
+            )}
+            {date && rules.bestDays !== "n.v.t." && (
+              <> {dayName} valt binnen <span className="font-medium">{rules.bestDays}</span>.</>
+            )}
+          </div>
         </div>
       </div>
     </div>

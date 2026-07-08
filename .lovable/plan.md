@@ -1,80 +1,63 @@
-# Integratieplan: Happy Beez → pilot-tenant van SocialMotor
+Huidige stand van zaken
 
-Happy Beez behoudt zijn huidige functies (SEO, foto-bibliotheek, boek, nieuws, agent, content-studio, kalender) en wordt de eerste organisatie in een multi-tenant SocialMotor-platform. We laten de rank tracker die er nu staat gewoon werken en bouwen daaromheen het bouwplan uit — in fases zodat elke sprint werkend oplevert.
+De virale contentstrategie is al op drie plekken terug te vinden in het systeem:
 
-## Mapping: wat we al hebben vs wat het bouwplan vraagt
+1. Geheugen (memory)
+   - `mem://features/viral-content-strategy.md` bevat het volledige speelboek per platform.
+   - `mem://features/posting-schedule.md` bevat de beste tijden, dagen, frequentie en weekcadans.
+   - `mem://index.md` noemt expliciet dat content volgens deze strategie wordt geproduceerd.
 
-```text
-Bouwplan-feature            Status in Happy Beez         Actie
---------------------------  ---------------------------  -----------------------------
-Merkprofiel                 impliciet in agent-context   → expliciete wizard + tabel
-Campagneplanner (maand)     ontbreekt                    → NIEUW (Sprint 2)
-Ideeëngenerator             deels in content-studio      → uitbreiden met pijler/campagne
-Post-editor per platform    content-studio single-text   → platform-tabs + previews
-AI-afbeeldingen             image.functions.ts bestaat   → merkstijl-presets + formaten
-Template-video              ontbreekt                    → Creatomate (Sprint 5)
-Contentkalender             kalender.tsx bestaat         → drag-drop + statuskleuren
-Auto-publish FB/IG/LI/YT    ontbreekt                    → Ayrshare (Sprint 4)
-Approval-workflow           ontbreekt                    → status-enum + RLS (Sprint 3)
-Analytics                   ontbreekt                    → Sprint 6
-Multi-tenant + rollen       single-user                  → Sprint 1 fundament
-```
+2. Kalender (`/kalender`)
+   - Elke dag toont een suggestie uit `WEEKLY_PLAN` met kanaal, type, aanbevolen tijd en format (bijv. "Ma 12:30 · IG Reel 9:16").
+   - Onder de kalender staat per kanaal het advies over beste tijden en dagen.
 
-## Sprintplan (6 sprints, elk 1 lever-moment)
+3. Content Studio (`/content-studio`)
+   - De AI-prompt bevat platformspecifieke "playbooks" voor Instagram, Facebook en LinkedIn.
+   - Die playbooks dwingen de juiste structuur af: hook-lengte, emoji-limiet, hashtag-limiet, CTA-stijl, toon en vermeden termen.
+   - Blog valt terug op een neutrale instructie; daar zit nog geen volledig blog-playbook in.
 
-### Sprint 1 — Multi-tenant fundament (grootste refactor, doen als eerste)
-- Nieuwe tabellen: `organizations`, `organization_members` (met `role` enum: `agency_admin | org_admin | editor`), `brand_profiles` (1-op-1 met org: branche, doelgroep, tone, pijlers, kleuren, logo).
-- Alle bestaande HB-tabellen (`library_photos`, `book_contents`, `news_items`, `content_calendar_items`, `seo_*`, `social_profiles`, `agent_conversations`) krijgen `org_id uuid not null` + RLS-policy `has_org_access(auth.uid(), org_id)` via security-definer functie.
-- Migratiescript: seed één organization "Happy Beez", koppel bestaande rijen, huidige gebruiker wordt `org_admin`.
-- UI: org-switcher in AppShell topbar (dropdown met orgs waar user lid van is). Persist via URL-param of user-preference.
+Wat er nog beter kan
 
-### Sprint 2 — Merkprofiel-wizard + Campagneplanner
-- 5-staps wizard voor `brand_profiles` (branche → doelgroep → tone → pijlers → visuals).
-- Tabel `campaign_plans` (org_id, month, theme, status) + `campaign_blocks` (plan_id, name, pillar, week, hook).
-- Server function `generateCampaignPlan` via Lovable AI Gateway (Gemini): input = brand_profile + NL-kalender + laatste analytics → output = maandthema + 3-4 campagneblokken.
-- Route `/campagnes` met maandpicker, "Genereer maandplan"-knop, goedkeuren.
+De strategie zit nu vooral in de achtergrond (prompts en geheugen). Voor de gebruiker is niet altijd zichtbaar waarom de AI iets bepaalds genereert. Dit plan maakt de strategie zichtbaarder tijdens het schrijven.
 
-### Sprint 3 — Approval-workflow op posts
-- Uitbreiding `content_calendar_items` (of nieuwe `posts`-tabel): `status` enum `draft | review | approved | scheduled | published | failed`, `platform` enum, `body`, `hashtags[]`, `media_ids[]`, `scheduled_at`, `campaign_block_id`.
-- Status-transities RLS-afgedwongen: alleen `org_admin`/`agency_admin` mogen naar `approved`.
-- Content-studio herzien: platform-tabs (FB/IG/LI/YT), karakter-tellers, live-preview per platform, "Naar review"/"Keur goed"-knoppen.
+Te bouwen:
 
-### Sprint 4+5 — Auto-publish (Ayrshare) + Videostudio (Creatomate) + AI-beeld in merkstijl ✅ gecombineerd opgeleverd
-- Ayrshare als publishing-layer; secret `AYRSHARE_API_KEY` (nog te leveren).
-- Server route `POST /api/public/cron/publish` — pg_cron elke 5 min pakt `status=scheduled AND scheduled_at<=now()`.
-- Webhook `POST /api/public/hooks/ayrshare` — status-updates (success/failed) landen in `content_calendar_items` + `publish_attempts`-log.
-- Handmatige `publishPostNow` + `retryFailedPost` server-fn's (alleen `org_admin`/`agency_admin`).
-- Creatomate videostudio: tabel `video_templates` (agency-breed) + `media_assets` (per org). `renderVideo` → Creatomate; webhook `POST /api/public/hooks/creatomate` vult `media_assets.url/status`.
-- Nieuwe route `/videostudio`: template-grid, variabelen-modal, recente renders met live polling.
-- `generatePostImage` uitgebreid: formaat-presets (1:1, 4:5, 9:16, 16:9) + optioneel `org_id` → brand_profile-stijl (tone, kleuren, pijlers) als prompt-prefix i.p.v. hardcoded HB-stijl.
+1. Strategiepaneel in Content Studio
+   - Een inklapbaar paneel rechts van het tekstveld.
+   - Toont per gekozen kanaal de belangrijkste regels uit het playbook:
+     - ideale hook-lengte,
+     - maximale woordenaantal,
+     - aantal hashtags,
+     - aanbevolen CTA,
+     - beste format (Reel, carrousel, document, etc.).
+   - Inhoud komt uit de bestaande geheugenbestanden, zodat het consistent blijft.
 
+2. Live feedback op de gegenereerde tekst
+   - Woordenteller met kleurindicatie (groen/oranje/rood) per kanaal.
+   - Hashtag-teller (aantal # in de tekst).
+   - Eenvoudige hook-check: waarschuwing als de eerste regel te lang is voor het gekozen kanaal.
 
-### Sprint 6 — Analytics + feedback-loop ✅ opgeleverd
-- Nieuwe tabel `post_metrics` (per post × platform × dag: reach, impressions, likes, comments, shares, saves, clicks, engagement_rate). RLS: org-leden lezen.
-- Server route `POST /api/public/cron/analytics` — dagelijks pg_cron → Ayrshare Analytics API → upsert `post_metrics`.
-- Route `/analytics`: KPI-cards, per-kanaal-bars, top-5 posts (laatste 30 dagen).
-- Feedback-loop: `generateCampaignPlan` haalt analytics-samenvatting op en geeft die als extra context aan Gemini → best-presterende kanalen krijgen meer gewicht in nieuwe plannen.
+3. Format- en tijdsadvies bij opslaan
+   - Wanneer een post wordt opgeslagen in de kalender, toon een herinnering met het aanbevolen format en de beste posttijd voor dat kanaal.
+   - Voorstel om de publicatietijd automatisch in te vullen op basis van `WEEKLY_PLAN` / posting-schedule.
 
-## Technische keuzes (afgestemd op Happy Beez-stack)
+4. Blog-playbook aanvullen
+   - Toevoegen van een volledig blog-playbook aan de AI-prompt, gebaseerd op het geheugenbestand (people-first, SEO-structuur, interne links, CTA, distributie).
 
-- **AI**: Lovable AI Gateway (Gemini) i.p.v. Anthropic direct — geen extra secret, geen extra facturatie. Het bouwplan noemt Claude Haiku maar Gemini 3 Flash Preview kan hetzelfde voor onze schaal.
-- **Publishing**: Ayrshare (zoals bouwplan) — bespaart ons OAuth-onderhoud voor 4 platforms.
-- **Video**: Creatomate (zoals bouwplan) — Edge/Worker kan geen ffmpeg draaien, dus dit is niet-onderhandelbaar.
-- **Beeld**: hergebruik bestaande `image.functions.ts` (Lovable AI image) i.p.v. fal.ai — één minder secret, tenzij we specifieke FLUX-controls nodig hebben.
-- **Auth-gating**: alle nieuwe routes onder `_authenticated/` layout die er al staat.
+5. Watermerk-controle (reeds aanwezig, behouden)
+   - AI-beelden en uploads krijgen automatisch het HappyBeez-watermerk; dit blijft ongewijzigd.
 
-## Wat NIET in dit plan zit (bewust)
+Technische details
 
-- TikTok/Pinterest/X publishing (buiten scope v1 conform bouwplan).
-- White-label domeinen (Should, later).
-- Reactie-inbox (Could, later).
-- Generatieve AI-video / Kling (Should, credit-premium, later).
-- Betaalde DataForSEO/SerpAPI upgrades — de gratis SERP-scrape van vorige sprint blijft.
+- Wijzigingen beperken tot frontend: `src/routes/content-studio.tsx` en eventueel een nieuw helperbestand `src/lib/content-strategy.ts` voor de strategie-regels.
+- Geen database-wijzigingen nodig.
+- Bestaande server functions (`generateText`, `generatePostImage`, `uploadUserPhoto`) blijven ongewijzigd.
+- Build-verificatie via `bun run build` na wijzigingen.
 
-## Volgorde-argument
+Acceptatiecriteria
 
-Sprint 1 (multi-tenant) is de enige echte "big bang" — alles daarna is additief en per sprint los te testen op Happy Beez zelf. Als je Sprint 1 goedkeurt lever ik de migratie + org-switcher + gemigreerde routes in één keer op, en dan gaan we sprint-voor-sprint verder.
-
-## Vraag voor jou
-
-Beginnen we met Sprint 1 (multi-tenant fundament), of wil je eerst een detail-plan zien voor één specifieke sprint (bv. Sprint 2 campagneplanner) omdat die het meest urgent voelt voor Happy Beez zelf?
+- Content Studio toont een duidelijk strategiepaneel per kanaal.
+- Gegenereerde tekst krijgt live feedback over lengte, hashtags en hook.
+- Bij opslaan verschijnt format- en tijdsadvies.
+- Blog-content volgt hetzelfde playbook als in de geheugenbestanden.
+- Build slaagt zonder fouten.
