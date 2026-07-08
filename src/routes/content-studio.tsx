@@ -549,9 +549,33 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
 
   async function saveToCalendar() {
     if (!generated || !user) return;
+    if (!currentOrg) {
+      toast.error("Geen actieve organisatie geselecteerd.");
+      return;
+    }
     setSaving(true);
+    if (search.item) {
+      // Update the existing calendar item the user came from.
+      const { error } = await supabase
+        .from("content_calendar_items")
+        .update({
+          title: topic || `${contentType} — ${channel}`,
+          channel,
+          content_type: contentType,
+          publish_date: saveDate,
+          content_text: generated,
+          image_url: selectedPhoto?.image_url ?? null,
+          image_storage_path: selectedPhoto?.storage_path ?? null,
+        })
+        .eq("id", search.item);
+      setSaving(false);
+      if (error) return toast.error(error.message);
+      toast.success("Kalender-item bijgewerkt.");
+      return;
+    }
     const { error } = await supabase.from("content_calendar_items").insert({
       user_id: user.id,
+      org_id: currentOrg.id,
       title: topic || `${contentType} — ${channel}`,
       channel,
       content_type: contentType,
