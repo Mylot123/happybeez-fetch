@@ -47,8 +47,6 @@ import { useAuth } from "@/lib/auth";
 import { useCurrentOrg } from "@/hooks/use-current-org";
 import {
   CHANNEL_RULES,
-  countWords,
-  firstLineWordCount,
   wordFeedback,
   hookFeedback,
   hashtagFeedback,
