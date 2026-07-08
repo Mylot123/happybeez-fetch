@@ -213,7 +213,7 @@ function MerkprofielPage() {
                     rows={3}
                     value={form.industry}
                     onChange={(e) => setField("industry", e.target.value)}
-                    placeholder="Bv. Imkerij met eigen honing, bijenhotels en workshops."
+                    placeholder="Bv. Natuurvriendelijke bijenhotels voor solitaire (wilde) bijen."
                   />
                 </div>
                 <div>
