@@ -372,21 +372,34 @@ function ContentStudio() {
           channel,
           title,
           caption: subject || undefined,
-          save: true,
+          save: false,
         },
       });
-      if (!result.photo) throw new Error("Beeld niet opgeslagen.");
+      if (!result.b64) throw new Error("Geen beeld ontvangen.");
+      const wm = await watermarkBase64(result.b64, "image/png", title);
+      const photo = await uploadPhoto({
+        data: {
+          org_id: currentOrg.id,
+          filename: wm.filename,
+          content_type: wm.contentType,
+          b64: wm.b64,
+          title,
+          caption: subject || undefined,
+          channel,
+          extra_tags: ["ai-gegenereerd"],
+        },
+      });
       const newPhoto: Photo = {
-        id: result.photo.id,
-        title: result.photo.title,
-        caption: result.photo.caption,
-        tags: (result.photo.tags as string[] | null) ?? [],
-        storage_path: result.photo.storage_path,
-        image_url: result.photo.image_url,
+        id: photo.id,
+        title: photo.title,
+        caption: photo.caption,
+        tags: (photo.tags as string[] | null) ?? [],
+        storage_path: photo.storage_path,
+        image_url: photo.image_url,
       };
       setPhotos((prev) => [newPhoto, ...prev.filter((p) => p.id !== newPhoto.id)]);
       setSelectedPhotoId(newPhoto.id);
-      toast.success("Beeld gegenereerd en toegevoegd aan bibliotheek.");
+      toast.success("Beeld gegenereerd, gewatermerkt en toegevoegd aan bibliotheek.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Beeldgeneratie mislukt.", {
         action: { label: "Probeer opnieuw", onClick: () => void runGenerateImage() },
