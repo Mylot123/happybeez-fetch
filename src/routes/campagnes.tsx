@@ -219,7 +219,7 @@ function CampagnesPage() {
           rows={2}
           value={extra}
           onChange={(e) => setExtra(e.target.value)}
-          placeholder="Bv. Introductie nieuwe honingsoort, marktdag op 14e, focus op cadeautips."
+          placeholder="Bv. Introductie model Studio, focus op bijenhotels voor kleine tuinen, biodiversiteit-tips."
           className="mt-2"
         />
         <div className="mt-3 flex items-center justify-between gap-3 flex-wrap">
