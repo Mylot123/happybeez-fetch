@@ -34,9 +34,11 @@ import {
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { generateText } from "@/lib/ai.functions";
 import { generatePostImage, uploadUserPhoto } from "@/lib/image.functions";
+import { generateContentIdeas } from "@/lib/ideas.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useCurrentOrg } from "@/hooks/use-current-org";
+
 
 const CHANNEL_FORMAT: Record<string, "1:1" | "9:16" | "16:9" | "4:5"> = {
   instagram: "1:1",
@@ -155,6 +157,10 @@ export const Route = createFileRoute("/content-studio")({
     topic: typeof search.topic === "string" ? search.topic : "",
     keywords: typeof search.keywords === "string" ? search.keywords : "",
     source: typeof search.source === "string" ? search.source : "",
+    date: typeof search.date === "string" ? search.date : "",
+    channel: typeof search.channel === "string" ? search.channel : "",
+    type: typeof search.type === "string" ? search.type : "",
+    item: typeof search.item === "string" ? search.item : "",
   }),
   head: () => ({
     meta: [
@@ -167,6 +173,7 @@ export const Route = createFileRoute("/content-studio")({
   }),
   component: ContentStudioPage,
 });
+
 
 function ContentStudioPage() {
   return (
