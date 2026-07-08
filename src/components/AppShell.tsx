@@ -16,7 +16,6 @@ import {
   Palette,
   Sparkles,
   KanbanSquare,
-  Film,
   BarChart3,
   type LucideIcon,
 } from "lucide-react";
@@ -45,7 +44,6 @@ const navGroups: NavGroup[] = [
     label: "Content",
     items: [
       { path: "/content-studio", label: "Content Studio", icon: Wand2 },
-      { path: "/videostudio", label: "Videostudio", icon: Film },
       { path: "/planning", label: "Planning & Approvals", icon: KanbanSquare },
       { path: "/kalender", label: "Kalender", icon: CalendarDays },
       { path: "/foto-bibliotheek", label: "Foto's & Kennis", icon: Images },
