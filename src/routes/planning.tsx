@@ -245,7 +245,12 @@ function PostCard({
       {/* Actions per status */}
       <div className="flex flex-wrap gap-1.5 pt-1">
         {post.status === "draft" && (
-          <ActionBtn busy={busy} variant="primary" onClick={() => wrap(onSubmit)} icon={<Send className="w-3 h-3" />} label="Ter beoordeling" />
+          <>
+            <ActionBtn busy={busy} variant="primary" onClick={() => wrap(onSubmit)} icon={<Send className="w-3 h-3" />} label="Ter beoordeling" />
+            {isAdmin && (
+              <ActionBtn busy={busy} variant="primary" onClick={() => wrap(onApprove)} icon={<Check className="w-3 h-3" />} label="Direct goedkeuren" />
+            )}
+          </>
         )}
         {post.status === "review" && (
           <>
