@@ -520,13 +520,22 @@ function Kalender() {
                           } as never,
                         });
                       }}
-                      className="w-full text-left text-[10px] leading-tight px-1.5 py-1 rounded border border-dashed border-border hover:border-wine/50 hover:bg-wine/5 text-muted-foreground hover:text-ink transition-colors flex items-center justify-between gap-1 group/tip"
+                      className="w-full text-left text-[10px] leading-tight px-1.5 py-1 rounded border border-dashed border-border hover:border-wine/50 hover:bg-wine/5 text-muted-foreground hover:text-ink transition-colors flex flex-col gap-0.5 group/tip"
                       title={`Ga naar ${planRoute === "/nieuws" ? "Nieuws" : "Content Studio"}`}
                     >
-                      <span className="truncate">
-                        {plan.channel && channelEmoji[plan.channel]} {plan.label}
+                      <span className="flex items-center justify-between gap-1">
+                        <span className="truncate">
+                          {plan.channel && channelEmoji[plan.channel]} {plan.label}
+                        </span>
+                        <ArrowRight className="w-3 h-3 opacity-0 group-hover/tip:opacity-100 shrink-0" />
                       </span>
-                      <ArrowRight className="w-3 h-3 opacity-0 group-hover/tip:opacity-100 shrink-0" />
+                      {(plan.time || plan.format) && (
+                        <span className="text-[9px] text-muted-foreground/80 truncate">
+                          {plan.time && <span className="font-semibold text-wine/80">{plan.time}</span>}
+                          {plan.time && plan.format ? " · " : ""}
+                          {plan.format}
+                        </span>
+                      )}
                     </button>
                   )
                 )}
