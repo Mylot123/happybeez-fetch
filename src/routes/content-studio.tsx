@@ -191,8 +191,18 @@ function ContentStudio() {
   const uploadPhoto = useServerFn(uploadUserPhoto);
   const search = Route.useSearch();
 
-  const [channel, setChannel] = useState<Channel>("instagram");
-  const [contentType, setContentType] = useState<ContentType>("tip");
+  const initialChannel: Channel =
+    (["instagram","linkedin","facebook","blog","website"] as const).includes(search.channel as Channel)
+      ? (search.channel as Channel)
+      : "instagram";
+  const initialType: ContentType =
+    (["tip","citaat","educatief","product","seizoen","behind_scenes","nieuws","boekfragment"] as const)
+      .includes(search.type as ContentType)
+      ? (search.type as ContentType)
+      : "tip";
+
+  const [channel, setChannel] = useState<Channel>(initialChannel);
+  const [contentType, setContentType] = useState<ContentType>(initialType);
   const [tone, setTone] = useState<Tone>("warm_educatief");
   const [topic, setTopic] = useState(search.topic ?? "");
   const [keywords, setKeywords] = useState(search.keywords ?? "");
@@ -201,13 +211,20 @@ function ContentStudio() {
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveDate, setSaveDate] = useState(
-    new Date().toISOString().split("T")[0]!,
+    search.date || new Date().toISOString().split("T")[0]!,
   );
+
+  type IdeaItem = { title: string; hook: string; angle?: string };
+  const [ideas, setIdeas] = useState<IdeaItem[]>([]);
+  const [ideasLoading, setIdeasLoading] = useState(false);
+  const [ideasCampaign, setIdeasCampaign] = useState<{ theme: string; goal: string | null; week: number; block: string | null } | null>(null);
+  const fetchIdeas = useServerFn(generateContentIdeas);
 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [photoByChannel, setPhotoByChannel] = useState<Record<string, string>>({});
   const [recentByChannel, setRecentByChannel] = useState<Record<string, string[]>>({});
   const selectedPhotoId = photoByChannel[channel] ?? null;
+
   const [generatingImage, setGeneratingImage] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
