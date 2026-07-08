@@ -106,21 +106,32 @@ const MONTHS_NL = [
 ];
 
 // Weekly content-plan, afgestemd op beste posting-momenten + HappyBeez-niche.
+// Gebaseerd op de virale contentstrategie: midweek focus, Reels voor bereik,
+// carrousels/documents voor saves & shares, LinkedIn later op de dag.
 // Index = ma(0) .. zo(6). rest=true betekent: geen post deze dag.
 type DailyPlan = {
   channel?: Channel;
   content_type?: ContentType;
   label: string;
+  time?: string; // aanbevolen posttijd (lokale tijd doelgroep)
+  format?: string; // Reel, carrousel, document, native afbeelding, blog
   rest?: boolean;
 };
 const WEEKLY_PLAN: DailyPlan[] = [
-  { rest: true, label: "Rustdag — laat algoritme ademen" },
-  { channel: "instagram", content_type: "tip", label: "IG tip / educatief" },
-  { channel: "linkedin", content_type: "educatief", label: "LinkedIn kennis" },
-  { channel: "instagram", content_type: "behind_scenes", label: "IG behind-the-scenes" },
-  { channel: "facebook", content_type: "seizoen", label: "FB seizoens-post" },
+  // Maandag — IG Reel (discovery, laag-drempelig weekstart)
+  { channel: "instagram", content_type: "tip", label: "IG Reel — herkenbare tip", time: "12:30", format: "Reel 9:16" },
+  // Dinsdag — LinkedIn thought leadership (midweek zakelijk piek)
+  { channel: "linkedin", content_type: "educatief", label: "LinkedIn standpunt", time: "15:00", format: "Tekst + beeld of document" },
+  // Woensdag — IG carrousel (saves + shares)
+  { channel: "instagram", content_type: "educatief", label: "IG carrousel — save-post", time: "13:00", format: "Carrousel 4:5" },
+  // Donderdag — Facebook community + LinkedIn video
+  { channel: "facebook", content_type: "seizoen", label: "FB community-verhaal", time: "12:00", format: "Native afbeelding of Reel" },
+  // Vrijdag — Blog publiceren (di/do als alternatief), plus IG behind-the-scenes
+  { channel: "blog", content_type: "educatief", label: "Blog publiceren + delen", time: "08:00", format: "Long-form + social snippets" },
+  // Zaterdag — rustdag (lagere B2B-engagement)
   { rest: true, label: "Rustdag — engagement laag" },
-  { channel: "instagram", content_type: "nieuws", label: "IG nieuws-haakje" },
+  // Zondag — IG Reel avond (consumer scroll)
+  { channel: "instagram", content_type: "behind_scenes", label: "IG Reel — behind-the-scenes", time: "19:30", format: "Reel 9:16" },
 ];
 
 function routeForType(content_type?: ContentType): "/nieuws" | "/content-studio" {
@@ -509,13 +520,22 @@ function Kalender() {
                           } as never,
                         });
                       }}
-                      className="w-full text-left text-[10px] leading-tight px-1.5 py-1 rounded border border-dashed border-border hover:border-wine/50 hover:bg-wine/5 text-muted-foreground hover:text-ink transition-colors flex items-center justify-between gap-1 group/tip"
+                      className="w-full text-left text-[10px] leading-tight px-1.5 py-1 rounded border border-dashed border-border hover:border-wine/50 hover:bg-wine/5 text-muted-foreground hover:text-ink transition-colors flex flex-col gap-0.5 group/tip"
                       title={`Ga naar ${planRoute === "/nieuws" ? "Nieuws" : "Content Studio"}`}
                     >
-                      <span className="truncate">
-                        {plan.channel && channelEmoji[plan.channel]} {plan.label}
+                      <span className="flex items-center justify-between gap-1">
+                        <span className="truncate">
+                          {plan.channel && channelEmoji[plan.channel]} {plan.label}
+                        </span>
+                        <ArrowRight className="w-3 h-3 opacity-0 group-hover/tip:opacity-100 shrink-0" />
                       </span>
-                      <ArrowRight className="w-3 h-3 opacity-0 group-hover/tip:opacity-100 shrink-0" />
+                      {(plan.time || plan.format) && (
+                        <span className="text-[9px] text-muted-foreground/80 truncate">
+                          {plan.time && <span className="font-semibold text-wine/80">{plan.time}</span>}
+                          {plan.time && plan.format ? " · " : ""}
+                          {plan.format}
+                        </span>
+                      )}
                     </button>
                   )
                 )}
@@ -849,29 +869,29 @@ function Kalender() {
 
 const BEST_TIMES: Record<Channel, { slots: string; weekdays: string; note: string }> = {
   instagram: {
-    slots: "11:00–13:00 en 19:00–21:00",
-    weekdays: "di, wo, do, zo",
-    note: "Reels presteren beter 's avonds; carrousels rond lunch.",
+    slots: "12:00–16:00 (Reels + carrousels) · 18:00–21:00 (Reels avond)",
+    weekdays: "ma, di, wo, do",
+    note: "Reels = bereik, carrousels = saves & shares. Max 5 hashtags. Sterke hook in eerste seconde, ondertitels altijd aan. Reageer in het eerste uur.",
   },
   linkedin: {
-    slots: "07:30–09:00 en 12:00–13:00",
+    slots: "11:00–17:00 (test 12:00–14:00 én 15:00–17:00)",
     weekdays: "di, wo, do",
-    note: "Zakelijk publiek leest vóór werk en in lunchpauze.",
+    note: "Persoonlijk profiel > bedrijfspagina. Standpunt in eerste 2 regels. 3000 tekens max, 3–5 hashtags. Reageer in het eerste uur op comments.",
   },
   facebook: {
-    slots: "09:00–11:00 en 19:00–21:00",
-    weekdays: "wo, do, vr, zo",
-    note: "Oudere doelgroep — ochtend koffie & avond TV-moment.",
+    slots: "12:00–14:00 (lunch) · 19:00–21:00 (avond)",
+    weekdays: "di, wo, do",
+    note: "Native > links. Afbeelding en Reel scoren beste; deel-CTA werkt beter dan like-CTA. Max 3 hashtags, community-toon.",
   },
   blog: {
-    slots: "Publiceer di of wo ochtend (08:00–10:00)",
-    weekdays: "di, wo",
-    note: "Google-indexering + delen via socials op zelfde dag.",
+    slots: "06:00–10:00 publiceren (di/do/vr), zelfde dag delen op social + nieuwsbrief",
+    weekdays: "di, do, vr",
+    note: "People-first, unieke title + meta, OG-image, structured data, alt-tekst. Bouw interne links + backlinks; refresh oude toppers.",
   },
   website: {
-    slots: "Update vóór nieuwsbrief / campagne",
+    slots: "Vóór nieuwsbrief of campagne (ma/di ochtend)",
     weekdays: "ma, di",
-    note: "Verkeer piekt op werkdagen vroeg in de week.",
+    note: "Zorg dat CTA + hero-beeld actueel zijn vóór je verkeer stuurt. Mobile-first check.",
   },
 };
 
