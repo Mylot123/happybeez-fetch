@@ -106,21 +106,32 @@ const MONTHS_NL = [
 ];
 
 // Weekly content-plan, afgestemd op beste posting-momenten + HappyBeez-niche.
+// Gebaseerd op de virale contentstrategie: midweek focus, Reels voor bereik,
+// carrousels/documents voor saves & shares, LinkedIn later op de dag.
 // Index = ma(0) .. zo(6). rest=true betekent: geen post deze dag.
 type DailyPlan = {
   channel?: Channel;
   content_type?: ContentType;
   label: string;
+  time?: string; // aanbevolen posttijd (lokale tijd doelgroep)
+  format?: string; // Reel, carrousel, document, native afbeelding, blog
   rest?: boolean;
 };
 const WEEKLY_PLAN: DailyPlan[] = [
-  { rest: true, label: "Rustdag — laat algoritme ademen" },
-  { channel: "instagram", content_type: "tip", label: "IG tip / educatief" },
-  { channel: "linkedin", content_type: "educatief", label: "LinkedIn kennis" },
-  { channel: "instagram", content_type: "behind_scenes", label: "IG behind-the-scenes" },
-  { channel: "facebook", content_type: "seizoen", label: "FB seizoens-post" },
+  // Maandag — IG Reel (discovery, laag-drempelig weekstart)
+  { channel: "instagram", content_type: "tip", label: "IG Reel — herkenbare tip", time: "12:30", format: "Reel 9:16" },
+  // Dinsdag — LinkedIn thought leadership (midweek zakelijk piek)
+  { channel: "linkedin", content_type: "educatief", label: "LinkedIn standpunt", time: "15:00", format: "Tekst + beeld of document" },
+  // Woensdag — IG carrousel (saves + shares)
+  { channel: "instagram", content_type: "educatief", label: "IG carrousel — save-post", time: "13:00", format: "Carrousel 4:5" },
+  // Donderdag — Facebook community + LinkedIn video
+  { channel: "facebook", content_type: "seizoen", label: "FB community-verhaal", time: "12:00", format: "Native afbeelding of Reel" },
+  // Vrijdag — Blog publiceren (di/do als alternatief), plus IG behind-the-scenes
+  { channel: "blog", content_type: "educatief", label: "Blog publiceren + delen", time: "08:00", format: "Long-form + social snippets" },
+  // Zaterdag — rustdag (lagere B2B-engagement)
   { rest: true, label: "Rustdag — engagement laag" },
-  { channel: "instagram", content_type: "nieuws", label: "IG nieuws-haakje" },
+  // Zondag — IG Reel avond (consumer scroll)
+  { channel: "instagram", content_type: "behind_scenes", label: "IG Reel — behind-the-scenes", time: "19:30", format: "Reel 9:16" },
 ];
 
 function routeForType(content_type?: ContentType): "/nieuws" | "/content-studio" {
