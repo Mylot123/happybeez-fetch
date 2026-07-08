@@ -536,6 +536,24 @@ LINKEDIN PLAYBOOK (verplicht volgen voor LinkedIn):
 • Relevant voor: bedrijven met groen terrein, scholen, zorginstellingen, gemeenten, hoveniers, vastgoed, recreatieparken, duurzame ondernemers, HR/CSR/ESG-verantwoordelijken én tuinliefhebbers.
 `;
 
+      const blogPlaybook = `
+BLOG PLAYBOOK (verplicht volgen voor Blog):
+• Doel: organisch verkeer, Google Discover, backlinks, nieuwsbriefrecirculatie. "Viraal" = distributie-architectuur, geen social spike.
+• TOON: people-first, bewijsgericht, helder, deskundig. Geen overtrokken claims.
+• STRUCTUUR:
+  1. TITEL: uniek, concreet, belofte aan lezer (max ~60 tekens).
+  2. INTRO: vraag of probleem in 2-3 zinnen, beloof de oplossing.
+  3. BODY: tussenkoppen (H2/H3), korte alinea's, bullets/tabellen, eigen inzichten of observaties.
+  4. HappyBeez-koppeling: productdetails alleen waar relevant (handgemaakt in Boekel, materialen, nestgangen).
+  5. CONCLUSIE: samenvatting + duidelijke CTA (nieuwsbrief, gerelateerd artikel, delen).
+• SEO: gebruik kernwoord natuurlijk in titel, intro en tussenkoppen. Geen keyword-stuffing.
+• META: unieke meta description (~150-160 tekens), beschrijvende alt-tekst voor beelden.
+• INTERN: link naar 1-2 gerelateerde artikelen of productpagina's.
+• DISTRIBUTIE: social snippets en quote-cards publiceren op dag van publicatie, push via nieuwsbrief.
+• LENGTE: 600-1200 woorden. Elke zin moet waarde toevoegen.
+• GEEN hashtags.
+`;
+
       const prompt = `Je schrijft een ${contentType.replace("_", " ")} post voor ${channel} namens HappyBeez — handgemaakte natuurvriendelijke bijenhotels uit Boekel.
 
 Toon: ${toneLabel}
@@ -547,7 +565,7 @@ MERKSTIJL: rustig, deskundig, natuurvriendelijk. Gebruik termen: solitaire/wilde
 
 VERMIJD: absolute claims, generiek "bijen", suggestie dat een hotel voedsel biedt, garanties.
 
-${channel === "instagram" ? instagramPlaybook : channel === "facebook" ? facebookPlaybook : channel === "linkedin" ? linkedinPlaybook : `CTA kort en neutraal. Geen hashtags.`}
+${channel === "instagram" ? instagramPlaybook : channel === "facebook" ? facebookPlaybook : channel === "linkedin" ? linkedinPlaybook : channel === "blog" ? blogPlaybook : `CTA kort en neutraal. Geen hashtags.`}
 
 Geef ALLEEN de posttekst terug, in het Nederlands.`;
       const { text } = await generate({ data: { prompt } });
