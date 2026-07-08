@@ -679,6 +679,58 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
                   <Input id="kw" value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="bijenhotel, bestuiving, biodiversiteit…" />
                 </div>
 
+                <div className="space-y-2 pt-2" style={{ borderTop: "1px dashed var(--hb-border)" }}>
+                  <div className="flex items-center justify-between pt-2">
+                    <Label className="mb-0">Ideeën voor deze post</Label>
+                    <button
+                      type="button"
+                      onClick={runFetchIdeas}
+                      disabled={ideasLoading}
+                      className="text-[11px] underline disabled:opacity-50"
+                      style={{ color: "var(--hb-green-dark)" }}
+                    >
+                      {ideasLoading ? "Ideeën ophalen…" : ideas.length ? "Ververs 5 ideeën" : "Genereer 5 ideeën"}
+                    </button>
+                  </div>
+                  {ideasCampaign && (
+                    <div className="text-[11px] rounded-md px-2 py-1.5" style={{ background: "var(--hb-offwhite)", border: "1px solid var(--hb-border)", color: "var(--hb-dark)" }}>
+                      Campagne: <span className="font-semibold">{ideasCampaign.theme}</span>
+                      {ideasCampaign.block ? <> · week {ideasCampaign.week}: {ideasCampaign.block}</> : null}
+                    </div>
+                  )}
+                  {ideas.length > 0 && (
+                    <ul className="space-y-1.5">
+                      {ideas.map((idea, i) => (
+                        <li key={i}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTopic(idea.title);
+                              toast.success("Idee overgenomen als onderwerp.");
+                            }}
+                            className="w-full text-left rounded-lg px-3 py-2 text-xs transition-colors hover:bg-[var(--hb-offwhite)]"
+                            style={{ border: "1px solid var(--hb-border)", background: "#fff", color: "var(--hb-dark)" }}
+                            title="Klik om dit idee als onderwerp te gebruiken"
+                          >
+                            <div className="font-semibold leading-snug">{idea.title}</div>
+                            {idea.hook && (
+                              <div className="mt-0.5 opacity-80 leading-snug">{idea.hook}</div>
+                            )}
+                            {idea.angle && (
+                              <div className="mt-1 text-[10px] opacity-60 italic">{idea.angle}</div>
+                            )}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {!ideas.length && !ideasLoading && (
+                    <p className="text-[11px]" style={{ color: "var(--hb-dark)", opacity: 0.6 }}>
+                      Krijg 5 concrete ideeën op basis van de actieve maandcampagne, het gekozen kanaal en type. Klik op een idee om het over te nemen.
+                    </p>
+                  )}
+                </div>
+
                 <Button
                   onClick={runGenerate}
                   disabled={generating}
@@ -687,6 +739,7 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
                 >
                   {generating ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />AI schrijft…</>) : (<><Wand2 className="w-4 h-4 mr-2" />Content genereren</>)}
                 </Button>
+
               </div>
             </div>
           </div>
