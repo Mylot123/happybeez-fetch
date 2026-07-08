@@ -839,6 +839,8 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
                     aria-label="Bewerk de gegenereerde post"
                   />
 
+                  <GeneratedFeedback channel={channel} text={generated} />
+
                   {hasPreview && (
                     <div className="p-4 border-t" style={{ borderColor: "var(--hb-border)" }}>
                       <div className="flex items-center justify-between mb-2">
