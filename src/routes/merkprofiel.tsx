@@ -271,7 +271,7 @@ function MerkprofielPage() {
                   hint="Waarom klanten voor jullie kiezen."
                   values={form.usps}
                   onChange={(v) => setField("usps", v)}
-                  placeholder="Bv. Honing uit eigen imkerij in Brabant"
+                  placeholder="Bv. Verwisselbare cassettes, gebaseerd op 40+ jaar onderzoek"
                 />
               </div>
             )}
