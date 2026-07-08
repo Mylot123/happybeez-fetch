@@ -34,6 +34,7 @@ import {
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { generateText } from "@/lib/ai.functions";
 import { generatePostImage, uploadUserPhoto } from "@/lib/image.functions";
+import { watermarkImage, watermarkBase64 } from "@/lib/watermark";
 import { generateContentIdeas } from "@/lib/ideas.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -48,17 +49,6 @@ const CHANNEL_FORMAT: Record<string, "1:1" | "9:16" | "16:9" | "4:5"> = {
   website: "16:9",
 };
 
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      resolve(result.split(",")[1] ?? "");
-    };
-    reader.onerror = () => reject(new Error("Kon bestand niet lezen."));
-    reader.readAsDataURL(file);
-  });
-}
 
 type Channel = "instagram" | "linkedin" | "facebook" | "blog" | "website";
 type ContentType =
@@ -371,21 +361,34 @@ function ContentStudio() {
           channel,
           title,
           caption: subject || undefined,
-          save: true,
+          save: false,
         },
       });
-      if (!result.photo) throw new Error("Beeld niet opgeslagen.");
+      if (!result.b64) throw new Error("Geen beeld ontvangen.");
+      const wm = await watermarkBase64(result.b64, "image/png", title);
+      const photo = await uploadPhoto({
+        data: {
+          org_id: currentOrg.id,
+          filename: wm.filename,
+          content_type: wm.contentType,
+          b64: wm.b64,
+          title,
+          caption: subject || undefined,
+          channel,
+          extra_tags: ["ai-gegenereerd"],
+        },
+      });
       const newPhoto: Photo = {
-        id: result.photo.id,
-        title: result.photo.title,
-        caption: result.photo.caption,
-        tags: (result.photo.tags as string[] | null) ?? [],
-        storage_path: result.photo.storage_path,
-        image_url: result.photo.image_url,
+        id: photo.id,
+        title: photo.title,
+        caption: photo.caption,
+        tags: (photo.tags as string[] | null) ?? [],
+        storage_path: photo.storage_path,
+        image_url: photo.image_url,
       };
       setPhotos((prev) => [newPhoto, ...prev.filter((p) => p.id !== newPhoto.id)]);
       setSelectedPhotoId(newPhoto.id);
-      toast.success("Beeld gegenereerd en toegevoegd aan bibliotheek.");
+      toast.success("Beeld gegenereerd, gewatermerkt en toegevoegd aan bibliotheek.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Beeldgeneratie mislukt.", {
         action: { label: "Probeer opnieuw", onClick: () => void runGenerateImage() },
@@ -410,14 +413,14 @@ function ContentStudio() {
     }
     setUploading(true);
     try {
-      const b64 = await fileToBase64(file);
+      const wm = await watermarkImage(file);
       const title = (topic || file.name.replace(/\.[^.]+$/, "")).slice(0, 120);
       const photo = await uploadPhoto({
         data: {
           org_id: currentOrg.id,
-          filename: file.name,
-          content_type: file.type as "image/png" | "image/jpeg" | "image/webp",
-          b64,
+          filename: wm.filename,
+          content_type: wm.contentType,
+          b64: wm.b64,
           title,
           caption: [topic, keywords].filter(Boolean).join(", ") || undefined,
           channel,

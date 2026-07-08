@@ -23,6 +23,7 @@ const uploadSchema = z.object({
   title: z.string().min(1).max(200),
   caption: z.string().max(500).optional(),
   channel: z.string().max(50).optional(),
+  extra_tags: z.array(z.string().max(40)).max(10).optional(),
 });
 
 const FALLBACK_STYLE =
@@ -261,7 +262,7 @@ export const uploadUserPhoto = createServerFn({ method: "POST" })
         org_id: data.org_id,
         title: data.title.slice(0, 120),
         caption: data.caption ?? null,
-        tags: ["upload", ...(data.channel ? [data.channel] : [])],
+        tags: ["upload", ...(data.channel ? [data.channel] : []), ...(data.extra_tags ?? [])],
         suggested_channels: data.channel ? [data.channel] : [],
         storage_path: path,
         image_url: path,
