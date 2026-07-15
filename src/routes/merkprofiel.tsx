@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrg } from "@/hooks/use-current-org";
 import { saveBrandProfile } from "@/lib/brand.functions";
 import { analyzeWebsiteForBrand } from "@/lib/website-analysis.functions";
+import { BrandDocumentUpload } from "@/components/BrandDocumentUpload";
 import { cn } from "@/lib/utils";
 
 type WebsiteAnalysis = {
@@ -345,6 +346,14 @@ function MerkprofielPage() {
                       )}
                     </Button>
                   </div>
+
+                  <BrandDocumentUpload
+                    onAnalyzed={(a) => {
+                      setAnalysis(a);
+                      toast.success("Analyse toegevoegd — controleer en pas toe hieronder.");
+                    }}
+                  />
+
 
                   {analysis && (
                     <div className="bg-muted/40 border border-border/60 rounded-md p-4 space-y-4 text-sm">
