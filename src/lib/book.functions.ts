@@ -17,23 +17,22 @@ type Source = {
 
 type AIResponse = { choices: Array<{ message: { content: string } }> };
 
+const NL_STOPWORDS = new Set([
+  "aan","als","bij","dan","dat","der","des","deze","die","dit","doe","doen","door","een","eens","elk","elke","els","enig","enige","erg","gaan","geen","ging","haar","had","heb","hebben","heeft","hem","het","hij","hoe","hun","iet","ietsy","iets","ieder","ik","kan","kon","laat","laten","meer","men","met","moet","moeten","naar","niet","nog","noem","och","och","ook","over","per","reeds","tegen","toch","toen","tot","uit","van","vaak","veel","voor","waar","wat","wanneer","was","wel","werd","werden","werd","weet","weten","wie","wij","wilt","word","worden","zal","zei","zij","zijn","zich","zo","zoals","zou","zouden","zult","echt","alle","alles","aldus","altijd","andere","anders","beetje","beter","best","bijna","daar","daarom","dus","eerst","enkel","erin","erop","even","gaat","geef","gewoon","goed","groot","heel","hier","hoe","iemand","ieder","ik","je","jij","jouw","jullie","kunnen","maar","mij","min","misschien","mijn","na","namelijk","nee","niks","nu","ons","onze","ooit","onder","op","reeds","samen","soms","staan","staat","tegen","teveel","tja","toen","ver","vroeg","waarom","waarvan","wanneer","weinig","weer","welke","wel","zeer","zeker","zelf","zulk","zulke","the","and","for","that","this","with","you","your","are","was","were","not","but","have","has","had"
+]);
+
 function tokenize(s: string): string[] {
   return s
     .toLowerCase()
     .replace(/[^\p{L}\p{N}\s]/gu, " ")
     .split(/\s+/)
-    .filter((w) => w.length >= 3);
+    .filter((w) => w.length >= 3 && !NL_STOPWORDS.has(w));
 }
 
-function scoreText(text: string, tokens: string[]): number {
-  const t = text.toLowerCase();
-  let s = 0;
-  for (const tok of tokens) {
-    const re = new RegExp(`\\b${tok.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "gi");
-    const matches = t.match(re);
-    if (matches) s += matches.length;
-  }
-  return s;
+function countMatches(text: string, tok: string): number {
+  const re = new RegExp(tok.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+  const m = text.match(re);
+  return m ? m.length : 0;
 }
 
 export const askBook = createServerFn({ method: "POST" })
