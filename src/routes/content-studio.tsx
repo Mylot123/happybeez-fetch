@@ -581,7 +581,20 @@ BLOG PLAYBOOK (verplicht volgen voor Blog):
 • GEEN hashtags.
 `;
 
+      const bp = brandProfile;
+      const brandBlock = bp
+        ? `MERKPROFIEL (verplicht toepassen — dit is het merk waarvoor je schrijft):
+${bp.industry ? `• Branche: ${bp.industry}` : ""}
+${bp.audience ? `• Doelgroep: ${bp.audience}` : ""}
+${bp.tone ? `• Tone-of-voice: ${bp.tone} (combineer met gekozen toon hieronder)` : ""}
+${bp.pillars && bp.pillars.length ? `• Contentpijlers: ${bp.pillars.join(" | ")}` : ""}
+${bp.usps && bp.usps.length ? `• USP's om (subtiel) te verweven: ${bp.usps.join(" | ")}` : ""}
+${bp.website ? `• Website: ${bp.website}` : ""}`.replace(/\n\n+/g, "\n")
+        : "";
+
       const prompt = `Je schrijft een ${contentType.replace("_", " ")} post voor ${channel} namens HappyBeez — handgemaakte natuurvriendelijke bijenhotels uit Boekel.
+
+${brandBlock}
 
 Toon: ${toneLabel}
 Platform: ${channelHint}
