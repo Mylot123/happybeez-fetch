@@ -347,6 +347,14 @@ function MerkprofielPage() {
                     </Button>
                   </div>
 
+                  <BrandDocumentUpload
+                    onAnalyzed={(a) => {
+                      setAnalysis(a);
+                      toast.success("Analyse toegevoegd — controleer en pas toe hieronder.");
+                    }}
+                  />
+
+
                   {analysis && (
                     <div className="bg-muted/40 border border-border/60 rounded-md p-4 space-y-4 text-sm">
                       {analysis.summary && (
