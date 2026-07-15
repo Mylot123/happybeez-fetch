@@ -56,8 +56,7 @@ export function BookPdfUpload({ onDone }: { onDone?: () => void }) {
     const pdfjs = await import("pdfjs-dist");
     // Use worker as URL (Vite handles this)
     const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
-    // @ts-expect-error runtime option
-    pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+    (pdfjs as unknown as { GlobalWorkerOptions: { workerSrc: string } }).GlobalWorkerOptions.workerSrc = workerUrl;
     const buf = await f.arrayBuffer();
     const doc = await pdfjs.getDocument({ data: buf }).promise;
     const all: Chunk[] = [];
