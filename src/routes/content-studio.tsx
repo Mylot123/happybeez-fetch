@@ -228,6 +228,16 @@ function ContentStudio() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [photoByChannel, setPhotoByChannel] = useState<Record<string, string>>({});
   const [recentByChannel, setRecentByChannel] = useState<Record<string, string[]>>({});
+  const [brandProfile, setBrandProfile] = useState<{
+    industry: string | null;
+    audience: string | null;
+    tone: string | null;
+    pillars: string[] | null;
+    usps: string[] | null;
+    primary_color: string | null;
+    secondary_color: string | null;
+    website: string | null;
+  } | null>(null);
   const selectedPhotoId = photoByChannel[channel] ?? null;
 
   const [generatingImage, setGeneratingImage] = useState(false);
@@ -280,6 +290,25 @@ function ContentStudio() {
     void loadPhotos();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!currentOrg) {
+      setBrandProfile(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase
+        .from("brand_profiles")
+        .select("industry,audience,tone,pillars,usps,primary_color,secondary_color,website")
+        .eq("org_id", currentOrg.id)
+        .maybeSingle();
+      if (!cancelled) setBrandProfile((data as typeof brandProfile) ?? null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentOrg]);
 
 
   async function loadPhotos() {
@@ -552,7 +581,20 @@ BLOG PLAYBOOK (verplicht volgen voor Blog):
 • GEEN hashtags.
 `;
 
+      const bp = brandProfile;
+      const brandBlock = bp
+        ? `MERKPROFIEL (verplicht toepassen — dit is het merk waarvoor je schrijft):
+${bp.industry ? `• Branche: ${bp.industry}` : ""}
+${bp.audience ? `• Doelgroep: ${bp.audience}` : ""}
+${bp.tone ? `• Tone-of-voice: ${bp.tone} (combineer met gekozen toon hieronder)` : ""}
+${bp.pillars && bp.pillars.length ? `• Contentpijlers: ${bp.pillars.join(" | ")}` : ""}
+${bp.usps && bp.usps.length ? `• USP's om (subtiel) te verweven: ${bp.usps.join(" | ")}` : ""}
+${bp.website ? `• Website: ${bp.website}` : ""}`.replace(/\n\n+/g, "\n")
+        : "";
+
       const prompt = `Je schrijft een ${contentType.replace("_", " ")} post voor ${channel} namens HappyBeez — handgemaakte natuurvriendelijke bijenhotels uit Boekel.
+
+${brandBlock}
 
 Toon: ${toneLabel}
 Platform: ${channelHint}
