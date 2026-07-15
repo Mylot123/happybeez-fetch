@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PhotoUploadButton } from "@/components/PhotoUploadButton";
+import { BookPdfUpload } from "@/components/BookPdfUpload";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
