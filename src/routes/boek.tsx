@@ -148,6 +148,10 @@ function Boekbibliotheek() {
         <PhotoUploadButton />
       </div>
 
+      <div className="mb-6">
+        <BookPdfUpload onDone={() => void load()} />
+      </div>
+
       {/* Google-stijl Q&A zoekbalk */}
       <div className="mb-8 bg-card border border-border rounded-2xl p-5 shadow-sm">
         <div className="flex items-center gap-2 mb-3">
