@@ -49,47 +49,92 @@ export const askBook = createServerFn({ method: "POST" })
     const [{ data: sections }, { data: contents }] = await Promise.all([
       supabase
         .from("library_book_sections")
-        .select("id,title,content,page_start,book_id"),
+        .select("id,title,content,page_start,book_id")
+        .limit(5000),
       supabase
         .from("book_contents")
-        .select("id,title,content,page_number,chapter"),
+        .select("id,title,content,page_number,chapter")
+        .limit(5000),
     ]);
 
-    const scored: Array<Source & { score: number; full: string }> = [];
+    // Build documents
+    type Doc = {
+      id: string;
+      title: string;
+      content: string;
+      page: number | null;
+      chapter: string | null;
+      origin: "library_book_sections" | "book_contents";
+    };
+    const docs: Doc[] = [
+      ...(sections ?? []).map((r) => ({
+        id: r.id,
+        title: r.title,
+        content: r.content,
+        page: r.page_start,
+        chapter: null,
+        origin: "library_book_sections" as const,
+      })),
+      ...(contents ?? []).map((r) => ({
+        id: r.id,
+        title: r.title,
+        content: r.content,
+        page: r.page_number,
+        chapter: r.chapter,
+        origin: "book_contents" as const,
+      })),
+    ];
 
-    for (const row of sections ?? []) {
-      const score = scoreText(`${row.title} ${row.content}`, tokens);
-      if (score > 0) {
-        scored.push({
-          id: row.id,
-          title: row.title,
-          snippet: row.content.slice(0, 800),
-          page: row.page_start,
-          chapter: null,
-          origin: "library_book_sections",
-          score,
-          full: row.content,
-        });
-      }
+    // IDF per token — rare terms weigh much more than common ones
+    const N = Math.max(docs.length, 1);
+    const df = new Map<string, number>();
+    const lower = docs.map((d) => `${d.title}\n${d.content}`.toLowerCase());
+    for (const tok of tokens) {
+      let c = 0;
+      const re = new RegExp(tok.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+      for (const l of lower) if (re.test(l)) c++;
+      df.set(tok, c);
     }
-    for (const row of contents ?? []) {
-      const score = scoreText(`${row.title} ${row.content}`, tokens);
-      if (score > 0) {
+    const idf = new Map<string, number>();
+    for (const tok of tokens) {
+      const d = df.get(tok) ?? 0;
+      idf.set(tok, d === 0 ? 0 : Math.log(1 + N / d));
+    }
+    // Rare tokens = those that appear in <20% of docs
+    const rareTokens = tokens.filter((t) => (df.get(t) ?? 0) > 0 && (df.get(t) ?? 0) < N * 0.2);
+
+    const scored: Array<Source & { score: number; full: string }> = [];
+    for (let i = 0; i < docs.length; i++) {
+      const d = docs[i];
+      const text = lower[i];
+      let s = 0;
+      let rareHits = 0;
+      for (const tok of tokens) {
+        const c = countMatches(text, tok);
+        if (c > 0) {
+          s += c * (idf.get(tok) ?? 0);
+          if (rareTokens.includes(tok)) rareHits++;
+        }
+      }
+      // Boost docs that contain all rare tokens (specific match)
+      if (rareTokens.length > 0 && rareHits === rareTokens.length) s *= 3;
+      if (s > 0) {
         scored.push({
-          id: row.id,
-          title: row.title,
-          snippet: row.content.slice(0, 800),
-          page: row.page_number,
-          chapter: row.chapter,
-          origin: "book_contents",
-          score,
-          full: row.content,
+          id: d.id,
+          title: d.title,
+          snippet: d.content.slice(0, 800),
+          page: d.page,
+          chapter: d.chapter,
+          origin: d.origin,
+          score: s,
+          full: d.content,
         });
       }
     }
 
     scored.sort((a, b) => b.score - a.score);
-    const top = scored.slice(0, 6);
+    const top = scored.slice(0, 8);
+
 
     if (top.length === 0) {
       return {
