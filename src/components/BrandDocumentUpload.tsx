@@ -73,7 +73,12 @@ export function BrandDocumentUpload({
     setBusy(true);
     setFileName(file.name);
     try {
-      let payload: Parameters<typeof analyze>[0]["data"];
+      let payload: {
+        filename: string;
+        text?: string;
+        imageB64?: string;
+        contentType?: "image/png" | "image/jpeg" | "image/webp";
+      };
       if (file.type === "application/pdf") {
         const text = await extractPdfText(file, setProgress);
         if (text.length < 30) {
