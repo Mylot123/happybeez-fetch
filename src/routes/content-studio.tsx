@@ -291,6 +291,25 @@ function ContentStudio() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (!currentOrg) {
+      setBrandProfile(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase
+        .from("brand_profiles")
+        .select("industry,audience,tone,pillars,usps,primary_color,secondary_color,website")
+        .eq("org_id", currentOrg.id)
+        .maybeSingle();
+      if (!cancelled) setBrandProfile((data as typeof brandProfile) ?? null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentOrg]);
+
 
   async function loadPhotos() {
     const { data, error } = await supabase
