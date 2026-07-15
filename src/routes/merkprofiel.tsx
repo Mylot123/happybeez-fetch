@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrg } from "@/hooks/use-current-org";
 import { saveBrandProfile } from "@/lib/brand.functions";
 import { analyzeWebsiteForBrand } from "@/lib/website-analysis.functions";
+import { BrandDocumentUpload } from "@/components/BrandDocumentUpload";
 import { cn } from "@/lib/utils";
 
 type WebsiteAnalysis = {
