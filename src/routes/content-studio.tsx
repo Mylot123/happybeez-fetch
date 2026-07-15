@@ -228,6 +228,16 @@ function ContentStudio() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [photoByChannel, setPhotoByChannel] = useState<Record<string, string>>({});
   const [recentByChannel, setRecentByChannel] = useState<Record<string, string[]>>({});
+  const [brandProfile, setBrandProfile] = useState<{
+    industry: string | null;
+    audience: string | null;
+    tone: string | null;
+    pillars: string[] | null;
+    usps: string[] | null;
+    primary_color: string | null;
+    secondary_color: string | null;
+    website: string | null;
+  } | null>(null);
   const selectedPhotoId = photoByChannel[channel] ?? null;
 
   const [generatingImage, setGeneratingImage] = useState(false);
