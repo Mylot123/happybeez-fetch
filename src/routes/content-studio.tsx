@@ -221,6 +221,8 @@ function ContentStudio() {
   const [topic, setTopic] = useState(search.topic ?? "");
   const [keywords, setKeywords] = useState(search.keywords ?? "");
   const [generated, setGenerated] = useState("");
+  const [carousel, setCarousel] = useState<string[]>([]);
+  const [suggestedTitle, setSuggestedTitle] = useState("");
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -453,9 +455,15 @@ function ContentStudio() {
     }
     setGeneratingImage(true);
     try {
-      const prompt = subject
+      const processTypes = ["behind_scenes", "educatief", "product"];
+      const actionHint = processTypes.includes(contentType)
+        ? " Toon het proces in actie: close-up van handen die nestgangen boren, meten, polijsten of een cassette monteren — niet alleen het eindproduct."
+        : "";
+      const noHoney =
+        " Geen honing, geen honingraat, geen imker, geen bijenkorf, geen bijenpak. Alleen wilde/solitaire bijen en handgemaakte bijenhotels.";
+      const prompt = (subject
         ? `Een natuurfoto die past bij: ${subject}.`
-        : `Een natuurfoto die past bij deze post: ${generated.slice(0, 400)}`;
+        : `Een natuurfoto die past bij deze post: ${generated.slice(0, 400)}`) + actionHint + noHoney;
       const format = CHANNEL_FORMAT[channel] ?? "1:1";
       const title = (topic || subject || "AI-beeld").slice(0, 120);
       const result = await generateImage({
@@ -664,13 +672,44 @@ ${keywords ? `Kernwoorden: ${keywords}` : ""}
 
 MERKSTIJL: rustig, deskundig, natuurvriendelijk. Gebruik termen: solitaire/wilde bijen, nestelgelegenheid, biodiversiteit, onbehandeld beukenhout/Douglas, diepe gladde nestgangen, handgemaakt in Boekel.
 
-VERMIJD: absolute claims, generiek "bijen", suggestie dat een hotel voedsel biedt, garanties.
+HARDE MERKFEITEN (nooit tegen ingaan):
+• HappyBeez verkoopt uitsluitend handgemaakte bijenhotels voor WILDE / SOLITAIRE bijen. Er wordt GEEN honing geproduceerd, geoogst of verkocht.
+• Solitaire bijen maken geen honing, leven niet in korven of volken en worden niet gehouden door imkers.
+• VERBODEN woorden en beelden: honing, honing oogsten, imker, bijenkorf, honingraat, bijenvolk, honingbij als eigen product, bijenpak, smaak/oogst van honing.
+• VERMIJD verder: absolute claims, generiek "bijen" (schrijf "wilde bijen"), suggestie dat een hotel voedsel biedt, garanties.
+
+TITEL-CONSISTENTIE (belangrijk):
+• De titel moet exact de lading van de posttekst dekken. Als het onderwerp niet klopt met de inhoud (bijvoorbeeld een titel over honing bij een tekst over nestgangen), NEGEER de foute titel en formuleer zelf een kloppende titel.
+• Goede titelvorm: concreet + waarom het uitmaakt, bv. "Waarom gladde nestgangen belangrijk zijn voor wilde bijen" of "Zo maken we een veilig bijenhotel".
+
+HOOK-EIS (belangrijk):
+• De eerste regel noemt een concreet gevolg, risico of verrassend feit — geen algemene inleiding en geen vraag zonder inzet.
+• Voorbeeld van het gewenste niveau: "Een splinterige nestgang kan de vleugels van een wilde bij beschadigen."
+
+AFSLUITING: sluit altijd af met één concrete, inhoudelijke uitnodiging (iets bekijken, delen, reageren of volgen voor praktische kennis over wilde bijen). Geen holle "like & follow".
 
 ${channel === "instagram" ? instagramPlaybook : channel === "facebook" ? facebookPlaybook : channel === "linkedin" ? linkedinPlaybook : channel === "blog" ? blogPlaybook : `CTA kort en neutraal. Geen hashtags.`}
 
-Geef ALLEEN de posttekst terug, in het Nederlands.`;
+ANTWOORDFORMAAT (exact aanhouden, in het Nederlands, geen markdown):
+TITEL: <kloppende titel, max 70 tekens>
+POST:
+<de volledige posttekst>
+${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
+<alleen als het onderwerp technisch of stapsgewijs is: 4–6 slides, elk op een eigen regel als "1) Slide-titel". Anders schrijf je precies: geen>` : ""}`;
       const { text } = await generate({ data: { prompt } });
-      setGenerated(text);
+      const titleMatch = text.match(/^\s*TITEL:\s*(.+)$/m);
+      const postMatch = text.match(/POST:\s*\n?([\s\S]*?)(?:\n\s*CAROUSEL:|$)/);
+      const carouselMatch = text.match(/CAROUSEL:\s*\n?([\s\S]*)$/);
+      const postText = (postMatch?.[1] ?? text).trim();
+      const slides = (carouselMatch?.[1] ?? "")
+        .split(/\n/)
+        .map((l) => l.replace(/^\s*\d+[).:]?\s*/, "").trim())
+        .filter((l) => l.length > 2 && !/^geen$/i.test(l));
+      setGenerated(postText);
+      setCarousel(slides);
+      const newTitle = titleMatch?.[1]?.trim() ?? "";
+      setSuggestedTitle(newTitle);
+      if (newTitle && !topic) setTopic(newTitle);
       toast.success("Content gegenereerd.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "AI-fout");
@@ -941,6 +980,32 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
                   />
 
                   <GeneratedFeedback channel={channel} text={generated} />
+
+                  {suggestedTitle && suggestedTitle !== topic && (
+                    <div className="mx-5 mb-3 rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(217, 161, 58, 0.12)", border: "1px solid var(--hb-border)" }}>
+                      <div className="font-semibold mb-1" style={{ color: "var(--hb-dark)" }}>Voorgestelde titel</div>
+                      <div className="mb-2" style={{ color: "var(--hb-dark)", opacity: 0.85 }}>{suggestedTitle}</div>
+                      <button
+                        type="button"
+                        onClick={() => setTopic(suggestedTitle)}
+                        className="text-xs font-semibold underline"
+                        style={{ color: "var(--hb-green-dark)" }}
+                      >
+                        Titel overnemen (past bij de tekst)
+                      </button>
+                    </div>
+                  )}
+
+                  {carousel.length > 0 && (
+                    <div className="mx-5 mb-3 rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(111, 138, 58, 0.10)", border: "1px solid var(--hb-border)" }}>
+                      <div className="font-semibold mb-1" style={{ color: "var(--hb-dark)" }}>Carrousel-voorstel ({carousel.length} slides)</div>
+                      <ol className="list-decimal pl-5 space-y-0.5" style={{ color: "var(--hb-dark)", opacity: 0.85 }}>
+                        {carousel.map((s, i) => (
+                          <li key={i}>{s}</li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
 
                   {hasPreview && (
                     <div className="p-4 border-t" style={{ borderColor: "var(--hb-border)" }}>
