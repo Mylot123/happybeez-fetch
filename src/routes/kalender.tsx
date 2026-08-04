@@ -37,6 +37,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PostMockup } from "@/components/PostMockups";
+import { CampaignThemeBanner } from "@/components/CampaignThemeBanner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { generateText } from "@/lib/ai.functions";
@@ -492,7 +493,16 @@ function Kalender() {
         </div>
       </details>
 
-      <PostingAdvice month={month} />
+      <CampaignThemeBanner
+        year={view === "week" ? weekStart.getFullYear() : year}
+        month={view === "week" ? weekStart.getMonth() : month}
+        weekOfMonth={
+          view === "week" ? Math.ceil(weekStart.getDate() / 7) : undefined
+        }
+      />
+
+      <PostingAdvice month={view === "week" ? weekStart.getMonth() : month} />
+
 
 
       <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden">

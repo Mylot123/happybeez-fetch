@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Sparkles, Loader2, CalendarRange, Check, Archive, History, RotateCcw, AlertTriangle } from "lucide-react";
+import { Sparkles, Loader2, CalendarRange, Check, Archive, History, RotateCcw, AlertTriangle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -109,15 +109,52 @@ function CampagnesPage() {
     },
   });
 
+  const yearPlansQuery = useQuery({
+    queryKey: ["campaign-plans-year", currentOrgId, year],
+    enabled: !!currentOrgId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("campaign_plans")
+        .select("id, month, theme, status")
+        .eq("org_id", currentOrgId!)
+        .eq("year", year);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const yearPostsQuery = useQuery({
+    queryKey: ["calendar-year-counts", currentOrgId, year],
+    enabled: !!currentOrgId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("content_calendar_items")
+        .select("publish_date")
+        .eq("org_id", currentOrgId!)
+        .gte("publish_date", `${year}-01-01`)
+        .lte("publish_date", `${year}-12-31`);
+      if (error) throw error;
+      const counts = new Array(12).fill(0) as number[];
+      for (const row of data ?? []) {
+        if (!row.publish_date) continue;
+        const m = Number(row.publish_date.slice(5, 7)) - 1;
+        if (m >= 0 && m < 12) counts[m] = (counts[m] ?? 0) + 1;
+      }
+      return counts;
+    },
+  });
+
   const years = useMemo(() => {
     const y = now.getFullYear();
     return [y - 1, y, y + 1];
   }, [now]);
 
+
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["campaign-plan", currentOrgId, year, month] });
     qc.invalidateQueries({ queryKey: ["campaign-blocks"] });
     qc.invalidateQueries({ queryKey: ["campaign-plan-versions"] });
+    qc.invalidateQueries({ queryKey: ["campaign-plans-year", currentOrgId, year] });
   };
 
   const runGenerate = async () => {
@@ -211,7 +248,85 @@ function CampagnesPage() {
         </div>
       </header>
 
+      {/* Uitleg samenspel campagne ↔ kalender */}
+      <section className="mb-6 rounded-lg border border-border/60 bg-secondary/40 p-5">
+        <h2 className="font-heading text-base font-semibold text-ink">
+          Hoe campagne en kalender samenwerken
+        </h2>
+        <div className="grid gap-3 sm:grid-cols-3 mt-3 text-sm">
+          <div>
+            <p className="font-medium text-ink">1. Campagne = waarover</p>
+            <p className="text-muted-foreground text-xs mt-0.5">
+              Per maand één thema, een doel en vier contentblokken (één per week).
+            </p>
+          </div>
+          <div>
+            <p className="font-medium text-ink">2. Kalender = wanneer</p>
+            <p className="text-muted-foreground text-xs mt-0.5">
+              Het maandthema en het blok van die week staan bovenaan de kalender, zodat je
+              posts inplant die bij de campagne passen.
+            </p>
+          </div>
+          <div>
+            <p className="font-medium text-ink">3. Content Studio = hoe</p>
+            <p className="text-muted-foreground text-xs mt-0.5">
+              Vanuit een kalenderdag schrijf je de post; het thema en de hook van het
+              weekblok worden meegenomen in de suggesties.
+            </p>
+          </div>
+        </div>
+        <Link
+          to="/kalender"
+          className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-wine hover:underline"
+        >
+          Open de kalender <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
+      </section>
+
+      {/* Jaaroverzicht */}
+      <section className="mb-6">
+        <h2 className="font-heading text-base font-semibold text-ink mb-3">
+          Jaaroverzicht {year} — plan meerdere maanden vooruit
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          {MONTHS.map((m, i) => {
+            const p = (yearPlansQuery.data ?? []).find((x) => x.month === i + 1);
+            const postCount = yearPostsQuery.data?.[i] ?? 0;
+            const active = month === i + 1;
+            return (
+              <button
+                key={m}
+                onClick={() => setMonth(i + 1)}
+                className={`text-left rounded-lg border p-3 transition-colors ${
+                  active
+                    ? "border-wine bg-card ring-1 ring-wine/30"
+                    : "border-border/60 bg-card hover:bg-secondary/50"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs uppercase tracking-widest text-muted-foreground capitalize">
+                    {m}
+                  </span>
+                  {p && (
+                    <Badge variant={p.status === "approved" || p.status === "active" ? "default" : "secondary"} className="text-[10px]">
+                      {STATUS_LABEL[p.status] ?? p.status}
+                    </Badge>
+                  )}
+                </div>
+                <p className={`text-sm mt-1 line-clamp-2 ${p ? "font-medium text-ink" : "text-muted-foreground italic"}`}>
+                  {p?.theme ?? "Nog geen thema"}
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {postCount} {postCount === 1 ? "post" : "posts"} in kalender
+                </p>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
       {/* Generator */}
+
       <section className="bg-card border border-border/60 rounded-lg p-6 mb-6">
         <Label htmlFor="extra">Extra context (optioneel)</Label>
         <Textarea
