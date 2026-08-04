@@ -162,6 +162,25 @@ function firstWeekday(year: number, month: number) {
 function fmtDate(year: number, month: number, day: number) {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
+function fmtDateObj(d: Date) {
+  return fmtDate(d.getFullYear(), d.getMonth(), d.getDate());
+}
+function startOfWeek(d: Date) {
+  const c = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const wd = c.getDay() === 0 ? 6 : c.getDay() - 1;
+  c.setDate(c.getDate() - wd);
+  return c;
+}
+function addDays(d: Date, n: number) {
+  const c = new Date(d);
+  c.setDate(c.getDate() + n);
+  return c;
+}
+/** Een post telt als "gemaakt" zodra er echte contenttekst in staat. */
+function isMade(item: CalendarRow) {
+  return (item.content_text ?? "").trim().length > 20;
+}
+
 
 type FormState = {
   title: string;
