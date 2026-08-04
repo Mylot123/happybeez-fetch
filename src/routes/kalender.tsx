@@ -426,7 +426,7 @@ function Kalender() {
             status en optioneel een Canva-link).
           </li>
 
-          </li>
+
           <li>
             <span className="text-ink font-medium">Statussen:</span> de gekleurde
             balk links van een item toont de status (concept, ter beoordeling,
