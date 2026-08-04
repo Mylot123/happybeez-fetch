@@ -37,6 +37,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PostMockup } from "@/components/PostMockups";
+import { CampaignThemeBanner } from "@/components/CampaignThemeBanner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { generateText } from "@/lib/ai.functions";
