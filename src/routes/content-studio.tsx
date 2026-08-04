@@ -695,8 +695,8 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
           content_type: contentType,
           publish_date: saveDate,
           content_text: generated,
-          image_url: selectedPhoto?.image_url ?? null,
-          image_storage_path: selectedPhoto?.storage_path ?? null,
+          image_url: previewImage,
+          image_storage_path: previewStoragePath,
         })
         .eq("id", search.item);
       setSaving(false);
@@ -713,8 +713,8 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
       status: "draft",
       publish_date: saveDate,
       content_text: generated,
-      image_url: selectedPhoto?.image_url ?? null,
-      image_storage_path: selectedPhoto?.storage_path ?? null,
+      image_url: previewImage,
+      image_storage_path: previewStoragePath,
     });
     setSaving(false);
     if (error) return toast.error(error.message);
@@ -1074,16 +1074,16 @@ Geef ALLEEN de posttekst terug, in het Nederlands.`;
                 Preview op telefoon
               </span>
               {channel === "instagram" && (
-                <PhoneMockup image={selectedPhoto?.image_url ?? null} caption={generated} />
+                <PhoneMockup image={previewImage} caption={generated} />
               )}
               {channel === "linkedin" && (
-                <LinkedInMockup image={selectedPhoto?.image_url ?? null} caption={generated} />
+                <LinkedInMockup image={previewImage} caption={generated} />
               )}
               {channel === "facebook" && (
-                <FacebookMockup image={selectedPhoto?.image_url ?? null} caption={generated} />
+                <FacebookMockup image={previewImage} caption={generated} />
               )}
               {channel === "blog" && (
-                <BlogMockup image={selectedPhoto?.image_url ?? null} caption={generated} title={topic} />
+                <BlogMockup image={previewImage} caption={generated} title={topic} />
               )}
             </div>
           )}
