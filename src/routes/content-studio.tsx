@@ -455,9 +455,15 @@ function ContentStudio() {
     }
     setGeneratingImage(true);
     try {
-      const prompt = subject
+      const processTypes = ["behind_scenes", "educatief", "product"];
+      const actionHint = processTypes.includes(contentType)
+        ? " Toon het proces in actie: close-up van handen die nestgangen boren, meten, polijsten of een cassette monteren — niet alleen het eindproduct."
+        : "";
+      const noHoney =
+        " Geen honing, geen honingraat, geen imker, geen bijenkorf, geen bijenpak. Alleen wilde/solitaire bijen en handgemaakte bijenhotels.";
+      const prompt = (subject
         ? `Een natuurfoto die past bij: ${subject}.`
-        : `Een natuurfoto die past bij deze post: ${generated.slice(0, 400)}`;
+        : `Een natuurfoto die past bij deze post: ${generated.slice(0, 400)}`) + actionHint + noHoney;
       const format = CHANNEL_FORMAT[channel] ?? "1:1";
       const title = (topic || subject || "AI-beeld").slice(0, 120);
       const result = await generateImage({
