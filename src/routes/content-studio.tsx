@@ -45,6 +45,7 @@ import { generateContentIdeas } from "@/lib/ideas.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useCurrentOrg } from "@/hooks/use-current-org";
+import { PhoneMockup, LinkedInMockup, FacebookMockup, BlogMockup } from "@/components/PostMockups";
 import {
   CHANNEL_RULES,
   wordFeedback,
