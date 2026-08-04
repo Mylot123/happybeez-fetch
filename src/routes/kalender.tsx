@@ -1138,6 +1138,12 @@ function DayCell({
               </span>
               <ArrowRight className="w-3 h-3 opacity-0 group-hover/tip:opacity-100 shrink-0" />
             </span>
+            {plan.content_type && (
+              <span className="flex">
+                <TypeBadge type={plan.content_type} />
+              </span>
+            )}
+
             {(plan.time || plan.format) && (
               <span className="text-[9px] text-muted-foreground/80 truncate">
                 {plan.time && (
