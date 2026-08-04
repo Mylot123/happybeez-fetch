@@ -1007,7 +1007,8 @@ const SEASONAL: Record<number, string> = {
 function PostingAdvice({ month }: { month: number }) {
   return (
     <div className="mb-5 rounded-lg border border-border bg-card overflow-hidden">
-      <div className="px-5 py-3 border-b border-border bg-secondary/40 flex items-center justify-between">
+    <details className="group mb-5 rounded-lg border border-border bg-card overflow-hidden">
+      <summary className="cursor-pointer list-none px-5 py-3 border-b border-border bg-secondary/40 flex items-center justify-between gap-3">
         <div>
           <span className="text-[11px] tracking-[0.2em] uppercase text-muted-foreground font-medium">
             Posting-advies
@@ -1016,10 +1017,14 @@ function PostingAdvice({ month }: { month: number }) {
             Wanneer & waar posten?
           </h3>
         </div>
-        <span className="text-xs text-muted-foreground hidden sm:block">
-          Tijden in CET — NL hobby-tuinier 35-65j
-        </span>
-      </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground hidden sm:block">
+            Tijden in CET — NL hobby-tuinier 35-65j
+          </span>
+          <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-180" />
+        </div>
+      </summary>
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
         {CHANNELS.map((ch) => {
