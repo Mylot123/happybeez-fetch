@@ -221,6 +221,8 @@ function ContentStudio() {
   const [topic, setTopic] = useState(search.topic ?? "");
   const [keywords, setKeywords] = useState(search.keywords ?? "");
   const [generated, setGenerated] = useState("");
+  const [carousel, setCarousel] = useState<string[]>([]);
+  const [suggestedTitle, setSuggestedTitle] = useState("");
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
