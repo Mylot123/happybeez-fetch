@@ -52,26 +52,36 @@ async function renderWatermarked(
 
   ctx.drawImage(photo, 0, 0, width, height);
 
-  const wmTargetW = Math.max(140, Math.round(Math.min(width, height) * 0.28));
+  // Plaats het watermerk binnen het gecentreerde vierkant, zodat het ook
+  // zichtbaar blijft als een feed (Instagram/Facebook) de foto vierkant bijsnijdt.
+  const safe = Math.min(width, height);
+  const safeLeft = Math.round((width - safe) / 2);
+  const safeTop = Math.round((height - safe) / 2);
+
+  const wmTargetW = Math.max(160, Math.round(safe * 0.36));
   const wmRatio = logo.naturalHeight / logo.naturalWidth;
   const wmW = wmTargetW;
   const wmH = Math.round(wmW * wmRatio);
-  const margin = Math.round(Math.min(width, height) * 0.025);
-  const x = width - wmW - margin;
-  const y = height - wmH - margin;
+  const margin = Math.round(safe * 0.04);
+  const x = safeLeft + safe - wmW - margin;
+  const y = safeTop + safe - wmH - margin;
 
+  // Donkere, zachte plaat achter het logo zodat het witte merk altijd leesbaar is.
   ctx.save();
-  ctx.globalAlpha = 0.18;
-  const pad = Math.round(wmH * 0.25);
+  ctx.globalAlpha = 0.32;
+  const pad = Math.round(wmH * 0.35);
   ctx.fillStyle = "#000";
-  ctx.filter = "blur(8px)";
+  ctx.filter = "blur(14px)";
   ctx.fillRect(x - pad, y - pad, wmW + pad * 2, wmH + pad * 2);
   ctx.restore();
 
   ctx.save();
-  ctx.globalAlpha = 0.55;
+  ctx.globalAlpha = 0.95;
+  ctx.shadowColor = "rgba(0,0,0,0.6)";
+  ctx.shadowBlur = Math.round(wmH * 0.25);
   ctx.drawImage(logo, x, y, wmW, wmH);
   ctx.restore();
+
 
   const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
   const b64 = dataUrl.split(",")[1] ?? "";

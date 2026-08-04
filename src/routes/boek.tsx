@@ -202,6 +202,10 @@ function Boekbibliotheek() {
                     topic,
                     keywords: baseKeywords,
                     source: `Boekbibliotheek — vraag: ${question}\n\n${ctx}${sourceBlock}`,
+                    date: "",
+                    channel: "",
+                    type: "",
+                    item: "",
                   },
                 });
               };
