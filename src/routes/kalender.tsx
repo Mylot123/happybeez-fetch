@@ -454,24 +454,80 @@ function Kalender() {
 
 
       <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-secondary/40">
-          <button
-            onClick={prev}
-            className="p-2 hover:bg-secondary rounded-md transition-colors"
-            aria-label="Vorige maand"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <h2 className="font-heading text-xl font-semibold text-ink">
-            {MONTHS_NL[month]} {year}
-          </h2>
-          <button
-            onClick={next}
-            className="p-2 hover:bg-secondary rounded-md transition-colors"
-            aria-label="Volgende maand"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-4 border-b border-border bg-secondary/40">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => (view === "week" ? setWeekStart((w) => addDays(w, -7)) : prev())}
+              className="p-2 hover:bg-secondary rounded-md transition-colors"
+              aria-label="Vorige"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <h2 className="font-heading text-lg sm:text-xl font-semibold text-ink">
+              {view === "week"
+                ? `Week van ${weekStart.getDate()} ${MONTHS_NL[weekStart.getMonth()]!.toLowerCase()} ${weekStart.getFullYear()}`
+                : `${MONTHS_NL[month]} ${year}`}
+            </h2>
+            <button
+              onClick={() => (view === "week" ? setWeekStart((w) => addDays(w, 7)) : next())}
+              className="p-2 hover:bg-secondary rounded-md transition-colors"
+              aria-label="Volgende"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setView("week");
+                setWeekStart(startOfWeek(new Date()));
+              }}
+              className="text-xs"
+            >
+              Vandaag
+            </Button>
+            <div className="flex rounded-md border border-border overflow-hidden">
+              <button
+                onClick={() => setView("week")}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-colors",
+                  view === "week"
+                    ? "bg-wine text-primary-foreground"
+                    : "bg-card text-muted-foreground hover:bg-secondary",
+                )}
+              >
+                <CalendarRange className="w-3.5 h-3.5" /> Week
+              </button>
+              <button
+                onClick={() => setView("maand")}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-colors",
+                  view === "maand"
+                    ? "bg-wine text-primary-foreground"
+                    : "bg-card text-muted-foreground hover:bg-secondary",
+                )}
+              >
+                <CalendarDays className="w-3.5 h-3.5" /> Maand
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-4 sm:px-6 py-2 border-b border-border/60 flex flex-wrap items-center gap-4 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <Check className="w-3.5 h-3.5 text-emerald-600" /> Post is al gemaakt (tekst
+            aanwezig)
+          </span>
+          <span className="flex items-center gap-1.5">
+            <CircleDashed className="w-3.5 h-3.5 text-amber-600" /> Nog te maken in
+            Content Studio
+          </span>
+          <span className="flex items-center gap-1.5">
+            <ImageIcon className="w-3.5 h-3.5" /> Afbeelding met watermerk aanwezig
+          </span>
         </div>
 
         <div className="grid grid-cols-7 border-b border-border">
@@ -485,147 +541,106 @@ function Kalender() {
           ))}
         </div>
 
-        <div className="grid grid-cols-7">
-          {Array.from({ length: firstDay }).map((_, i) => (
-            <div
-              key={`empty-${i}`}
-              className="min-h-[90px] border-b border-r border-border/50 bg-muted/30"
-            />
-          ))}
-          {Array.from({ length: dim }).map((_, i) => {
-            const day = i + 1;
-            const dateStr = fmtDate(year, month, day);
-            const dayItems = itemsByDate.get(dateStr) ?? [];
-            const isToday =
-              today.getFullYear() === year &&
-              today.getMonth() === month &&
-              today.getDate() === day;
-            const col = (firstDay + i) % 7;
-            const weekend = col === 5 || col === 6;
-            const plan = WEEKLY_PLAN[col]!;
-            const planRoute = plan.rest ? null : routeForType(plan.content_type);
-
-            return (
+        {view === "week" ? (
+          <div className="grid grid-cols-7">
+            {Array.from({ length: 7 }).map((_, col) => {
+              const d = addDays(weekStart, col);
+              const dateStr = fmtDateObj(d);
+              return (
+                <DayCell
+                  key={dateStr}
+                  dateStr={dateStr}
+                  dayNum={d.getDate()}
+                  col={col}
+                  big
+                  items={itemsByDate.get(dateStr) ?? []}
+                  isToday={dateStr === fmtDateObj(today)}
+                  onNew={openNew}
+                  onOpenDetail={(it) => setDetail(it)}
+                  onEdit={openEdit}
+                  onPlanClick={(route, plan) =>
+                    void navigate({
+                      to: route,
+                      search: {
+                        date: dateStr,
+                        channel: plan.channel,
+                        type: plan.content_type,
+                      } as never,
+                    })
+                  }
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <div className="grid grid-cols-7">
+            {Array.from({ length: firstDay }).map((_, i) => (
               <div
-                key={day}
-                onClick={() => openNew(dateStr)}
-                className={cn(
-                  "min-h-[110px] border-b border-r border-border/50 p-1.5 cursor-pointer transition-colors group",
-                  weekend ? "bg-muted/40" : "hover:bg-secondary/40",
-                  isToday && "bg-wine/5 ring-1 ring-inset ring-wine/30",
-                )}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span
-                    className={cn(
-                      "text-xs font-semibold w-5 h-5 flex items-center justify-center rounded-full",
-                      isToday
-                        ? "bg-wine text-primary-foreground"
-                        : "text-muted-foreground",
-                    )}
-                  >
-                    {day}
-                  </span>
-                  {plan.channel && (
-                    <span
-                      className={cn(
-                        "w-1.5 h-1.5 rounded-full",
-                        channelDot[plan.channel],
-                      )}
-                      title={plan.label}
-                    />
-                  )}
-                </div>
-
-                {/* Dagtip: klik → ga direct naar de juiste tool */}
-                {dayItems.length === 0 && (
-                  plan.rest ? (
-                    <div className="text-[10px] text-muted-foreground/80 px-1 py-0.5 flex items-center gap-1">
-                      <Coffee className="w-3 h-3" /> Rustdag
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        void navigate({
-                          to: planRoute!,
-                          search: {
-                            date: dateStr,
-                            channel: plan.channel,
-                            type: plan.content_type,
-                          } as never,
-                        });
-                      }}
-                      className="w-full text-left text-[10px] leading-tight px-1.5 py-1 rounded border border-dashed border-border hover:border-wine/50 hover:bg-wine/5 text-muted-foreground hover:text-ink transition-colors flex flex-col gap-0.5 group/tip"
-                      title={`Ga naar ${planRoute === "/nieuws" ? "Nieuws" : "Content Studio"}`}
-                    >
-                      <span className="flex items-center justify-between gap-1">
-                        <span className="truncate">
-                          {plan.channel && channelEmoji[plan.channel]} {plan.label}
-                        </span>
-                        <ArrowRight className="w-3 h-3 opacity-0 group-hover/tip:opacity-100 shrink-0" />
-                      </span>
-                      {(plan.time || plan.format) && (
-                        <span className="text-[9px] text-muted-foreground/80 truncate">
-                          {plan.time && <span className="font-semibold text-wine/80">{plan.time}</span>}
-                          {plan.time && plan.format ? " · " : ""}
-                          {plan.format}
-                        </span>
-                      )}
-                    </button>
-                  )
-                )}
-
-                <div className="space-y-0.5 mt-0.5">
-                  {dayItems.slice(0, 3).map((item) => {
-                    const itemType = (item.content_type as ContentType) ?? "tip";
-                    const itemRoute = routeForType(itemType);
-                    return (
-                      <div
-                        key={item.id}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void navigate({
-                            to: itemRoute,
-                            search: {
-                              date: item.publish_date ?? dateStr,
-                              channel: item.channel,
-                              type: itemType,
-                              item: item.id,
-                            } as never,
-                          });
-                        }}
-                        className={cn(
-                          "text-xs px-1.5 py-0.5 rounded border-l-2 flex items-center gap-1 cursor-pointer hover:bg-secondary/60 transition-colors bg-card text-ink group/item",
-                          statusBorder[(item.status as Status) ?? "draft"],
-                        )}
-                        title={`Ga naar ${itemRoute === "/nieuws" ? "Nieuws" : "Content Studio"}`}
-                      >
-                        <span>{channelEmoji[(item.channel as Channel) ?? "instagram"]}</span>
-                        <span className="truncate flex-1">{item.title}</span>
-                        <button
-                          type="button"
-                          onClick={(e) => openEdit(item, e)}
-                          className="opacity-0 group-hover/item:opacity-100 hover:text-wine transition-opacity"
-                          title="Bewerken"
-                        >
-                          <Pencil className="w-3 h-3" />
-                        </button>
-                      </div>
-                    );
-                  })}
-                  {dayItems.length > 3 && (
-                    <div className="text-xs text-muted-foreground px-1.5">
-                      +{dayItems.length - 3} meer
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                key={`empty-${i}`}
+                className="min-h-[90px] border-b border-r border-border/50 bg-muted/30"
+              />
+            ))}
+            {Array.from({ length: dim }).map((_, i) => {
+              const day = i + 1;
+              const dateStr = fmtDate(year, month, day);
+              const col = (firstDay + i) % 7;
+              return (
+                <DayCell
+                  key={dateStr}
+                  dateStr={dateStr}
+                  dayNum={day}
+                  col={col}
+                  items={itemsByDate.get(dateStr) ?? []}
+                  isToday={
+                    today.getFullYear() === year &&
+                    today.getMonth() === month &&
+                    today.getDate() === day
+                  }
+                  onNew={openNew}
+                  onOpenDetail={(it) => setDetail(it)}
+                  onEdit={openEdit}
+                  onPlanClick={(route, plan) =>
+                    void navigate({
+                      to: route,
+                      search: {
+                        date: dateStr,
+                        channel: plan.channel,
+                        type: plan.content_type,
+                      } as never,
+                    })
+                  }
+                />
+              );
+            })}
+          </div>
+        )}
       </div>
+
+      {detail && (
+        <PostDetail
+          item={detail}
+          onClose={() => setDetail(null)}
+          onEdit={() => {
+            const it = detail;
+            setDetail(null);
+            openEdit(it);
+          }}
+          onOpenStudio={() => {
+            const it = detail;
+            setDetail(null);
+            void navigate({
+              to: routeForType((it.content_type as ContentType) ?? "tip"),
+              search: {
+                date: it.publish_date ?? "",
+                channel: it.channel,
+                type: (it.content_type as ContentType) ?? "tip",
+                item: it.id,
+              } as never,
+            });
+          }}
+        />
+      )}
+
 
       {loading && (
         <p className="text-xs text-muted-foreground mt-4">Items laden…</p>
