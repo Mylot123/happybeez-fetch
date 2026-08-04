@@ -95,6 +95,37 @@ const channelEmoji: Record<Channel, string> = {
   website: "🌐",
 };
 
+const TYPE_LABEL: Record<ContentType, string> = {
+  tip: "Praktische tip",
+  citaat: "Citaat",
+  boekfragment: "Boekfragment",
+  product: "Productpost",
+  educatief: "Educatief",
+  seizoen: "Seizoen",
+  nieuws: "Nieuws",
+  behind_scenes: "Behind the scenes",
+};
+
+const TYPE_EMOJI: Record<ContentType, string> = {
+  tip: "💡",
+  citaat: "💬",
+  boekfragment: "📖",
+  product: "🛒",
+  educatief: "🎓",
+  seizoen: "🌸",
+  nieuws: "📰",
+  behind_scenes: "🎬",
+};
+
+function TypeBadge({ type }: { type: ContentType }) {
+  return (
+    <span className="inline-flex items-center gap-0.5 rounded-full bg-forest/10 text-forest px-1.5 py-[1px] text-[9px] font-semibold leading-none">
+      {TYPE_EMOJI[type]} {TYPE_LABEL[type]}
+    </span>
+  );
+}
+
+
 const statusBorder: Record<Status, string> = {
   draft: "border-l-muted-foreground/40",
   review: "border-l-amber-400",
@@ -1107,6 +1138,12 @@ function DayCell({
               </span>
               <ArrowRight className="w-3 h-3 opacity-0 group-hover/tip:opacity-100 shrink-0" />
             </span>
+            {plan.content_type && (
+              <span className="flex">
+                <TypeBadge type={plan.content_type} />
+              </span>
+            )}
+
             {(plan.time || plan.format) && (
               <span className="text-[9px] text-muted-foreground/80 truncate">
                 {plan.time && (
@@ -1147,7 +1184,13 @@ function DayCell({
                   <Pencil className="w-3 h-3" />
                 </button>
               </div>
+              <div className="flex items-center gap-1 flex-wrap mt-0.5">
+                {item.content_type && (
+                  <TypeBadge type={item.content_type as ContentType} />
+                )}
+              </div>
               <div className="flex items-center gap-2 mt-0.5 text-[9px]">
+
                 <span
                   className={cn(
                     "flex items-center gap-0.5 font-semibold",
