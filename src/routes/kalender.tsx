@@ -20,6 +20,7 @@ import {
   Image as ImageIcon,
   CalendarDays,
   CalendarRange,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -427,11 +428,12 @@ function Kalender() {
         </Button>
       </div>
 
-      <div className="mb-5 rounded-lg border border-border bg-card p-5">
-        <h2 className="font-heading text-base font-semibold text-ink mb-2">
+      <details className="group mb-5 rounded-lg border border-border bg-card p-5">
+        <summary className="flex cursor-pointer list-none items-center justify-between font-heading text-base font-semibold text-ink">
           Zo werkt de kalender
-        </h2>
-        <ul className="text-sm text-muted-foreground space-y-1.5 list-disc list-inside">
+          <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-180" />
+        </summary>
+        <ul className="text-sm text-muted-foreground space-y-1.5 list-disc list-inside mt-3">
           <li>
             <span className="text-ink font-medium">Week- of maandweergave:</span>{" "}
             standaard zie je de <span className="font-medium">weekkalender</span> met
@@ -488,7 +490,7 @@ function Kalender() {
             </div>
           ))}
         </div>
-      </div>
+      </details>
 
       <PostingAdvice month={month} />
 
@@ -1004,8 +1006,9 @@ const SEASONAL: Record<number, string> = {
 
 function PostingAdvice({ month }: { month: number }) {
   return (
-    <div className="mb-5 rounded-lg border border-border bg-card overflow-hidden">
-      <div className="px-5 py-3 border-b border-border bg-secondary/40 flex items-center justify-between">
+    <details className="group mb-5 rounded-lg border border-border bg-card overflow-hidden">
+
+      <summary className="cursor-pointer list-none px-5 py-3 border-b border-border bg-secondary/40 flex items-center justify-between gap-3">
         <div>
           <span className="text-[11px] tracking-[0.2em] uppercase text-muted-foreground font-medium">
             Posting-advies
@@ -1014,10 +1017,14 @@ function PostingAdvice({ month }: { month: number }) {
             Wanneer & waar posten?
           </h3>
         </div>
-        <span className="text-xs text-muted-foreground hidden sm:block">
-          Tijden in CET — NL hobby-tuinier 35-65j
-        </span>
-      </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground hidden sm:block">
+            Tijden in CET — NL hobby-tuinier 35-65j
+          </span>
+          <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-180" />
+        </div>
+      </summary>
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
         {CHANNELS.map((ch) => {
@@ -1050,7 +1057,7 @@ function PostingAdvice({ month }: { month: number }) {
           {SEASONAL[month]}
         </p>
       </div>
-    </div>
+    </details>
   );
 }
 
