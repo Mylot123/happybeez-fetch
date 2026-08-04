@@ -975,6 +975,32 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
 
                   <GeneratedFeedback channel={channel} text={generated} />
 
+                  {suggestedTitle && suggestedTitle !== topic && (
+                    <div className="mx-5 mb-3 rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(217, 161, 58, 0.12)", border: "1px solid var(--hb-border)" }}>
+                      <div className="font-semibold mb-1" style={{ color: "var(--hb-dark)" }}>Voorgestelde titel</div>
+                      <div className="mb-2" style={{ color: "var(--hb-dark)", opacity: 0.85 }}>{suggestedTitle}</div>
+                      <button
+                        type="button"
+                        onClick={() => setTopic(suggestedTitle)}
+                        className="text-xs font-semibold underline"
+                        style={{ color: "var(--hb-green-dark)" }}
+                      >
+                        Titel overnemen (past bij de tekst)
+                      </button>
+                    </div>
+                  )}
+
+                  {carousel.length > 0 && (
+                    <div className="mx-5 mb-3 rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(111, 138, 58, 0.10)", border: "1px solid var(--hb-border)" }}>
+                      <div className="font-semibold mb-1" style={{ color: "var(--hb-dark)" }}>Carrousel-voorstel ({carousel.length} slides)</div>
+                      <ol className="list-decimal pl-5 space-y-0.5" style={{ color: "var(--hb-dark)", opacity: 0.85 }}>
+                        {carousel.map((s, i) => (
+                          <li key={i}>{s}</li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+
                   {hasPreview && (
                     <div className="p-4 border-t" style={{ borderColor: "var(--hb-border)" }}>
                       <div className="flex items-center justify-between mb-2">
