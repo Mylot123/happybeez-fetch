@@ -428,11 +428,12 @@ function Kalender() {
         </Button>
       </div>
 
-      <div className="mb-5 rounded-lg border border-border bg-card p-5">
-        <h2 className="font-heading text-base font-semibold text-ink mb-2">
+      <details className="group mb-5 rounded-lg border border-border bg-card p-5">
+        <summary className="flex cursor-pointer list-none items-center justify-between font-heading text-base font-semibold text-ink">
           Zo werkt de kalender
-        </h2>
-        <ul className="text-sm text-muted-foreground space-y-1.5 list-disc list-inside">
+          <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-180" />
+        </summary>
+        <ul className="text-sm text-muted-foreground space-y-1.5 list-disc list-inside mt-3">
           <li>
             <span className="text-ink font-medium">Week- of maandweergave:</span>{" "}
             standaard zie je de <span className="font-medium">weekkalender</span> met
