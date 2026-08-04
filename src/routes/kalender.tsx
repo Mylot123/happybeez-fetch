@@ -401,12 +401,23 @@ function Kalender() {
         </h2>
         <ul className="text-sm text-muted-foreground space-y-1.5 list-disc list-inside">
           <li>
-            <span className="text-ink font-medium">Weekritme:</span> elk hokje toont
-            een suggestie op basis van het weekplan (bijv. dinsdag = IG tip,
-            woensdag = LinkedIn kennis, zaterdag = rustdag). Klik op de suggestie
-            om direct naar de <span className="font-medium">Content Studio</span> of{" "}
-            <span className="font-medium">Nieuws</span> te gaan met de juiste
-            datum, kanaal en type al ingevuld.
+            <span className="text-ink font-medium">Week- of maandweergave:</span>{" "}
+            standaard zie je de <span className="font-medium">weekkalender</span> met
+            grote dagkolommen, voorbeeldbeelden en het volledige weekritme. Wissel
+            rechtsboven naar maand voor het overzicht.
+          </li>
+          <li>
+            <span className="text-ink font-medium">Gemaakt of nog te maken:</span>{" "}
+            een groene <span className="font-medium">Gemaakt</span>-markering betekent
+            dat de posttekst er al staat. Oranje{" "}
+            <span className="font-medium">Nog te maken</span> betekent: schrijven in de
+            Content Studio. Een fotolabel geeft aan dat er beeld met watermerk bij zit.
+          </li>
+          <li>
+            <span className="text-ink font-medium">Post bekijken:</span> klik op een
+            bestaande post om hem volledig te zien — afbeelding met watermerk,
+            volledige tekst, hashtags en een viral-check (hook, lengte, hashtags,
+            beeld, CTA) op basis van de contentstrategie.
           </li>
           <li>
             <span className="text-ink font-medium">Nieuw item:</span> klik op een
@@ -414,10 +425,7 @@ function Kalender() {
             om zelf een post in te plannen (titel, kanaal, type, datum, tekst,
             status en optioneel een Canva-link).
           </li>
-          <li>
-            <span className="text-ink font-medium">Bewerken:</span> klik op een
-            bestaand item om het te openen — daar kun je tekst kopiëren, foto
-            downloaden of naar Instagram springen, en de status wijzigen.
+
           </li>
           <li>
             <span className="text-ink font-medium">Statussen:</span> de gekleurde
