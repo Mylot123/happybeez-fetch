@@ -245,9 +245,53 @@ function ContentStudio() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Bestaand kalender-item dat via de kalender geopend is
+  const [existingImage, setExistingImage] = useState<string | null>(null);
+  const [existingStoragePath, setExistingStoragePath] = useState<string | null>(null);
+  const [useExistingImage, setUseExistingImage] = useState(false);
+  const [loadingItem, setLoadingItem] = useState(!!search.item);
+
   function setSelectedPhotoId(id: string) {
+    setUseExistingImage(false);
     setPhotoByChannel((prev) => ({ ...prev, [channel]: id }));
   }
+
+  // Haal de bestaande post op zodra je vanuit de kalender "Open in Content Studio" klikt.
+  useEffect(() => {
+    let cancelled = false;
+    if (!search.item) {
+      setLoadingItem(false);
+      return;
+    }
+    (async () => {
+      const { data, error } = await supabase
+        .from("content_calendar_items")
+        .select("title, channel, content_type, publish_date, content_text, image_url, image_storage_path")
+        .eq("id", search.item)
+        .maybeSingle();
+      if (cancelled) return;
+      setLoadingItem(false);
+      if (error || !data) {
+        toast.error(error?.message ?? "Post niet gevonden.");
+        return;
+      }
+      setTopic(data.title ?? "");
+      setGenerated(data.content_text ?? "");
+      if (data.publish_date) setSaveDate(data.publish_date);
+      if (data.channel) setChannel(data.channel as Channel);
+      if (data.content_type) setContentType(data.content_type as ContentType);
+      if (data.image_url) {
+        setExistingImage(data.image_url);
+        setExistingStoragePath(data.image_storage_path ?? null);
+        setUseExistingImage(true);
+      }
+      toast.success("Post uit de kalender geladen.");
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [search.item]);
+
 
   async function runFetchIdeas() {
     if (!currentOrg) {
