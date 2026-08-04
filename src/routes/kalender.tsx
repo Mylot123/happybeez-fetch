@@ -1014,3 +1014,374 @@ function PostingAdvice({ month }: { month: number }) {
   );
 }
 
+
+// ──────────────────────────────────────────────────────────────
+// Dagcel — gedeeld door week- en maandweergave
+
+function DayCell({
+  dateStr,
+  dayNum,
+  col,
+  big,
+  items,
+  isToday,
+  onNew,
+  onOpenDetail,
+  onEdit,
+  onPlanClick,
+}: {
+  dateStr: string;
+  dayNum: number;
+  col: number;
+  big?: boolean;
+  items: CalendarRow[];
+  isToday: boolean;
+  onNew: (date: string) => void;
+  onOpenDetail: (item: CalendarRow) => void;
+  onEdit: (item: CalendarRow, e?: React.MouseEvent) => void;
+  onPlanClick: (route: "/nieuws" | "/content-studio", plan: DailyPlan) => void;
+}) {
+  const plan = WEEKLY_PLAN[col]!;
+  const planRoute = plan.rest ? null : routeForType(plan.content_type);
+  const weekend = col === 5 || col === 6;
+  const visible = big ? items : items.slice(0, 3);
+
+  return (
+    <div
+      onClick={() => onNew(dateStr)}
+      className={cn(
+        "border-b border-r border-border/50 p-1.5 cursor-pointer transition-colors group",
+        big ? "min-h-[320px]" : "min-h-[110px]",
+        weekend ? "bg-muted/40" : "hover:bg-secondary/40",
+        isToday && "bg-wine/5 ring-1 ring-inset ring-wine/30",
+      )}
+    >
+      <div className="flex items-center justify-between mb-1">
+        <span
+          className={cn(
+            "text-xs font-semibold w-5 h-5 flex items-center justify-center rounded-full",
+            isToday ? "bg-wine text-primary-foreground" : "text-muted-foreground",
+          )}
+        >
+          {dayNum}
+        </span>
+        {plan.channel && (
+          <span
+            className={cn("w-1.5 h-1.5 rounded-full", channelDot[plan.channel])}
+            title={plan.label}
+          />
+        )}
+      </div>
+
+      {/* Weekplan-suggestie: alleen tonen als er nog niets gemaakt is */}
+      {items.length === 0 &&
+        (plan.rest ? (
+          <div className="text-[10px] text-muted-foreground/80 px-1 py-0.5 flex items-center gap-1">
+            <Coffee className="w-3 h-3" /> Rustdag
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onPlanClick(planRoute!, plan);
+            }}
+            className="w-full text-left text-[10px] leading-tight px-1.5 py-1.5 rounded border border-dashed border-amber-400/60 bg-amber-50/40 hover:border-wine/50 hover:bg-wine/5 text-muted-foreground hover:text-ink transition-colors flex flex-col gap-0.5 group/tip"
+            title={`Ga naar ${planRoute === "/nieuws" ? "Nieuws" : "Content Studio"}`}
+          >
+            <span className="flex items-center gap-1 text-amber-700 font-semibold">
+              <CircleDashed className="w-3 h-3" /> Nog te maken
+            </span>
+            <span className="flex items-center justify-between gap-1">
+              <span className="truncate">
+                {plan.channel && channelEmoji[plan.channel]} {plan.label}
+              </span>
+              <ArrowRight className="w-3 h-3 opacity-0 group-hover/tip:opacity-100 shrink-0" />
+            </span>
+            {(plan.time || plan.format) && (
+              <span className="text-[9px] text-muted-foreground/80 truncate">
+                {plan.time && (
+                  <span className="font-semibold text-wine/80">{plan.time}</span>
+                )}
+                {plan.time && plan.format ? " · " : ""}
+                {plan.format}
+              </span>
+            )}
+          </button>
+        ))}
+
+      <div className="space-y-1 mt-1">
+        {visible.map((item) => {
+          const made = isMade(item);
+          return (
+            <div
+              key={item.id}
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenDetail(item);
+              }}
+              className={cn(
+                "text-xs px-1.5 py-1 rounded border-l-2 cursor-pointer hover:bg-secondary/60 transition-colors bg-card text-ink group/item",
+                statusBorder[(item.status as Status) ?? "draft"],
+              )}
+              title="Bekijk de volledige post"
+            >
+              <div className="flex items-center gap-1">
+                <span>{channelEmoji[(item.channel as Channel) ?? "instagram"]}</span>
+                <span className="truncate flex-1">{item.title}</span>
+                <button
+                  type="button"
+                  onClick={(e) => onEdit(item, e)}
+                  className="opacity-0 group-hover/item:opacity-100 hover:text-wine transition-opacity"
+                  title="Snel bewerken"
+                >
+                  <Pencil className="w-3 h-3" />
+                </button>
+              </div>
+              <div className="flex items-center gap-2 mt-0.5 text-[9px]">
+                <span
+                  className={cn(
+                    "flex items-center gap-0.5 font-semibold",
+                    made ? "text-emerald-600" : "text-amber-600",
+                  )}
+                >
+                  {made ? (
+                    <>
+                      <Check className="w-3 h-3" /> Gemaakt
+                    </>
+                  ) : (
+                    <>
+                      <CircleDashed className="w-3 h-3" /> Nog te maken
+                    </>
+                  )}
+                </span>
+                {item.image_url && <ImageIcon className="w-3 h-3 text-muted-foreground" />}
+                <span className="text-muted-foreground truncate">
+                  {STATUS_LABEL[(item.status as Status) ?? "draft"]}
+                </span>
+              </div>
+              {big && item.image_url && (
+                <img
+                  src={item.image_url}
+                  alt=""
+                  loading="lazy"
+                  className="mt-1 w-full h-16 object-cover rounded border border-border"
+                />
+              )}
+            </div>
+          );
+        })}
+        {!big && items.length > 3 && (
+          <div className="text-xs text-muted-foreground px-1.5">
+            +{items.length - 3} meer
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────
+// Postdetail — volledige post incl. afbeelding (met watermerk) en viral-check
+
+function PostDetail({
+  item,
+  onClose,
+  onEdit,
+  onOpenStudio,
+}: {
+  item: CalendarRow;
+  onClose: () => void;
+  onEdit: () => void;
+  onOpenStudio: () => void;
+}) {
+  const channel = ((item.channel as StrategyChannel) ?? "instagram") in CHANNEL_RULES
+    ? (item.channel as StrategyChannel)
+    : "instagram";
+  const rules = CHANNEL_RULES[channel];
+  const text = item.content_text ?? "";
+  const made = isMade(item);
+  const checks = [
+    hookFeedback(channel, text),
+    wordFeedback(channel, text),
+    hashtagFeedback(channel, text),
+    {
+      level: item.image_url ? ("good" as const) : ("warning" as const),
+      message: item.image_url
+        ? "Beeld aanwezig (met HappyBeez-watermerk)"
+        : "Nog geen beeld — visuele posts scoren fors beter",
+    },
+    {
+      level: /\?|deel|sla .*op|reageer/i.test(text) ? ("good" as const) : ("warning" as const),
+      message: /\?|deel|sla .*op|reageer/i.test(text)
+        ? "Duidelijke CTA of vraag aanwezig"
+        : `Voeg een CTA toe, bijv. "${rules.ctaExamples[0]}"`,
+    },
+  ].filter((c) => c.message);
+
+  return (
+    <div
+      className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-card rounded-lg shadow-xl border border-border w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between px-6 py-4 border-b border-border">
+          <div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>{rules.emoji} {rules.label}</span>
+              <span>·</span>
+              <span>{item.publish_date ?? "geen datum"}</span>
+              <span>·</span>
+              <span>{STATUS_LABEL[(item.status as Status) ?? "draft"]}</span>
+            </div>
+            <h3 className="font-heading font-semibold text-ink text-lg mt-1">
+              {item.title}
+            </h3>
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 mt-1 text-[11px] font-semibold",
+                made ? "text-emerald-600" : "text-amber-600",
+              )}
+            >
+              {made ? <Check className="w-3.5 h-3.5" /> : <CircleDashed className="w-3.5 h-3.5" />}
+              {made ? "Deze post is gemaakt" : "Deze post moet nog gemaakt worden"}
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-secondary rounded-md transition-colors"
+            aria-label="Sluiten"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {item.image_url ? (
+            <div className="space-y-1">
+              <img
+                src={item.image_url}
+                alt={item.title}
+                className="w-full rounded-md border border-border"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Beeld inclusief HappyBeez-watermerk.
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+              Nog geen afbeelding bij deze post.
+            </div>
+          )}
+
+          <div>
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+              Volledige posttekst
+            </Label>
+            <p className="mt-2 whitespace-pre-wrap text-sm text-ink leading-relaxed">
+              {text || "Nog geen tekst geschreven."}
+            </p>
+          </div>
+
+          {(item.hashtags ?? []).length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {(item.hashtags ?? []).map((h) => (
+                <span
+                  key={h}
+                  className="text-[11px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground"
+                >
+                  {h.startsWith("#") ? h : `#${h}`}
+                </span>
+              ))}
+            </div>
+          )}
+
+          <div className="rounded-md border border-border bg-secondary/30 p-4">
+            <h4 className="font-heading text-sm font-semibold text-ink mb-2">
+              Viral-check voor {rules.label}
+            </h4>
+            <ul className="space-y-1.5">
+              {checks.map((c, i) => (
+                <li key={i} className="text-xs flex items-start gap-2">
+                  <span
+                    className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0"
+                    style={{ background: levelColor(c.level) }}
+                  />
+                  <span className="text-muted-foreground">{c.message}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-[11px] text-muted-foreground mt-3 leading-relaxed">
+              Doel: {rules.goal}. Format: {rules.format}. Beste tijden:{" "}
+              {rules.bestTimes} ({rules.bestDays}).
+            </p>
+          </div>
+
+          {item.notes && (
+            <div>
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                Notities
+              </Label>
+              <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
+                {item.notes}
+              </p>
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={!text}
+              onClick={async () => {
+                await navigator.clipboard.writeText(text);
+                toast.success("Tekst gekopieerd.");
+              }}
+            >
+              <Copy className="w-3.5 h-3.5" /> Kopieer tekst
+            </Button>
+            {item.image_url && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={async () => {
+                  try {
+                    const res = await fetch(item.image_url!);
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `${item.title || "post"}.jpg`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                    toast.success("Afbeelding gedownload.");
+                  } catch {
+                    toast.error("Download mislukt.");
+                  }
+                }}
+              >
+                <Download className="w-3.5 h-3.5" /> Download foto
+              </Button>
+            )}
+            <Button size="sm" variant="outline" onClick={onEdit}>
+              <Pencil className="w-3.5 h-3.5" /> Snel bewerken
+            </Button>
+            <Button
+              size="sm"
+              className="bg-wine text-primary-foreground hover:bg-wine/90"
+              onClick={onOpenStudio}
+            >
+              <ExternalLink className="w-3.5 h-3.5" />{" "}
+              {made ? "Open in Content Studio" : "Maak af in Content Studio"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
