@@ -16,6 +16,7 @@ import { Route as PlanningRouteImport } from './routes/planning'
 import { Route as NieuwsRouteImport } from './routes/nieuws'
 import { Route as MerkprofielRouteImport } from './routes/merkprofiel'
 import { Route as KalenderRouteImport } from './routes/kalender'
+import { Route as GoogleAdsRouteImport } from './routes/google-ads'
 import { Route as FotoBibliotheekRouteImport } from './routes/foto-bibliotheek'
 import { Route as ContentStudioRouteImport } from './routes/content-studio'
 import { Route as CampagnesRouteImport } from './routes/campagnes'
@@ -63,6 +64,11 @@ const MerkprofielRoute = MerkprofielRouteImport.update({
 const KalenderRoute = KalenderRouteImport.update({
   id: '/kalender',
   path: '/kalender',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GoogleAdsRoute = GoogleAdsRouteImport.update({
+  id: '/google-ads',
+  path: '/google-ads',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FotoBibliotheekRoute = FotoBibliotheekRouteImport.update({
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/campagnes': typeof CampagnesRoute
   '/content-studio': typeof ContentStudioRoute
   '/foto-bibliotheek': typeof FotoBibliotheekRoute
+  '/google-ads': typeof GoogleAdsRoute
   '/kalender': typeof KalenderRoute
   '/merkprofiel': typeof MerkprofielRoute
   '/nieuws': typeof NieuwsRoute
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/campagnes': typeof CampagnesRoute
   '/content-studio': typeof ContentStudioRoute
   '/foto-bibliotheek': typeof FotoBibliotheekRoute
+  '/google-ads': typeof GoogleAdsRoute
   '/kalender': typeof KalenderRoute
   '/merkprofiel': typeof MerkprofielRoute
   '/nieuws': typeof NieuwsRoute
@@ -187,6 +195,7 @@ export interface FileRoutesById {
   '/campagnes': typeof CampagnesRoute
   '/content-studio': typeof ContentStudioRoute
   '/foto-bibliotheek': typeof FotoBibliotheekRoute
+  '/google-ads': typeof GoogleAdsRoute
   '/kalender': typeof KalenderRoute
   '/merkprofiel': typeof MerkprofielRoute
   '/nieuws': typeof NieuwsRoute
@@ -211,6 +220,7 @@ export interface FileRouteTypes {
     | '/campagnes'
     | '/content-studio'
     | '/foto-bibliotheek'
+    | '/google-ads'
     | '/kalender'
     | '/merkprofiel'
     | '/nieuws'
@@ -233,6 +243,7 @@ export interface FileRouteTypes {
     | '/campagnes'
     | '/content-studio'
     | '/foto-bibliotheek'
+    | '/google-ads'
     | '/kalender'
     | '/merkprofiel'
     | '/nieuws'
@@ -255,6 +266,7 @@ export interface FileRouteTypes {
     | '/campagnes'
     | '/content-studio'
     | '/foto-bibliotheek'
+    | '/google-ads'
     | '/kalender'
     | '/merkprofiel'
     | '/nieuws'
@@ -278,6 +290,7 @@ export interface RootRouteChildren {
   CampagnesRoute: typeof CampagnesRoute
   ContentStudioRoute: typeof ContentStudioRoute
   FotoBibliotheekRoute: typeof FotoBibliotheekRoute
+  GoogleAdsRoute: typeof GoogleAdsRoute
   KalenderRoute: typeof KalenderRoute
   MerkprofielRoute: typeof MerkprofielRoute
   NieuwsRoute: typeof NieuwsRoute
@@ -341,6 +354,13 @@ declare module '@tanstack/react-router' {
       path: '/kalender'
       fullPath: '/kalender'
       preLoaderRoute: typeof KalenderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/google-ads': {
+      id: '/google-ads'
+      path: '/google-ads'
+      fullPath: '/google-ads'
+      preLoaderRoute: typeof GoogleAdsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/foto-bibliotheek': {
@@ -446,6 +466,7 @@ const rootRouteChildren: RootRouteChildren = {
   CampagnesRoute: CampagnesRoute,
   ContentStudioRoute: ContentStudioRoute,
   FotoBibliotheekRoute: FotoBibliotheekRoute,
+  GoogleAdsRoute: GoogleAdsRoute,
   KalenderRoute: KalenderRoute,
   MerkprofielRoute: MerkprofielRoute,
   NieuwsRoute: NieuwsRoute,
@@ -462,13 +483,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

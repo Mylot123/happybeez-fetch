@@ -17,6 +17,7 @@ import {
   Sparkles,
   KanbanSquare,
   BarChart3,
+  Megaphone,
   type LucideIcon,
 } from "lucide-react";
 import pdfAsset from "@/assets/HappyBeez-Social-Studio.pdf.asset.json";
@@ -56,6 +57,7 @@ const navGroups: NavGroup[] = [
     items: [
       { path: "/analytics", label: "Analytics", icon: BarChart3 },
       { path: "/seo", label: "SEO & Ranking", icon: Search },
+      { path: "/google-ads", label: "Google Ads Studio", icon: Megaphone },
       { path: "/social-profielen", label: "Social Profielen", icon: Users },
       { path: "/agent", label: "De Bijenspecialist (AI)", icon: Mic, ai: true },
     ],
