@@ -377,6 +377,14 @@ function ContentStudio() {
   const selectedPhoto =
     photos.find((p) => p.id === selectedPhotoId) ?? rankedPhotos[0] ?? null;
 
+  // Beeld zoals het in de preview/opslag gebruikt wordt (bestaand kalenderbeeld wint
+  // zolang de gebruiker zelf nog geen andere foto koos).
+  const previewImage = useExistingImage && existingImage ? existingImage : selectedPhoto?.image_url ?? null;
+  const previewStoragePath =
+    useExistingImage && existingImage ? existingStoragePath : selectedPhoto?.storage_path ?? null;
+
+
+
 
 
 
