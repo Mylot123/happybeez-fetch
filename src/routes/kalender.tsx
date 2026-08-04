@@ -490,7 +490,7 @@ function Kalender() {
             </div>
           ))}
         </div>
-      </div>
+      </details>
 
       <PostingAdvice month={month} />
 
