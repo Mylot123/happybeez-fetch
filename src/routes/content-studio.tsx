@@ -209,6 +209,14 @@ function ContentStudio() {
 
   const [channel, setChannel] = useState<Channel>(initialChannel);
   const [contentType, setContentType] = useState<ContentType>(initialType);
+
+  // Kanaal + type overnemen als je (opnieuw) vanuit de kalender binnenkomt.
+  useEffect(() => {
+    if (search.channel) setChannel(initialChannel);
+    if (search.type) setContentType(initialType);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.channel, search.type]);
+
   const [tone, setTone] = useState<Tone>("warm_educatief");
   const [topic, setTopic] = useState(search.topic ?? "");
   const [keywords, setKeywords] = useState(search.keywords ?? "");
