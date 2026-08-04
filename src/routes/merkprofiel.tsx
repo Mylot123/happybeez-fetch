@@ -482,7 +482,10 @@ function MerkprofielPage() {
           )}
         </div>
       </div>
+
+      <BrandDataOverview orgId={currentOrgId} />
     </div>
+
   );
 }
 
