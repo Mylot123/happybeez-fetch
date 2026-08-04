@@ -220,7 +220,11 @@ function Kalender() {
     blankForm(today.toISOString().split("T")[0]!),
   );
   const [generating, setGenerating] = useState(false);
+  const [view, setView] = useState<"week" | "maand">("week");
+  const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
+  const [detail, setDetail] = useState<CalendarRow | null>(null);
   const generate = useServerFn(generateText);
+
 
   useEffect(() => {
     void load();
