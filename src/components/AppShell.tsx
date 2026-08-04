@@ -17,6 +17,7 @@ import {
   Sparkles,
   KanbanSquare,
   BarChart3,
+  Megaphone,
   type LucideIcon,
 } from "lucide-react";
 import pdfAsset from "@/assets/HappyBeez-Social-Studio.pdf.asset.json";
