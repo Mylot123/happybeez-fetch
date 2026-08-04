@@ -1006,8 +1006,8 @@ const SEASONAL: Record<number, string> = {
 
 function PostingAdvice({ month }: { month: number }) {
   return (
-    <div className="mb-5 rounded-lg border border-border bg-card overflow-hidden">
     <details className="group mb-5 rounded-lg border border-border bg-card overflow-hidden">
+
       <summary className="cursor-pointer list-none px-5 py-3 border-b border-border bg-secondary/40 flex items-center justify-between gap-3">
         <div>
           <span className="text-[11px] tracking-[0.2em] uppercase text-muted-foreground font-medium">
