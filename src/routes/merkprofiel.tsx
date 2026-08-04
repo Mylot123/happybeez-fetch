@@ -14,6 +14,8 @@ import { useCurrentOrg } from "@/hooks/use-current-org";
 import { saveBrandProfile } from "@/lib/brand.functions";
 import { analyzeWebsiteForBrand } from "@/lib/website-analysis.functions";
 import { BrandDocumentUpload } from "@/components/BrandDocumentUpload";
+import { BrandDataOverview } from "@/components/BrandDataOverview";
+
 import { cn } from "@/lib/utils";
 
 type WebsiteAnalysis = {
@@ -482,7 +484,10 @@ function MerkprofielPage() {
           )}
         </div>
       </div>
+
+      <BrandDataOverview orgId={currentOrgId} />
     </div>
+
   );
 }
 
