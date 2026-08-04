@@ -15,6 +15,11 @@ import {
   Pencil,
   Coffee,
   ArrowRight,
+  Check,
+  CircleDashed,
+  Image as ImageIcon,
+  CalendarDays,
+  CalendarRange,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -33,7 +38,16 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { generateText } from "@/lib/ai.functions";
+import {
+  CHANNEL_RULES,
+  hookFeedback,
+  wordFeedback,
+  hashtagFeedback,
+  levelColor,
+  type Channel as StrategyChannel,
+} from "@/lib/content-strategy";
 import type { Database } from "@/integrations/supabase/types";
+
 
 type CalendarRow = Database["public"]["Tables"]["content_calendar_items"]["Row"];
 type CalendarInsert =
