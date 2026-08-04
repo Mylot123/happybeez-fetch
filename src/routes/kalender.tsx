@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { PostMockup } from "@/components/PostMockups";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { generateText } from "@/lib/ai.functions";
@@ -1268,22 +1269,23 @@ function PostDetail({
         </div>
 
         <div className="p-6 space-y-5">
-          {item.image_url ? (
-            <div className="space-y-1">
-              <img
-                src={item.image_url}
-                alt={item.title}
-                className="w-full rounded-md border border-border"
-              />
-              <p className="text-[11px] text-muted-foreground">
-                Beeld inclusief HappyBeez-watermerk.
-              </p>
-            </div>
-          ) : (
-            <div className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-              Nog geen afbeelding bij deze post.
-            </div>
-          )}
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
+              Zo ziet de post er live uit
+            </span>
+            <PostMockup
+              channel={channel}
+              image={item.image_url ?? null}
+              caption={text}
+              title={item.title}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              {item.image_url
+                ? "Beeld inclusief HappyBeez-watermerk."
+                : "Nog geen afbeelding bij deze post."}
+            </p>
+          </div>
+
 
           <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">
