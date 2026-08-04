@@ -154,6 +154,7 @@ function CampagnesPage() {
     qc.invalidateQueries({ queryKey: ["campaign-plan", currentOrgId, year, month] });
     qc.invalidateQueries({ queryKey: ["campaign-blocks"] });
     qc.invalidateQueries({ queryKey: ["campaign-plan-versions"] });
+    qc.invalidateQueries({ queryKey: ["campaign-plans-year", currentOrgId, year] });
   };
 
   const runGenerate = async () => {
