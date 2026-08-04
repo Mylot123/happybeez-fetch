@@ -1184,7 +1184,13 @@ function DayCell({
                   <Pencil className="w-3 h-3" />
                 </button>
               </div>
+              <div className="flex items-center gap-1 flex-wrap mt-0.5">
+                {item.content_type && (
+                  <TypeBadge type={item.content_type as ContentType} />
+                )}
+              </div>
               <div className="flex items-center gap-2 mt-0.5 text-[9px]">
+
                 <span
                   className={cn(
                     "flex items-center gap-0.5 font-semibold",
