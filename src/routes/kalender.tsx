@@ -20,6 +20,7 @@ import {
   Image as ImageIcon,
   CalendarDays,
   CalendarRange,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
