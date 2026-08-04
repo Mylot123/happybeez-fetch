@@ -138,7 +138,7 @@ function PlanningPage() {
           <p className="font-medium text-ink">Nog geen posts</p>
           <p className="text-sm text-muted-foreground mt-1">
             Maak een post aan in de{" "}
-            <Link to="/content-studio" className="text-wine underline">Content Studio</Link>{" "}
+            <Link to="/content-studio" search={{ topic: "", keywords: "", source: "", date: "", channel: "", type: "", item: "" }} className="text-wine underline">Content Studio</Link>{" "}
             of de <Link to="/kalender" className="text-wine underline">Kalender</Link>.
           </p>
         </div>
