@@ -1056,8 +1056,8 @@ function PostingAdvice({ month }: { month: number }) {
           <span className="font-semibold text-wine">Seizoens­focus:</span>{" "}
           {SEASONAL[month]}
         </p>
+      </div>
     </details>
-    </div>
   );
 }
 
