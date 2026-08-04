@@ -109,10 +109,46 @@ function CampagnesPage() {
     },
   });
 
+  const yearPlansQuery = useQuery({
+    queryKey: ["campaign-plans-year", currentOrgId, year],
+    enabled: !!currentOrgId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("campaign_plans")
+        .select("id, month, theme, status")
+        .eq("org_id", currentOrgId!)
+        .eq("year", year);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const yearPostsQuery = useQuery({
+    queryKey: ["calendar-year-counts", currentOrgId, year],
+    enabled: !!currentOrgId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("content_calendar_items")
+        .select("publish_date")
+        .eq("org_id", currentOrgId!)
+        .gte("publish_date", `${year}-01-01`)
+        .lte("publish_date", `${year}-12-31`);
+      if (error) throw error;
+      const counts = new Array(12).fill(0) as number[];
+      for (const row of data ?? []) {
+        if (!row.publish_date) continue;
+        const m = Number(row.publish_date.slice(5, 7)) - 1;
+        if (m >= 0 && m < 12) counts[m] = (counts[m] ?? 0) + 1;
+      }
+      return counts;
+    },
+  });
+
   const years = useMemo(() => {
     const y = now.getFullYear();
     return [y - 1, y, y + 1];
   }, [now]);
+
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["campaign-plan", currentOrgId, year, month] });
