@@ -42,6 +42,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { generateText } from "@/lib/ai.functions";
 import { downloadImage } from "@/lib/download";
+import { withFreshImageUrls } from "@/lib/signed-images";
+
 import {
   CHANNEL_RULES,
   hookFeedback,
