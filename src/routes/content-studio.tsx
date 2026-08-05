@@ -255,7 +255,9 @@ function ContentStudio() {
 
   const [generatingImage, setGeneratingImage] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showAllPhotos, setShowAllPhotos] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
 
   // Bestaand kalender-item dat via de kalender geopend is
   const [existingImage, setExistingImage] = useState<string | null>(null);
@@ -424,16 +426,27 @@ function ContentStudio() {
   }, [photos, topic, keywords, generated, channel, photoByChannel, recentByChannel]);
 
 
-  // auto-select top-ranked when ranking changes and nothing selected for this channel
+  // auto-select top-ranked alleen wanneer er nog géén (geldige) keuze is.
+  // Een eigen upload of handmatige keuze mag nooit overschreven worden.
   useEffect(() => {
     if (rankedPhotos.length === 0) return;
-    if (!selectedPhotoId || !rankedPhotos.some((p) => p.id === selectedPhotoId)) {
+    if (!selectedPhotoId || !photos.some((p) => p.id === selectedPhotoId)) {
       setPhotoByChannel((prev) => ({ ...prev, [channel]: rankedPhotos[0]!.id }));
     }
-  }, [rankedPhotos, selectedPhotoId, channel]);
+  }, [rankedPhotos, selectedPhotoId, channel, photos]);
 
   const selectedPhoto =
     photos.find((p) => p.id === selectedPhotoId) ?? rankedPhotos[0] ?? null;
+
+  // Toon altijd de gekozen foto in het raster, ook als die niet bij de suggesties zit.
+  const gridPhotos = useMemo(() => {
+    const base = showAllPhotos ? photos : rankedPhotos;
+    if (selectedPhoto && !base.some((p) => p.id === selectedPhoto.id)) {
+      return [selectedPhoto, ...base];
+    }
+    return base;
+  }, [showAllPhotos, photos, rankedPhotos, selectedPhoto]);
+
 
   // Beeld zoals het in de preview/opslag gebruikt wordt (bestaand kalenderbeeld wint
   // zolang de gebruiker zelf nog geen andere foto koos).
@@ -1011,17 +1024,23 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
                     </div>
                   )}
 
-                  {hasPreview && (
+                  {(hasPreview || photos.length > 0) && (
                     <div className="p-4 border-t" style={{ borderColor: "var(--hb-border)" }}>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--hb-dark)", opacity: 0.7 }}>
                           <ImageIcon className="w-3.5 h-3.5 inline mr-1" />
-                          Voorgestelde foto's
+                          {showAllPhotos ? "Foto- & kennisbank" : "Voorgestelde foto's"}
                         </span>
-                        <span className="text-[11px]" style={{ color: "var(--hb-dark)", opacity: 0.5 }}>
-                          uit bibliotheek
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowAllPhotos((v) => !v)}
+                          className="text-[11px] underline"
+                          style={{ color: "var(--hb-green-dark)" }}
+                        >
+                          {showAllPhotos ? "Toon suggesties" : `Alle foto's (${photos.length})`}
+                        </button>
                       </div>
+
                       <input
                         ref={fileInputRef}
                         type="file"
@@ -1032,7 +1051,7 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
                           if (f) void runUploadPhoto(f);
                         }}
                       />
-                      {rankedPhotos.length === 0 ? (
+                      {gridPhotos.length === 0 ? (
                         <div className="space-y-2">
                           <p className="text-xs" style={{ color: "var(--hb-dark)", opacity: 0.6 }}>
                             Geen relevante foto's in je bibliotheek. Genereer er één, of upload er zelf een.
@@ -1067,9 +1086,11 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
                         </div>
                       ) : (
                         <>
-                          <div className="grid grid-cols-6 gap-2">
-                            {rankedPhotos.map((p) => {
-                              const active = p.id === selectedPhotoId;
+                          <div
+                            className={`grid grid-cols-6 gap-2 ${showAllPhotos ? "max-h-64 overflow-y-auto pr-1" : ""}`}
+                          >
+                            {gridPhotos.map((p) => {
+                              const active = !useExistingImage && p.id === selectedPhoto?.id;
                               return (
                                 <button
                                   key={p.id}
@@ -1082,11 +1103,18 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
                                     outlineOffset: active ? "1px" : "0",
                                   }}
                                 >
-                                  <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" />
+                                  {p.image_url ? (
+                                    <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <span className="flex h-full w-full items-center justify-center text-[9px] opacity-50">
+                                      geen beeld
+                                    </span>
+                                  )}
                                 </button>
                               );
                             })}
                           </div>
+
                           <div className="mt-2 flex items-center gap-3 text-[11px]">
                             <button
                               type="button"
