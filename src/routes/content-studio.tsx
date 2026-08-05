@@ -42,6 +42,8 @@ import { generateText } from "@/lib/ai.functions";
 import { generatePostImage, uploadUserPhoto } from "@/lib/image.functions";
 import { watermarkImage, watermarkBase64 } from "@/lib/watermark";
 import { generateContentIdeas } from "@/lib/ideas.functions";
+import { signOne } from "@/lib/signed-images";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useCurrentOrg } from "@/hooks/use-current-org";
@@ -290,11 +292,13 @@ function ContentStudio() {
       if (data.publish_date) setSaveDate(data.publish_date);
       if (data.channel) setChannel(data.channel as Channel);
       if (data.content_type) setContentType(data.content_type as ContentType);
-      if (data.image_url) {
-        setExistingImage(data.image_url);
+      if (data.image_url || data.image_storage_path) {
+        const fresh = await signOne(data.image_storage_path);
+        setExistingImage(fresh ?? data.image_url);
         setExistingStoragePath(data.image_storage_path ?? null);
         setUseExistingImage(true);
       }
+
       toast.success("Post uit de kalender geladen.");
     })();
     return () => {

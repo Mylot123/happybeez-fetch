@@ -42,6 +42,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { generateText } from "@/lib/ai.functions";
 import { downloadImage } from "@/lib/download";
+import { withFreshImageUrls } from "@/lib/signed-images";
+
 import {
   CHANNEL_RULES,
   hookFeedback,
@@ -295,8 +297,10 @@ function Kalender() {
     if (error) {
       toast.error(error.message);
     } else {
-      setItems((data ?? []) as CalendarRow[]);
+      const rows = (data ?? []) as CalendarRow[];
+      setItems(await withFreshImageUrls(rows));
     }
+
     setLoading(false);
   }
 
