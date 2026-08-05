@@ -106,16 +106,48 @@ export const generateContentIdeas = createServerFn({ method: "POST" })
       const t = await res.text().catch(() => "");
       throw new Error(`AI Gateway fout (${res.status}): ${t.slice(0, 200)}`);
     }
-    const json = (await res.json()) as { choices: Array<{ message: { content: string } }> };
-    const raw = json.choices?.[0]?.message?.content ?? "";
-    let parsed: { ideas?: Idea[] };
-    try {
-      parsed = JSON.parse(raw) as { ideas?: Idea[] };
-    } catch {
-      throw new Error("AI-antwoord kon niet gelezen worden (geen geldig JSON).");
+    const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    const raw = (json.choices?.[0]?.message?.content ?? "").trim();
+
+    const tryParse = (s: string): { ideas?: Idea[] } | null => {
+      try {
+        return JSON.parse(s) as { ideas?: Idea[] };
+      } catch {
+        return null;
+      }
+    };
+
+    // Strip eventuele markdown-codefences en pak het eerste JSON-object/array.
+    const cleaned = raw
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/```\s*$/i, "")
+      .trim();
+
+    let parsed = tryParse(cleaned);
+    if (!parsed) {
+      const start = cleaned.indexOf("{");
+      const end = cleaned.lastIndexOf("}");
+      if (start !== -1 && end > start) parsed = tryParse(cleaned.slice(start, end + 1));
     }
+    if (!parsed) {
+      const aStart = cleaned.indexOf("[");
+      const aEnd = cleaned.lastIndexOf("]");
+      if (aStart !== -1 && aEnd > aStart) {
+        const arr = tryParse(`{"ideas":${cleaned.slice(aStart, aEnd + 1)}}`);
+        if (arr) parsed = arr;
+      }
+    }
+    if (!parsed) {
+      throw new Error(
+        raw
+          ? `AI-antwoord kon niet gelezen worden (geen geldig JSON): ${raw.slice(0, 160)}`
+          : "AI gaf een leeg antwoord — probeer het opnieuw.",
+      );
+    }
+
     const ideas = Array.isArray(parsed.ideas) ? parsed.ideas.slice(0, 5) : [];
-    if (ideas.length === 0) throw new Error("Geen ideeën ontvangen.");
+    if (ideas.length === 0) throw new Error("Geen ideeën ontvangen — probeer het opnieuw.");
+
 
     return {
       ideas,
