@@ -1419,19 +1419,12 @@ function PostDetail({
                 variant="outline"
                 onClick={async () => {
                   try {
-                    const res = await fetch(item.image_url!);
-                    const blob = await res.blob();
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = `${item.title || "post"}.jpg`;
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    URL.revokeObjectURL(url);
+                    await downloadImage(item.image_url!, item.title || "post");
                     toast.success("Afbeelding gedownload.");
                   } catch {
-                    toast.error("Download mislukt.");
+                    toast.info(
+                      "Afbeelding geopend in nieuw tabblad — rechtsklik en 'Afbeelding opslaan als'.",
+                    );
                   }
                 }}
               >
