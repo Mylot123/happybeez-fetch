@@ -1051,7 +1051,7 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
                           if (f) void runUploadPhoto(f);
                         }}
                       />
-                      {rankedPhotos.length === 0 ? (
+                      {gridPhotos.length === 0 ? (
                         <div className="space-y-2">
                           <p className="text-xs" style={{ color: "var(--hb-dark)", opacity: 0.6 }}>
                             Geen relevante foto's in je bibliotheek. Genereer er één, of upload er zelf een.
