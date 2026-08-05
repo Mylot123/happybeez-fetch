@@ -10,6 +10,7 @@ import { PhotoUploadButton } from "@/components/PhotoUploadButton";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
+import { downloadImage } from "@/lib/download";
 
 type Book = Database["public"]["Tables"]["library_books"]["Row"];
 type Section = Database["public"]["Tables"]["library_book_sections"]["Row"];
@@ -297,10 +298,21 @@ function PhotoCard({ photo, displayUrl }: { photo: Photo; displayUrl: string }) 
             <Copy className="h-3 w-3" /> URL
           </Button>
           {displayUrl ? (
-            <Button size="sm" variant="outline" asChild>
-              <a href={displayUrl} download>
-                <Download className="h-3 w-3" />
-              </a>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                try {
+                  await downloadImage(displayUrl, photo.title || "foto");
+                  toast.success("Afbeelding gedownload.");
+                } catch {
+                  toast.info(
+                    "Afbeelding geopend in nieuw tabblad — rechtsklik en 'Afbeelding opslaan als'.",
+                  );
+                }
+              }}
+            >
+              <Download className="h-3 w-3" />
             </Button>
           ) : (
             <Button size="sm" variant="outline" disabled>
