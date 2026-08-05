@@ -1024,17 +1024,23 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
                     </div>
                   )}
 
-                  {hasPreview && (
+                  {(hasPreview || photos.length > 0) && (
                     <div className="p-4 border-t" style={{ borderColor: "var(--hb-border)" }}>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--hb-dark)", opacity: 0.7 }}>
                           <ImageIcon className="w-3.5 h-3.5 inline mr-1" />
-                          Voorgestelde foto's
+                          {showAllPhotos ? "Foto- & kennisbank" : "Voorgestelde foto's"}
                         </span>
-                        <span className="text-[11px]" style={{ color: "var(--hb-dark)", opacity: 0.5 }}>
-                          uit bibliotheek
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowAllPhotos((v) => !v)}
+                          className="text-[11px] underline"
+                          style={{ color: "var(--hb-green-dark)" }}
+                        >
+                          {showAllPhotos ? "Toon suggesties" : `Alle foto's (${photos.length})`}
+                        </button>
                       </div>
+
                       <input
                         ref={fileInputRef}
                         type="file"
