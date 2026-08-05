@@ -255,7 +255,9 @@ function ContentStudio() {
 
   const [generatingImage, setGeneratingImage] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showAllPhotos, setShowAllPhotos] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
 
   // Bestaand kalender-item dat via de kalender geopend is
   const [existingImage, setExistingImage] = useState<string | null>(null);
