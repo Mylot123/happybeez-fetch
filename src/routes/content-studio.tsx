@@ -1086,9 +1086,11 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
                         </div>
                       ) : (
                         <>
-                          <div className="grid grid-cols-6 gap-2">
-                            {rankedPhotos.map((p) => {
-                              const active = p.id === selectedPhotoId;
+                          <div
+                            className={`grid grid-cols-6 gap-2 ${showAllPhotos ? "max-h-64 overflow-y-auto pr-1" : ""}`}
+                          >
+                            {gridPhotos.map((p) => {
+                              const active = !useExistingImage && p.id === selectedPhoto?.id;
                               return (
                                 <button
                                   key={p.id}
@@ -1101,11 +1103,18 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
                                     outlineOffset: active ? "1px" : "0",
                                   }}
                                 >
-                                  <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" />
+                                  {p.image_url ? (
+                                    <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <span className="flex h-full w-full items-center justify-center text-[9px] opacity-50">
+                                      geen beeld
+                                    </span>
+                                  )}
                                 </button>
                               );
                             })}
                           </div>
+
                           <div className="mt-2 flex items-center gap-3 text-[11px]">
                             <button
                               type="button"
