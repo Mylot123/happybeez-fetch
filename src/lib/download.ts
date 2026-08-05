@@ -1,4 +1,6 @@
 /** Robuuste afbeelding-download: juiste extensie, veilige bestandsnaam, fallback. */
+import { watermarkBlob } from "@/lib/watermark";
+
 
 const EXT_BY_MIME: Record<string, string> = {
   "image/jpeg": "jpg",
