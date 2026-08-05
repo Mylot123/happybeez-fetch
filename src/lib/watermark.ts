@@ -95,6 +95,16 @@ export async function watermarkImage(file: File) {
   return renderWatermarked(photo, file.name);
 }
 
+/** Watermarks any image Blob and returns a JPEG Blob (voor downloads). */
+export async function watermarkBlob(blob: Blob): Promise<Blob> {
+  const photo = await loadFileImage(blob);
+  const { b64 } = await renderWatermarked(photo, "foto");
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: "image/jpeg" });
+}
+
 /** Watermarks a base64 image (any mime) and returns base64 JPEG. */
 export async function watermarkBase64(
   b64: string,

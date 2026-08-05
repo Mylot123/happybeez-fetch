@@ -1,4 +1,6 @@
 /** Robuuste afbeelding-download: juiste extensie, veilige bestandsnaam, fallback. */
+import { watermarkBlob } from "@/lib/watermark";
+
 
 const EXT_BY_MIME: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -45,27 +47,33 @@ function triggerDownload(href: string, filename: string, revoke: boolean) {
 export async function downloadImage(url: string, nameHint: string) {
   const base = safeBase(nameHint);
 
-  // data:-URL's kunnen direct.
-  if (url.startsWith("data:")) {
-    const mime = url.slice(5, url.indexOf(";")) || "image/jpeg";
-    const ext = EXT_BY_MIME[mime] ?? "jpg";
-    triggerDownload(url, `${base}.${ext}`, false);
-    return;
-  }
-
   try {
-    const res = await fetch(url, { mode: "cors", cache: "no-store" });
-    if (!res.ok) throw new Error(String(res.status));
-    const blob = await res.blob();
-    if (!blob.size) throw new Error("leeg bestand");
+    let blob: Blob;
+    if (url.startsWith("data:")) {
+      blob = await (await fetch(url)).blob();
+    } else {
+      const res = await fetch(url, { mode: "cors", cache: "no-store" });
+      if (!res.ok) throw new Error(String(res.status));
+      blob = await res.blob();
+      if (!blob.size) throw new Error("leeg bestand");
+    }
 
-    const mime = blob.type && blob.type.startsWith("image/") ? blob.type : null;
-    const ext = (mime && EXT_BY_MIME[mime]) || extFromUrl(url) || "jpg";
-    const typed = mime ? blob : new Blob([blob], { type: "image/jpeg" });
-    triggerDownload(URL.createObjectURL(typed), `${base}.${ext}`, true);
+    // Altijd het HappyBeez-watermerk toevoegen bij downloaden.
+    try {
+      const marked = await watermarkBlob(blob);
+      triggerDownload(URL.createObjectURL(marked), `${base}.jpg`, true);
+      return;
+    } catch {
+      const mime = blob.type && blob.type.startsWith("image/") ? blob.type : null;
+      const ext = (mime && EXT_BY_MIME[mime]) || extFromUrl(url) || "jpg";
+      const typed = mime ? blob : new Blob([blob], { type: "image/jpeg" });
+      triggerDownload(URL.createObjectURL(typed), `${base}.${ext}`, true);
+      return;
+    }
   } catch {
     // CORS of netwerkfout: open de afbeelding zodat de gebruiker kan opslaan.
     window.open(url, "_blank", "noopener");
     throw new Error("open-fallback");
   }
 }
+
