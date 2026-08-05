@@ -10,6 +10,7 @@ import { PhotoUploadButton } from "@/components/PhotoUploadButton";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
+import { downloadImage } from "@/lib/download";
 
 type Book = Database["public"]["Tables"]["library_books"]["Row"];
 type Section = Database["public"]["Tables"]["library_book_sections"]["Row"];
