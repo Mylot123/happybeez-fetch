@@ -424,16 +424,27 @@ function ContentStudio() {
   }, [photos, topic, keywords, generated, channel, photoByChannel, recentByChannel]);
 
 
-  // auto-select top-ranked when ranking changes and nothing selected for this channel
+  // auto-select top-ranked alleen wanneer er nog géén (geldige) keuze is.
+  // Een eigen upload of handmatige keuze mag nooit overschreven worden.
   useEffect(() => {
     if (rankedPhotos.length === 0) return;
-    if (!selectedPhotoId || !rankedPhotos.some((p) => p.id === selectedPhotoId)) {
+    if (!selectedPhotoId || !photos.some((p) => p.id === selectedPhotoId)) {
       setPhotoByChannel((prev) => ({ ...prev, [channel]: rankedPhotos[0]!.id }));
     }
-  }, [rankedPhotos, selectedPhotoId, channel]);
+  }, [rankedPhotos, selectedPhotoId, channel, photos]);
 
   const selectedPhoto =
     photos.find((p) => p.id === selectedPhotoId) ?? rankedPhotos[0] ?? null;
+
+  // Toon altijd de gekozen foto in het raster, ook als die niet bij de suggesties zit.
+  const gridPhotos = useMemo(() => {
+    const base = showAllPhotos ? photos : rankedPhotos;
+    if (selectedPhoto && !base.some((p) => p.id === selectedPhoto.id)) {
+      return [selectedPhoto, ...base];
+    }
+    return base;
+  }, [showAllPhotos, photos, rankedPhotos, selectedPhoto]);
+
 
   // Beeld zoals het in de preview/opslag gebruikt wordt (bestaand kalenderbeeld wint
   // zolang de gebruiker zelf nog geen andere foto koos).
