@@ -902,19 +902,15 @@ function Kalender() {
                         variant="outline"
                         onClick={async () => {
                           try {
-                            const res = await fetch(editing.image_url!);
-                            const blob = await res.blob();
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement("a");
-                            a.href = url;
-                            a.download = `${editing.title || "post"}.jpg`;
-                            document.body.appendChild(a);
-                            a.click();
-                            a.remove();
-                            URL.revokeObjectURL(url);
+                            await downloadImage(
+                              editing.image_url!,
+                              editing.title || "post",
+                            );
                             toast.success("Afbeelding gedownload.");
                           } catch {
-                            toast.error("Download mislukt.");
+                            toast.info(
+                              "Afbeelding geopend in nieuw tabblad — rechtsklik en 'Afbeelding opslaan als'.",
+                            );
                           }
                         }}
                       >
