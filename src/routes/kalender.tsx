@@ -295,8 +295,10 @@ function Kalender() {
     if (error) {
       toast.error(error.message);
     } else {
-      setItems((data ?? []) as CalendarRow[]);
+      const rows = (data ?? []) as CalendarRow[];
+      setItems(await withFreshImageUrls(rows));
     }
+
     setLoading(false);
   }
 
