@@ -909,7 +909,9 @@ function Kalender() {
                             await downloadImage(
                               editing.image_url!,
                               editing.title || "post",
+                              editing.title || undefined,
                             );
+
                             toast.success("Afbeelding gedownload.");
                           } catch {
                             toast.info(
