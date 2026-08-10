@@ -10,12 +10,13 @@ import { useCurrentOrg } from "@/hooks/use-current-org";
 type Props = {
   onUploaded?: () => void;
   compact?: boolean;
+  folderId?: string | null;
 };
 
 const ACCEPT = "image/png,image/jpeg,image/jpg,image/webp";
 const MAX_BYTES = 15 * 1024 * 1024; // 15 MB source
 
-export function PhotoUploadButton({ onUploaded, compact }: Props) {
+export function PhotoUploadButton({ onUploaded, compact, folderId }: Props) {
   const { currentOrgId } = useCurrentOrg();
   const upload = useServerFn(uploadUserPhoto);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -50,6 +51,7 @@ export function PhotoUploadButton({ onUploaded, compact }: Props) {
             content_type: contentType,
             b64,
             title: file.name.replace(/\.[^.]+$/, "").slice(0, 120) || "Upload",
+            folder_id: folderId ?? null,
           },
         });
         ok++;
