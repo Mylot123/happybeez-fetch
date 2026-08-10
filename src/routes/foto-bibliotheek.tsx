@@ -227,7 +227,15 @@ function Kennisbank() {
   );
 }
 
-function PhotoCard({ photo, displayUrl }: { photo: Photo; displayUrl: string }) {
+function PhotoCard({
+  photo,
+  displayUrl,
+  onDeleted,
+}: {
+  photo: Photo;
+  displayUrl: string;
+  onDeleted: () => void;
+}) {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
