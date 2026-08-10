@@ -240,6 +240,7 @@ function ContentStudio() {
   const [carousel, setCarousel] = useState<string[]>([]);
   const [slidePhotoIds, setSlidePhotoIds] = useState<Record<number, string>>({});
   const [targetSlide, setTargetSlide] = useState<number | null>(null);
+  const [carouselMode, setCarouselMode] = useState(false);
   const [downloadingSlides, setDownloadingSlides] = useState(false);
   const [suggestedTitle, setSuggestedTitle] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -289,8 +290,10 @@ function ContentStudio() {
 
   /** Kies een foto: voor een specifieke carrousel-slide, of voor de hoofdafbeelding. */
   function pickPhoto(id: string) {
-    if (targetSlide !== null) {
-      setSlidePhotoIds((prev) => ({ ...prev, [targetSlide]: id }));
+    if (carousel.length > 0) {
+      const slot = targetSlide ?? 0;
+      setSlidePhotoIds((prev) => ({ ...prev, [slot]: id }));
+      setTargetSlide(slot + 1 < carousel.length ? slot + 1 : 0);
       return;
     }
     setSelectedPhotoId(id);
@@ -769,8 +772,9 @@ ANTWOORDFORMAAT (exact aanhouden, in het Nederlands, geen markdown):
 TITEL: <kloppende titel, max 70 tekens>
 POST:
 <de volledige posttekst>
-${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
-<alleen als het onderwerp technisch of stapsgewijs is: 4–6 slides, elk op een eigen regel als "1) Slide-titel". Anders schrijf je precies: geen>` : ""}`;
+${carouselMode ? `CAROUSEL:
+<verplicht 5 slides, elk op een eigen regel als "1) Slide-tekst". Elke slide is maximaal 60 tekens, staat op zichzelf en bouwt het verhaal op: slide 1 is de hook, slides 2 t/m 4 geven inzicht of stappen, slide 5 is de uitnodiging.>` : (channel === "instagram" || channel === "facebook" ? `CAROUSEL:
+<alleen als het onderwerp technisch of stapsgewijs is: 4-6 slides, elk op een eigen regel als "1) Slide-titel". Anders schrijf je precies: geen>` : "")}`;
       const { text } = await generate({ data: { prompt } });
       const titleMatch = text.match(/^\s*TITEL:\s*(.+)$/m);
       const postMatch = text.match(/POST:\s*\n?([\s\S]*?)(?:\n\s*CAROUSEL:|$)/);
@@ -784,7 +788,7 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
       setGenerated(postText);
       setCarousel(slides);
       setSlidePhotoIds({});
-      setTargetSlide(null);
+      setTargetSlide(slides.length > 0 ? 0 : null);
       const newTitle = stripDashes(titleMatch?.[1]?.trim() ?? "");
       setSuggestedTitle(newTitle);
       if (newTitle && !topic) setTopic(newTitle);
@@ -1321,7 +1325,13 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
                 <LinkedInMockup image={previewImage} caption={generated} overlayText={suggestedTitle || topic || undefined} />
               )}
               {channel === "facebook" && (
-                <FacebookMockup image={previewImage} caption={generated} overlayText={suggestedTitle || topic || undefined} />
+                <FacebookMockup
+                  image={previewImage}
+                  caption={generated}
+                  overlayText={suggestedTitle || topic || undefined}
+                  slides={carousel.length > 0 ? carousel : undefined}
+                  slideImages={carousel.length > 0 ? slideImages : undefined}
+                />
               )}
               {channel === "blog" && (
                 <BlogMockup image={previewImage} caption={generated} title={topic} />
