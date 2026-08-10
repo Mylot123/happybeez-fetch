@@ -17,7 +17,7 @@ type ProfileRow = Database["public"]["Tables"]["social_profiles"]["Row"];
 export const Route = createFileRoute("/social-profielen")({
   head: () => ({
     meta: [
-      { title: "Social Profielen — HappyBeez" },
+      { title: "Social Profielen — Happybeez" },
       { name: "description", content: "Beheer je social media profielen en kanalen." },
     ],
   }),

@@ -60,8 +60,8 @@ function pageLabelFor(url: string): string {
 export const Route = createFileRoute("/agent")({
   head: () => ({
     meta: [
-      { title: "De Bijenspecialist — HappyBeez Agent" },
-      { name: "description", content: "Praat met de Bijenspecialist, je HappyBeez AI-assistent." },
+      { title: "De Bijenspecialist — Happybeez Agent" },
+      { name: "description", content: "Praat met de Bijenspecialist, je Happybeez AI-assistent." },
     ],
   }),
   component: () => (
@@ -316,7 +316,7 @@ function AgentPage() {
           De Bijenspecialist
         </h1>
         <p className="text-muted-foreground text-sm mt-2">
-          Praat met de Bijenspecialist, je HappyBeez assistent. Alles wat je vraagt en zijn
+          Praat met de Bijenspecialist, je Happybeez assistent. Alles wat je vraagt en zijn
           antwoorden worden opgeslagen.
         </p>
       </div>

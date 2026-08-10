@@ -30,13 +30,13 @@ import { generateGoogleAd, getAdsKeywordMetrics, type GoogleAd } from "@/lib/goo
 export const Route = createFileRoute("/google-ads")({
   head: () => ({
     meta: [
-      { title: "Google Ads Studio — HappyBeez" },
+      { title: "Google Ads Studio — Happybeez" },
       {
         name: "description",
         content:
           "Schrijf zoekwoord-geoptimaliseerde Google Ads met karaktercontrole per veld en een kostenraming op basis van kliks en impressies.",
       },
-      { property: "og:title", content: "Google Ads Studio — HappyBeez" },
+      { property: "og:title", content: "Google Ads Studio — Happybeez" },
       {
         property: "og:description",
         content:
@@ -171,7 +171,7 @@ function GoogleAdsStudio() {
           cta,
           tone,
           seed_keywords: seed,
-          brand: "HappyBeez",
+          brand: "Happybeez",
           language: "Nederlands",
         },
       });

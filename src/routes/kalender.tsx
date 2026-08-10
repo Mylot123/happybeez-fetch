@@ -156,7 +156,7 @@ const MONTHS_NL = [
   "December",
 ];
 
-// Weekly content-plan, afgestemd op beste posting-momenten + HappyBeez-niche.
+// Weekly content-plan, afgestemd op beste posting-momenten + Happybeez-niche.
 // Gebaseerd op de virale contentstrategie: midweek focus, Reels voor bereik,
 // carrousels/documents voor saves & shares, LinkedIn later op de dag.
 // Index = ma(0) .. zo(6). rest=true betekent: geen post deze dag.
@@ -244,7 +244,7 @@ const blankForm = (date: string): FormState => ({
 export const Route = createFileRoute("/kalender")({
   head: () => ({
     meta: [
-      { title: "Kalender — HappyBeez" },
+      { title: "Kalender — Happybeez" },
       {
         name: "description",
         content: "Plan en publiceer je social-media content per kanaal.",
@@ -972,7 +972,7 @@ function Kalender() {
 // ──────────────────────────────────────────────────────────────
 // Posting-advies: beste momenten per kanaal (NL-publiek, tuin/bijen-niche)
 // Bron: meta-analyse Later/Hootsuite/Sprout 2024-2025, vertaald naar
-// CET en geverifieerd tegen HappyBeez-doelgroep (hobby-tuiniers, 35-65j).
+// CET en geverifieerd tegen Happybeez-doelgroep (hobby-tuiniers, 35-65j).
 
 const BEST_TIMES: Record<Channel, { slots: string; weekdays: string; note: string }> = {
   instagram: {
@@ -1280,7 +1280,7 @@ function PostDetail({
     {
       level: item.image_url ? ("good" as const) : ("warning" as const),
       message: item.image_url
-        ? "Beeld aanwezig (met HappyBeez-watermerk)"
+        ? "Beeld aanwezig (met Happybeez-watermerk)"
         : "Nog geen beeld — visuele posts scoren fors beter",
     },
     {
@@ -1344,7 +1344,7 @@ function PostDetail({
             />
             <p className="text-[11px] text-muted-foreground">
               {item.image_url
-                ? "Beeld inclusief HappyBeez-watermerk."
+                ? "Beeld inclusief Happybeez-watermerk."
                 : "Nog geen afbeelding bij deze post."}
             </p>
           </div>

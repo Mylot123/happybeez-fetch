@@ -19,7 +19,7 @@ type Photo = Database["public"]["Tables"]["library_photos"]["Row"];
 export const Route = createFileRoute("/foto-bibliotheek")({
   head: () => ({
     meta: [
-      { title: "Kennisbank & Foto's — HappyBeez" },
+      { title: "Kennisbank & Foto's — Happybeez" },
       {
         name: "description",
         content:
@@ -154,7 +154,7 @@ function Kennisbank() {
           <div className="mb-4 flex items-center justify-between gap-3 flex-wrap rounded-lg border border-border bg-card px-4 py-3">
             <div className="text-xs text-muted-foreground max-w-xl">
               Upload je eigen foto's naar de gedeelde bibliotheek. Er wordt
-              automatisch een licht <span className="font-semibold text-ink">HappyBeez</span>-watermerk
+              automatisch een licht <span className="font-semibold text-ink">Happybeez</span>-watermerk
               rechtsonder toegevoegd voordat de foto wordt opgeslagen.
             </div>
             <PhotoUploadButton onUploaded={() => void load()} />

@@ -16,7 +16,7 @@ type NewsRow = Database["public"]["Tables"]["news_items"]["Row"];
 export const Route = createFileRoute("/nieuws")({
   head: () => ({
     meta: [
-      { title: "Nieuws — HappyBeez" },
+      { title: "Nieuws — Happybeez" },
       { name: "description", content: "Actueel nieuws over bijen, bestuivers en biodiversiteit." },
     ],
   }),

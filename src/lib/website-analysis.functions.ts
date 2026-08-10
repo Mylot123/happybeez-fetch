@@ -144,7 +144,7 @@ export const analyzeWebsiteForBrand = createServerFn({ method: "POST" })
       res = await fetch(url, {
         headers: {
           "User-Agent":
-            "Mozilla/5.0 (compatible; HappyBeezMerkanalyse/1.0; +https://happybeez.nl)",
+            "Mozilla/5.0 (compatible; HappybeezMerkanalyse/1.0; +https://happybeez.nl)",
           Accept: "text/html,application/xhtml+xml",
         },
         redirect: "follow",

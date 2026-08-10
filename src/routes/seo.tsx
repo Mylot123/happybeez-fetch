@@ -78,7 +78,7 @@ type ExtendedSnapshot = Omit<Snapshot, "ai_actions" | "content_gaps" | "page_aud
 export const Route = createFileRoute("/seo")({
   head: () => ({
     meta: [
-      { title: "SEO & Ranking — HappyBeez" },
+      { title: "SEO & Ranking — Happybeez" },
       { name: "description", content: "Volg SEO-keywords, ranking, pagina-audits en concurrentie." },
     ],
   }),
@@ -643,7 +643,7 @@ function Seo() {
                   <p className="mt-1">
                     {analysisSource === "live"
                       ? "Deze analyse bevat live site-audit en AI-actiepunten van de laatste vernieuwing."
-                      : "Engine toont een praktisch HappyBeez SEO-plan op basis van je domein en relevante bijenhotel-keywords."}
+                      : "Engine toont een praktisch Happybeez SEO-plan op basis van je domein en relevante bijenhotel-keywords."}
                   </p>
                 </div>
               </div>
@@ -692,7 +692,7 @@ function Seo() {
 
 
               {aiActions.length > 0 ? (
-                <Section title="Concrete actiepunten" subtitle={analysisSource === "live" ? "AI-prioritering op basis van je eigen homepage + keyword-doelen." : "Direct toepasbaar SEO-plan voor HappyBeez wanneer externe rankingdata leeg blijft."} icon={Lightbulb}>
+                <Section title="Concrete actiepunten" subtitle={analysisSource === "live" ? "AI-prioritering op basis van je eigen homepage + keyword-doelen." : "Direct toepasbaar SEO-plan voor Happybeez wanneer externe rankingdata leeg blijft."} icon={Lightbulb}>
                   <ol className="space-y-3">
                     {aiActions.map((a, i) => {
                       const tone = a.priority === "hoog" ? "bg-wine/10 text-wine border-wine/30" : a.priority === "midden" ? "bg-amber-100 text-amber-800 border-amber-300" : "bg-secondary text-muted-foreground border-border";
@@ -1589,7 +1589,7 @@ function buildFallbackSeoPlan(domain: string, rows: TopKw[]): { actions: SeoActi
       {
         priority: "hoog",
         action: "Voeg op de homepage een korte SEO-sectie toe met wilde bijen, metselbijen, biodiversiteit en bijvriendelijke tuin. ",
-        why: "Extra context op de homepage helpt Google beter begrijpen waarvoor HappyBeez relevant is.",
+        why: "Extra context op de homepage helpt Google beter begrijpen waarvoor Happybeez relevant is.",
         where: "homepage",
       },
       {
