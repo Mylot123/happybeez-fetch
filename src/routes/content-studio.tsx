@@ -1018,14 +1018,34 @@ ${carouselMode ? `CAROUSEL:
                   )}
                 </div>
 
+                {(channel === "instagram" || channel === "facebook") && (
+                  <label
+                    className="flex items-start gap-2 rounded-xl px-3 py-2 text-xs cursor-pointer"
+                    style={{ background: "rgba(111, 138, 58, 0.10)", border: "1px solid var(--hb-border)", color: "var(--hb-dark)" }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={carouselMode}
+                      onChange={(e) => setCarouselMode(e.target.checked)}
+                      className="mt-0.5"
+                    />
+                    <span>
+                      <span className="font-semibold">Maak er een carrousel van (5 slides)</span>
+                      <br />
+                      Je krijgt 5 slideteksten en kunt per slide een eigen foto kiezen en doorswipen in de preview.
+                    </span>
+                  </label>
+                )}
+
                 <Button
                   onClick={runGenerate}
                   disabled={generating}
                   className="w-full font-semibold rounded-full h-11 hover:brightness-110 transition"
                   style={{ background: "var(--hb-green)", color: "#fff" }}
                 >
-                  {generating ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />AI schrijft…</>) : (<><Wand2 className="w-4 h-4 mr-2" />Content genereren</>)}
+                  {generating ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />AI schrijft…</>) : (<><Wand2 className="w-4 h-4 mr-2" />{carouselMode ? "Carrousel genereren" : "Content genereren"}</>)}
                 </Button>
+
 
               </div>
             </div>
