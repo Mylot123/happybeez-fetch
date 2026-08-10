@@ -72,7 +72,8 @@ export const generateCampaignPlan = createServerFn({ method: "POST" })
       "Je bent een senior social media strateeg. Je maakt een maandcampagne-plan voor een specifiek merk. " +
       "Antwoord uitsluitend in geldig JSON, in het Nederlands. Structuur: " +
       `{"theme": string, "goal": string, "summary": string, "blocks": [{"name": string, "pillar": string, "week": number (1-4), "hook": string, "platforms": string[], "notes": string}]}. ` +
-      "Maak 4 blokken (één per week), variatie in pijler en platform (facebook, instagram, linkedin, youtube).";
+      "Maak 4 blokken (één per week), variatie in pijler en platform (facebook, instagram, linkedin, youtube). " +
+      "Gebruik geen gedachtestreepjes of koppelstreepjes tussen zinsdelen (geen '—', '–' of ' - ').";
 
     const brandLine = brand
       ? `Merk: branche=${brand.industry ?? "onbekend"}; doelgroep=${brand.audience ?? "onbekend"}; tone=${brand.tone ?? "warm & deskundig"}; pijlers=${(brand.pillars ?? []).join(" | ")}; USPs=${(brand.usps ?? []).join(" | ")}.`

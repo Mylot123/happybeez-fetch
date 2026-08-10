@@ -75,6 +75,7 @@ export const generateContentIdeas = createServerFn({ method: "POST" })
       "HARDE MERKREGEL: dit merk maakt handgemaakte bijenhotels voor WILDE/SOLITAIRE bijen. Er wordt geen honing geproduceerd, geoogst of verkocht. " +
       "Gebruik nooit de woorden honing, honing oogsten, imker, bijenkorf, honingraat, bijenvolk of bijenpak in titel, hook of angle. Schrijf 'wilde bijen', niet generiek 'bijen'. " +
       "De titel moet exact de lading van de hook dekken; de hook noemt een concreet gevolg, risico of verrassend feit (bijv. 'Een splinterige nestgang kan vleugels van een wilde bij beschadigen'), geen algemene inleiding. " +
+      "Gebruik nooit gedachtestreepjes of koppelstreepjes tussen zinsdelen (geen '—', '–' of ' - '); dat leest als AI-tekst. " +
       "Antwoord uitsluitend in geldig JSON, in het Nederlands, structuur: " +
       `{"ideas":[{"title": string (max 80 tekens, concreet onderwerp), "hook": string (max 120 tekens, eerste regel/scrollstopper), "angle": string (1 zin waarom dit werkt voor dit kanaal en type)}]}.`;
 
