@@ -851,6 +851,51 @@ function Seo() {
             />
           </div>
 
+          {/* Focus-advies: welke zoekwoorden claimen? */}
+          {(() => {
+            const active = tracked.filter((r) => (r as SeoRow & { is_active?: boolean }).is_active !== false);
+            const scored = active
+              .map((r) => ({ row: r, ...focusAdvice(r.current_rank, r.search_volume) }))
+              .filter((x) => x.score > 0)
+              .sort((a, b) => b.score - a.score)
+              .slice(0, 6);
+            const missingVol = active.filter((r) => r.search_volume == null).length;
+            return (
+              <div className="rounded-xl border border-border bg-card p-5">
+                <h3 className="font-heading text-lg text-ink">Waar moet je op focussen?</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Gerangschikt op kans: zoekvolume × hoe dicht je bij pagina 1 staat. Pak deze eerst.
+                </p>
+                {scored.length === 0 ? (
+                  <p className="text-sm text-muted-foreground mt-3">
+                    Nog geen advies — klik op “Refresh nu” om posities én zoekvolumes op te halen.
+                  </p>
+                ) : (
+                  <ol className="mt-3 space-y-2">
+                    {scored.map((x, i) => (
+                      <li key={x.row.id} className="flex items-center gap-3 text-sm border-b border-border/50 last:border-0 pb-2 last:pb-0">
+                        <span className="w-5 text-muted-foreground tabular-nums">{i + 1}.</span>
+                        <span className="font-medium text-ink flex-1">{x.row.keyword}</span>
+                        <span className="text-xs text-muted-foreground tabular-nums w-20 text-right">
+                          {fmtNum(x.row.search_volume)} /mnd
+                        </span>
+                        <span className="text-xs text-muted-foreground w-24 text-right">
+                          {x.row.current_rank != null ? `positie ${x.row.current_rank}` : "niet rankend"}
+                        </span>
+                        <span className={`text-xs px-2 py-0.5 rounded ${x.tone}`}>{x.label}</span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+                {missingVol > 0 ? (
+                  <p className="text-xs text-muted-foreground mt-3">
+                    {missingVol} keyword(s) hebben nog geen zoekvolume. “Refresh nu” haalt volume, CPC en positie in één keer op bij DataForSEO.
+                  </p>
+                ) : null}
+              </div>
+            );
+          })()}
+
           <div className="flex flex-wrap gap-2">
             {([
               { id: "all", label: "Alle" },
