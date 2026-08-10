@@ -287,6 +287,15 @@ function ContentStudio() {
     setPhotoByChannel((prev) => ({ ...prev, [channel]: id }));
   }
 
+  /** Kies een foto: voor een specifieke carrousel-slide, of voor de hoofdafbeelding. */
+  function pickPhoto(id: string) {
+    if (targetSlide !== null) {
+      setSlidePhotoIds((prev) => ({ ...prev, [targetSlide]: id }));
+      return;
+    }
+    setSelectedPhotoId(id);
+  }
+
   // Haal de bestaande post op zodra je vanuit de kalender "Open in Content Studio" klikt.
   useEffect(() => {
     let cancelled = false;
@@ -471,6 +480,36 @@ function ContentStudio() {
   const previewStoragePath =
     useExistingImage && existingImage ? existingStoragePath : selectedPhoto?.storage_path ?? null;
 
+  // Per carrousel-slide een eigen afbeelding (valt terug op de hoofdafbeelding).
+  const slideImages = useMemo(
+    () =>
+      carousel.map((_, i) => {
+        const pid = slidePhotoIds[i];
+        const photo = pid ? photos.find((p) => p.id === pid) : null;
+        return photo?.image_url ?? previewImage;
+      }),
+    [carousel, slidePhotoIds, photos, previewImage],
+  );
+
+  async function downloadSlides() {
+    if (carousel.length === 0) return;
+    setDownloadingSlides(true);
+    try {
+      const base = (suggestedTitle || topic || "carrousel").slice(0, 60);
+      for (let i = 0; i < carousel.length; i++) {
+        const url = slideImages[i];
+        if (!url) continue;
+        await downloadImage(url, `${base}-slide-${i + 1}`, carousel[i]);
+        await new Promise((r) => setTimeout(r, 400));
+      }
+      toast.success("Slides gedownload (met watermerk en tekst).");
+    } catch (err) {
+      toast.error(err instanceof Error && err.message !== "open-fallback" ? err.message : "Downloaden mislukt.");
+    } finally {
+      setDownloadingSlides(false);
+    }
+  }
+
 
 
 
@@ -534,7 +573,7 @@ function ContentStudio() {
         image_url: photo.image_url,
       };
       setPhotos((prev) => [newPhoto, ...prev.filter((p) => p.id !== newPhoto.id)]);
-      setSelectedPhotoId(newPhoto.id);
+      pickPhoto(newPhoto.id);
       toast.success("Beeld gegenereerd, gewatermerkt en toegevoegd aan bibliotheek.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Beeldgeneratie mislukt.", {
@@ -582,7 +621,7 @@ function ContentStudio() {
         image_url: photo.image_url,
       };
       setPhotos((prev) => [newPhoto, ...prev.filter((p) => p.id !== newPhoto.id)]);
-      setSelectedPhotoId(newPhoto.id);
+      pickPhoto(newPhoto.id);
       toast.success("Foto geüpload en toegevoegd aan bibliotheek.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload mislukt.");
@@ -1120,7 +1159,7 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
                                 <button
                                   key={p.id}
                                   type="button"
-                                  onClick={() => setSelectedPhotoId(p.id)}
+                                  onClick={() => pickPhoto(p.id)}
                                   title={p.title}
                                   className="aspect-square rounded-lg overflow-hidden transition-all"
                                   style={{
@@ -1209,6 +1248,7 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
                   caption={generated}
                   overlayText={suggestedTitle || topic || undefined}
                   slides={carousel.length > 0 ? carousel : undefined}
+                  slideImages={carousel.length > 0 ? slideImages : undefined}
                 />
               )}
               {channel === "linkedin" && (
