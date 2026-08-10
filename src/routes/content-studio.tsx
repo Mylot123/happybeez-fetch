@@ -1079,14 +1079,80 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
 
                   {carousel.length > 0 && (
                     <div className="mx-5 mb-3 rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(111, 138, 58, 0.10)", border: "1px solid var(--hb-border)" }}>
-                      <div className="font-semibold mb-1" style={{ color: "var(--hb-dark)" }}>Carrousel-voorstel ({carousel.length} slides)</div>
-                      <ol className="list-decimal pl-5 space-y-0.5" style={{ color: "var(--hb-dark)", opacity: 0.85 }}>
-                        {carousel.map((s, i) => (
-                          <li key={i}>{s}</li>
-                        ))}
-                      </ol>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-semibold" style={{ color: "var(--hb-dark)" }}>Carrousel ({carousel.length} slides)</span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={downloadSlides}
+                          disabled={downloadingSlides}
+                          className="rounded-full h-7 text-[11px] font-semibold hover:brightness-110"
+                          style={{ background: "var(--hb-green)", color: "#fff" }}
+                        >
+                          {downloadingSlides ? "Downloaden…" : "Download alle slides"}
+                        </Button>
+                      </div>
+                      <p className="mb-2 text-[11px]" style={{ color: "var(--hb-dark)", opacity: 0.7 }}>
+                        Kies per slide een eigen foto uit de foto- &amp; kennisbank hieronder. Downloads bevatten watermerk en slide-tekst.
+                      </p>
+                      <div className="space-y-2">
+                        {carousel.map((s, i) => {
+                          const img = slideImages[i];
+                          const isTarget = targetSlide === i;
+                          return (
+                            <div
+                              key={i}
+                              className="flex items-center gap-3 rounded-lg p-2"
+                              style={{
+                                background: "#fff",
+                                border: isTarget ? "2px solid var(--hb-green)" : "1px solid var(--hb-border)",
+                              }}
+                            >
+                              <div className="w-12 h-12 rounded-md overflow-hidden shrink-0" style={{ background: "rgba(0,0,0,0.06)" }}>
+                                {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : null}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-[11px] font-semibold" style={{ color: "var(--hb-dark)", opacity: 0.6 }}>Slide {i + 1}</div>
+                                <div className="truncate" style={{ color: "var(--hb-dark)" }}>{s}</div>
+                              </div>
+                              <div className="flex flex-col items-end gap-1 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => setTargetSlide(isTarget ? null : i)}
+                                  className="text-[11px] underline"
+                                  style={{ color: "var(--hb-green-dark)" }}
+                                >
+                                  {isTarget ? "Klaar met kiezen" : "Kies foto"}
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={!img}
+                                  onClick={() =>
+                                    img &&
+                                    void downloadImage(
+                                      img,
+                                      `${(suggestedTitle || topic || "carrousel").slice(0, 60)}-slide-${i + 1}`,
+                                      s,
+                                    )
+                                  }
+                                  className="text-[11px] underline disabled:opacity-40"
+                                  style={{ color: "var(--hb-green-dark)" }}
+                                >
+                                  Download
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {targetSlide !== null && (
+                        <p className="mt-2 text-[11px] font-semibold" style={{ color: "var(--hb-green-dark)" }}>
+                          Klik hieronder een foto (of upload/genereer er één) voor slide {targetSlide + 1}.
+                        </p>
+                      )}
                     </div>
                   )}
+
 
                   {(hasPreview || photos.length > 0) && (
                     <div className="p-4 border-t" style={{ borderColor: "var(--hb-border)" }}>
