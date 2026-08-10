@@ -1179,7 +1179,12 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
                 Preview op telefoon
               </span>
               {channel === "instagram" && (
-                <PhoneMockup image={previewImage} caption={generated} />
+                <PhoneMockup
+                  image={previewImage}
+                  caption={generated}
+                  overlayText={suggestedTitle || topic || undefined}
+                  slides={carousel.length > 0 ? carousel : undefined}
+                />
               )}
               {channel === "linkedin" && (
                 <LinkedInMockup image={previewImage} caption={generated} />
