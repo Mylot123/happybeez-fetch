@@ -703,6 +703,8 @@ HOOK-EIS (belangrijk):
 • De eerste regel noemt een concreet gevolg, risico of verrassend feit — geen algemene inleiding en geen vraag zonder inzet.
 • Voorbeeld van het gewenste niveau: "Een splinterige nestgang kan de vleugels van een wilde bij beschadigen."
 
+SCHRIJFSTIJL (streng): gebruik GEEN gedachtestreepjes of koppelstreepjes tussen zinsdelen (dus geen "—", "–" of " - "). Dat leest als AI-tekst. Splits de zin op, of gebruik een komma, dubbele punt of punt.
+
 AFSLUITING: sluit altijd af met één concrete, inhoudelijke uitnodiging (iets bekijken, delen, reageren of volgen voor praktische kennis over wilde bijen). Geen holle "like & follow".
 
 ${channel === "instagram" ? instagramPlaybook : channel === "facebook" ? facebookPlaybook : channel === "linkedin" ? linkedinPlaybook : channel === "blog" ? blogPlaybook : `CTA kort en neutraal. Geen hashtags.`}
@@ -717,14 +719,15 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
       const titleMatch = text.match(/^\s*TITEL:\s*(.+)$/m);
       const postMatch = text.match(/POST:\s*\n?([\s\S]*?)(?:\n\s*CAROUSEL:|$)/);
       const carouselMatch = text.match(/CAROUSEL:\s*\n?([\s\S]*)$/);
-      const postText = (postMatch?.[1] ?? text).trim();
+      const postText = stripDashes((postMatch?.[1] ?? text).trim());
       const slides = (carouselMatch?.[1] ?? "")
         .split(/\n/)
         .map((l) => l.replace(/^\s*\d+[).:]?\s*/, "").trim())
-        .filter((l) => l.length > 2 && !/^geen$/i.test(l));
+        .filter((l) => l.length > 2 && !/^geen$/i.test(l))
+        .map(stripDashes);
       setGenerated(postText);
       setCarousel(slides);
-      const newTitle = titleMatch?.[1]?.trim() ?? "";
+      const newTitle = stripDashes(titleMatch?.[1]?.trim() ?? "");
       setSuggestedTitle(newTitle);
       if (newTitle && !topic) setTopic(newTitle);
       toast.success("Content gegenereerd.");
