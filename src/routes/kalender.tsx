@@ -909,7 +909,9 @@ function Kalender() {
                             await downloadImage(
                               editing.image_url!,
                               editing.title || "post",
+                              editing.title || undefined,
                             );
+
                             toast.success("Afbeelding gedownload.");
                           } catch {
                             toast.info(
@@ -1420,9 +1422,14 @@ function PostDetail({
                 variant="outline"
                 onClick={async () => {
                   try {
-                    await downloadImage(item.image_url!, item.title || "post");
-                    toast.success("Afbeelding gedownload.");
+                    await downloadImage(
+                      item.image_url!,
+                      item.title || "post",
+                      item.title || undefined,
+                    );
+                    toast.success("Afbeelding gedownload met watermerk.");
                   } catch {
+
                     toast.info(
                       "Afbeelding geopend in nieuw tabblad — rechtsklik en 'Afbeelding opslaan als'.",
                     );

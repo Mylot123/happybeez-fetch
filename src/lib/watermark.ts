@@ -32,10 +32,69 @@ function loadFileImage(file: File | Blob): Promise<HTMLImageElement> {
   });
 }
 
+function drawOverlayText(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  text: string,
+) {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (!clean) return;
+
+  const fontSize = Math.round(Math.min(width, height) * 0.062);
+  const lineHeight = Math.round(fontSize * 1.2);
+  const margin = Math.round(Math.min(width, height) * 0.06);
+  const maxWidth = width - margin * 2;
+
+  ctx.font = `700 ${fontSize}px system-ui, -apple-system, "Segoe UI", sans-serif`;
+  ctx.textBaseline = "alphabetic";
+
+  // Woorden afbreken over maximaal 3 regels.
+  const words = clean.split(" ");
+  const lines: string[] = [];
+  let current = "";
+  for (const w of words) {
+    const test = current ? `${current} ${w}` : w;
+    if (ctx.measureText(test).width > maxWidth && current) {
+      lines.push(current);
+      current = w;
+    } else {
+      current = test;
+    }
+  }
+  if (current) lines.push(current);
+  const shown = lines.slice(0, 3);
+  if (lines.length > 3) shown[2] = `${shown[2].slice(0, -1)}…`;
+
+  const blockH = shown.length * lineHeight;
+  const gradTop = Math.max(0, height - blockH - margin * 2.4);
+  const grad = ctx.createLinearGradient(0, gradTop, 0, height);
+  grad.addColorStop(0, "rgba(0,0,0,0)");
+  grad.addColorStop(0.55, "rgba(0,0,0,0.42)");
+  grad.addColorStop(1, "rgba(0,0,0,0.72)");
+  ctx.save();
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, gradTop, width, height - gradTop);
+  ctx.restore();
+
+  ctx.save();
+  ctx.fillStyle = "#fff";
+  ctx.shadowColor = "rgba(0,0,0,0.55)";
+  ctx.shadowBlur = Math.round(fontSize * 0.35);
+  let y = height - margin - (shown.length - 1) * lineHeight;
+  for (const line of shown) {
+    ctx.fillText(line, margin, y);
+    y += lineHeight;
+  }
+  ctx.restore();
+}
+
 async function renderWatermarked(
   photo: HTMLImageElement,
   filenameBase: string,
+  overlayText?: string,
 ): Promise<{ b64: string; contentType: "image/jpeg"; filename: string }> {
+
   const logo = await loadLogo();
 
   let width = photo.naturalWidth || photo.width;
@@ -82,6 +141,7 @@ async function renderWatermarked(
   ctx.drawImage(logo, x, y, wmW, wmH);
   ctx.restore();
 
+  if (overlayText) drawOverlayText(ctx, width, height, overlayText);
 
   const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
   const b64 = dataUrl.split(",")[1] ?? "";
@@ -96,14 +156,15 @@ export async function watermarkImage(file: File) {
 }
 
 /** Watermarks any image Blob and returns a JPEG Blob (voor downloads). */
-export async function watermarkBlob(blob: Blob): Promise<Blob> {
+export async function watermarkBlob(blob: Blob, overlayText?: string): Promise<Blob> {
   const photo = await loadFileImage(blob);
-  const { b64 } = await renderWatermarked(photo, "foto");
+  const { b64 } = await renderWatermarked(photo, "foto", overlayText);
   const bin = atob(b64);
   const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   return new Blob([bytes], { type: "image/jpeg" });
 }
+
 
 /** Watermarks a base64 image (any mime) and returns base64 JPEG. */
 export async function watermarkBase64(

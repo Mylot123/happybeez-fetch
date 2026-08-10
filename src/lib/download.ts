@@ -2,14 +2,8 @@
 import { watermarkBlob } from "@/lib/watermark";
 
 
-const EXT_BY_MIME: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/jpg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-  "image/gif": "gif",
-  "image/avif": "avif",
-};
+
+
 
 function safeBase(name: string) {
   const base = (name || "post")
@@ -21,10 +15,6 @@ function safeBase(name: string) {
   return base || "post";
 }
 
-function extFromUrl(url: string) {
-  const m = url.split("?")[0].match(/\.(jpe?g|png|webp|gif|avif)$/i);
-  return m ? m[1].toLowerCase().replace("jpeg", "jpg") : null;
-}
 
 function triggerDownload(href: string, filename: string, revoke: boolean) {
   const a = document.createElement("a");
@@ -41,14 +31,18 @@ function triggerDownload(href: string, filename: string, revoke: boolean) {
 }
 
 /**
- * Downloadt een afbeelding als echt bestand met correcte extensie.
- * Valt bij CORS-problemen terug op het openen van de afbeelding in een tab.
+ * Downloadt een afbeelding als JPEG met HappyBeez-watermerk en (optioneel)
+ * de tekst-overlay ingebrand, zoals in de preview.
  */
-export async function downloadImage(url: string, nameHint: string) {
+export async function downloadImage(
+  url: string,
+  nameHint: string,
+  overlayText?: string,
+) {
   const base = safeBase(nameHint);
 
+  let blob: Blob;
   try {
-    let blob: Blob;
     if (url.startsWith("data:")) {
       blob = await (await fetch(url)).blob();
     } else {
@@ -57,23 +51,15 @@ export async function downloadImage(url: string, nameHint: string) {
       blob = await res.blob();
       if (!blob.size) throw new Error("leeg bestand");
     }
-
-    // Altijd het HappyBeez-watermerk toevoegen bij downloaden.
-    try {
-      const marked = await watermarkBlob(blob);
-      triggerDownload(URL.createObjectURL(marked), `${base}.jpg`, true);
-      return;
-    } catch {
-      const mime = blob.type && blob.type.startsWith("image/") ? blob.type : null;
-      const ext = (mime && EXT_BY_MIME[mime]) || extFromUrl(url) || "jpg";
-      const typed = mime ? blob : new Blob([blob], { type: "image/jpeg" });
-      triggerDownload(URL.createObjectURL(typed), `${base}.${ext}`, true);
-      return;
-    }
   } catch {
     // CORS of netwerkfout: open de afbeelding zodat de gebruiker kan opslaan.
     window.open(url, "_blank", "noopener");
     throw new Error("open-fallback");
   }
+
+  // Altijd watermerk + tekst inbranden bij downloaden.
+  const marked = await watermarkBlob(blob, overlayText);
+  triggerDownload(URL.createObjectURL(marked), `${base}.jpg`, true);
 }
+
 
