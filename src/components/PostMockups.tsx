@@ -50,11 +50,13 @@ export function PhoneMockup({
   caption,
   overlayText,
   slides,
+  slideImages,
 }: {
   image: string | null;
   caption: string;
   overlayText?: string;
   slides?: string[];
+  slideImages?: (string | null | undefined)[];
 }) {
   const username = "happybeez";
   const cleaned = cleanText(caption);
@@ -63,6 +65,8 @@ export function PhoneMockup({
 
   const allOverlays = hasSlides ? slides : overlayText ? [overlayText] : [];
   const currentOverlay = allOverlays[slideIdx] ?? overlayText;
+  const currentImage = (hasSlides ? slideImages?.[slideIdx] : null) ?? image;
+
 
   function nextSlide(e: React.MouseEvent) {
     e.stopPropagation();
