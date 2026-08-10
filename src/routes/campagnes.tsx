@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { StandaloneCampaigns } from "@/components/StandaloneCampaigns";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrg } from "@/hooks/use-current-org";
 import { generateCampaignPlan, setCampaignPlanStatus, restoreCampaignPlanVersion } from "@/lib/campaigns.functions";
@@ -282,6 +283,8 @@ function CampagnesPage() {
           Open de kalender <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </section>
+
+      <StandaloneCampaigns />
 
       {/* Jaaroverzicht */}
       <section className="mb-6">

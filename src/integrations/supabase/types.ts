@@ -382,6 +382,59 @@ export type Database = {
           },
         ]
       }
+      campaigns: {
+        Row: {
+          channels: string[]
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string
+          id: string
+          name: string
+          org_id: string
+          posts_per_week: number
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          channels?: string[]
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date: string
+          id?: string
+          name: string
+          org_id: string
+          posts_per_week?: number
+          start_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          channels?: string[]
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string
+          id?: string
+          name?: string
+          org_id?: string
+          posts_per_week?: number
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_calendar_items: {
         Row: {
           approved_at: string | null
