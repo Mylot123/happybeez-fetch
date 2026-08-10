@@ -937,7 +937,8 @@ function Seo() {
                     <thead className="bg-muted/40">
                       <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
                         <th className="py-3 pl-4 pr-4">Keyword</th>
-                        <th className="py-3 pr-4 text-right">Volume</th>
+                        <th className="py-3 pr-4 text-right">Volume /mnd</th>
+                        <th className="py-3 pr-4">Focus</th>
                         <th className="py-3 pr-4">Positie</th>
                         <th className="py-3 pr-4 text-right">Verandering</th>
                         <th className="py-3 pr-4">Rankt op</th>
@@ -952,10 +953,21 @@ function Seo() {
                         const prev = hist[1];
                         const rankDelta =
                           prev?.rank != null && row.current_rank != null ? prev.rank - row.current_rank : null;
+                        const advice = focusAdvice(row.current_rank, row.search_volume);
                         return (
                           <tr key={row.id} className="hover:bg-secondary/30">
                             <td className="py-2 pl-4 pr-4 font-medium text-ink">{row.keyword}</td>
-                            <td className="py-2 pr-4 text-right tabular-nums">{fmtNum(row.search_volume)}</td>
+                            <td className="py-2 pr-4 text-right tabular-nums">
+                              {row.search_volume != null ? (
+                                fmtNum(row.search_volume)
+                              ) : (
+                                <span className="text-xs text-muted-foreground">nog niet opgehaald</span>
+                              )}
+                            </td>
+                            <td className="py-2 pr-4">
+                              <span className={`text-xs px-2 py-0.5 rounded ${advice.tone}`}>{advice.label}</span>
+                            </td>
+
                             <td className="py-2 pr-4">
                               {row.current_rank != null ? (
                                 positionBadge(row.current_rank)
