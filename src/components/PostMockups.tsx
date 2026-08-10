@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   Heart,
   Send,
@@ -9,6 +9,8 @@ import {
   ThumbsUp,
   Share2,
   Globe,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 const HB_VARS: Record<string, string> = {
@@ -32,9 +34,45 @@ export function PhoneFrame({ children }: { children: ReactNode }) {
   );
 }
 
-export function PhoneMockup({ image, caption }: { image: string | null; caption: string }) {
+function ImageOverlay({ text }: { text?: string }) {
+  if (!text) return null;
+  return (
+    <div className="absolute inset-x-0 bottom-0 p-4 flex items-end" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.25) 60%, transparent 100%)", minHeight: "35%" }}>
+      <p className="text-white font-bold text-[15px] leading-tight line-clamp-2 drop-shadow-md" style={{ textShadow: "0 1px 3px rgba(0,0,0,0.4)" }}>
+        {text}
+      </p>
+    </div>
+  );
+}
+
+export function PhoneMockup({
+  image,
+  caption,
+  overlayText,
+  slides,
+}: {
+  image: string | null;
+  caption: string;
+  overlayText?: string;
+  slides?: string[];
+}) {
   const username = "happybeez";
   const cleaned = cleanText(caption);
+  const hasSlides = Array.isArray(slides) && slides.length > 0;
+  const [slideIdx, setSlideIdx] = useState(0);
+
+  const allOverlays = hasSlides ? slides : overlayText ? [overlayText] : [];
+  const currentOverlay = allOverlays[slideIdx] ?? overlayText;
+
+  function nextSlide(e: React.MouseEvent) {
+    e.stopPropagation();
+    setSlideIdx((i) => (i + 1) % allOverlays.length);
+  }
+  function prevSlide(e: React.MouseEvent) {
+    e.stopPropagation();
+    setSlideIdx((i) => (i - 1 + allOverlays.length) % allOverlays.length);
+  }
+
   return (
     <div
       className="relative w-[300px] rounded-[44px] p-3 shadow-2xl"
@@ -63,13 +101,46 @@ export function PhoneMockup({ image, caption }: { image: string | null; caption:
           </div>
           <MoreHorizontal className="w-4 h-4 text-neutral-700" />
         </div>
-        <div className="w-full bg-neutral-100" style={{ aspectRatio: "1 / 1" }}>
+        <div className="relative w-full bg-neutral-100" style={{ aspectRatio: "1 / 1" }}>
           {image ? (
             <img src={image} alt="" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-neutral-400 text-xs">
               <ImageIcon className="w-8 h-8" />
             </div>
+          )}
+          <ImageOverlay text={currentOverlay} />
+          {hasSlides && allOverlays.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={prevSlide}
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition"
+                aria-label="Vorige slide"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={nextSlide}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition"
+                aria-label="Volgende slide"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+                {allOverlays.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setSlideIdx(i); }}
+                    className="w-1.5 h-1.5 rounded-full transition"
+                    style={{ background: i === slideIdx ? "#fff" : "rgba(255,255,255,0.45)" }}
+                    aria-label={`Ga naar slide ${i + 1}`}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </div>
         <div className="px-3 pt-2 flex items-center justify-between">
@@ -210,11 +281,13 @@ export function PostMockup({
   image,
   caption,
   title,
+  slides,
 }: {
   channel: string;
   image: string | null;
   caption: string;
   title?: string;
+  slides?: string[];
 }) {
   const inner =
     channel === "linkedin" ? (
@@ -224,7 +297,7 @@ export function PostMockup({
     ) : channel === "blog" || channel === "website" ? (
       <BlogMockup image={image} caption={caption} title={title ?? ""} />
     ) : (
-      <PhoneMockup image={image} caption={caption} />
+      <PhoneMockup image={image} caption={caption} overlayText={title} slides={slides} />
     );
   return <div style={HB_VARS as React.CSSProperties}>{inner}</div>;
 }
