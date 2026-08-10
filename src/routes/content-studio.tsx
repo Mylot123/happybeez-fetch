@@ -1183,7 +1183,11 @@ ${carouselMode ? `CAROUSEL:
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--hb-dark)", opacity: 0.7 }}>
                           <ImageIcon className="w-3.5 h-3.5 inline mr-1" />
-                          {showAllPhotos ? "Foto- & kennisbank" : "Voorgestelde foto's"}
+                          {carousel.length > 0 && targetSlide !== null
+                            ? `Kies foto voor slide ${targetSlide + 1}`
+                            : showAllPhotos
+                              ? "Foto- & kennisbank"
+                              : "Voorgestelde foto's"}
                         </span>
                         <button
                           type="button"
