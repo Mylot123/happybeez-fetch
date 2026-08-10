@@ -97,11 +97,15 @@ type Photo = {
 /** Haalt AI-achtige gedachtestreepjes tussen zinsdelen weg. */
 function stripDashes(t: string) {
   return t
+    .replace(/^\s*[—–-]\s+/gm, "")
     .replace(/\s+[—–]\s+/g, ", ")
     .replace(/(\S)\s+-\s+(\S)/g, "$1, $2")
-    .replace(/^[—–-]\s+/gm, "")
-    .replace(/ ,/g, ",");
+    .replace(/(\w)[—–](\w)/g, "$1, $2")
+    .replace(/\s+[—–-]$/gm, "")
+    .replace(/ ,/g, ",")
+    .replace(/,\s*,/g, ",");
 }
+
 
 const CHANNELS: { value: Channel; label: string; hint: string }[] = [
   { value: "instagram", label: "📸 Instagram", hint: "Emoji, persoonlijk, hashtags, max 2200 tekens" },
