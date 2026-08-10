@@ -15,10 +15,6 @@ function safeBase(name: string) {
   return base || "post";
 }
 
-function extFromUrl(url: string) {
-  const m = url.split("?")[0].match(/\.(jpe?g|png|webp|gif|avif)$/i);
-  return m ? m[1].toLowerCase().replace("jpeg", "jpg") : null;
-}
 
 function triggerDownload(href: string, filename: string, revoke: boolean) {
   const a = document.createElement("a");
