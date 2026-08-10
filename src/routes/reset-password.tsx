@@ -9,8 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Wachtwoord herstellen — HappyBeez" },
-      { name: "description", content: "Stel een nieuw wachtwoord in voor je HappyBeez account." },
+      { title: "Wachtwoord herstellen — Happybeez" },
+      { name: "description", content: "Stel een nieuw wachtwoord in voor je Happybeez account." },
     ],
   }),
   component: ResetPasswordPage,
@@ -64,7 +64,7 @@ function ResetPasswordPage() {
           <span className="text-xs tracking-[0.2em] uppercase text-muted-foreground font-medium">
             Social Studio
           </span>
-          <h1 className="font-heading font-bold text-ink text-4xl mt-2">HappyBeez</h1>
+          <h1 className="font-heading font-bold text-ink text-4xl mt-2">Happybeez</h1>
           <div className="mt-3 h-px bg-gold w-12 mx-auto" />
         </div>
 

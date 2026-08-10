@@ -29,7 +29,7 @@ type AskSource = {
 export const Route = createFileRoute("/boek")({
   head: () => ({
     meta: [
-      { title: "Boekbibliotheek — HappyBeez" },
+      { title: "Boekbibliotheek — Happybeez" },
       { name: "description", content: "Citaten, fragmenten en boekcontent voor social media." },
     ],
   }),
@@ -142,7 +142,7 @@ function Boekbibliotheek() {
           </h1>
           <p className="text-xs text-muted-foreground mt-2 max-w-lg">
             Upload ook eigen foto's bij je kennisbank — automatisch voorzien van
-            een licht HappyBeez-watermerk.
+            een licht Happybeez-watermerk.
           </p>
         </div>
         <PhotoUploadButton />

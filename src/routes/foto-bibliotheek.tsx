@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { BookOpen, Copy, Download, ExternalLink, Images, Search } from "lucide-react";
+import { BookOpen, Copy, Download, ExternalLink, Images, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ type Photo = Database["public"]["Tables"]["library_photos"]["Row"];
 export const Route = createFileRoute("/foto-bibliotheek")({
   head: () => ({
     meta: [
-      { title: "Kennisbank & Foto's — HappyBeez" },
+      { title: "Kennisbank & Foto's — Happybeez" },
       {
         name: "description",
         content:
@@ -154,7 +154,7 @@ function Kennisbank() {
           <div className="mb-4 flex items-center justify-between gap-3 flex-wrap rounded-lg border border-border bg-card px-4 py-3">
             <div className="text-xs text-muted-foreground max-w-xl">
               Upload je eigen foto's naar de gedeelde bibliotheek. Er wordt
-              automatisch een licht <span className="font-semibold text-ink">HappyBeez</span>-watermerk
+              automatisch een licht <span className="font-semibold text-ink">Happybeez</span>-watermerk
               rechtsonder toegevoegd voordat de foto wordt opgeslagen.
             </div>
             <PhotoUploadButton onUploaded={() => void load()} />
@@ -171,6 +171,7 @@ function Kennisbank() {
                 <PhotoCard
                   key={photo.id}
                   photo={photo}
+                  onDeleted={() => void load()}
                   displayUrl={
                     (photo.storage_path && signedUrls[photo.storage_path]) ||
                     photo.image_url ||
@@ -226,9 +227,31 @@ function Kennisbank() {
   );
 }
 
-function PhotoCard({ photo, displayUrl }: { photo: Photo; displayUrl: string }) {
+function PhotoCard({
+  photo,
+  displayUrl,
+  onDeleted,
+}: {
+  photo: Photo;
+  displayUrl: string;
+  onDeleted: () => void;
+}) {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  async function removePhoto() {
+    if (!window.confirm(`Foto "${photo.title}" definitief verwijderen?`)) return;
+    setDeleting(true);
+    if (photo.storage_path) {
+      await supabase.storage.from("library-photos").remove([photo.storage_path]);
+    }
+    const { error } = await supabase.from("library_photos").delete().eq("id", photo.id);
+    setDeleting(false);
+    if (error) return toast.error(error.message);
+    toast.success("Foto verwijderd.");
+    onDeleted();
+  }
 
   async function copyUrl() {
     await navigator.clipboard.writeText(displayUrl);
@@ -319,6 +342,16 @@ function PhotoCard({ photo, displayUrl }: { photo: Photo; displayUrl: string }) 
               <Download className="h-3 w-3" />
             </Button>
           )}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={removePhoto}
+            disabled={deleting}
+            title="Foto verwijderen uit de bibliotheek"
+            className="text-destructive hover:text-destructive"
+          >
+            <Trash2 className="h-3 w-3" />
+          </Button>
           <Button
             size="sm"
             onClick={addToCalendar}

@@ -62,7 +62,7 @@ export function PhotoUploadButton({ onUploaded, compact }: Props) {
     if (ok > 0) {
       toast.success(
         ok === 1
-          ? "Foto geüpload met HappyBeez-watermerk."
+          ? "Foto geüpload met Happybeez-watermerk."
           : `${ok} foto's geüpload met watermerk.`,
       );
       onUploaded?.();

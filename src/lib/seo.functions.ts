@@ -91,7 +91,7 @@ async function aiKeywordIdeas(seed: string, database: string): Promise<FallbackI
           {
             role: "system",
             content:
-              "Je bent een Nederlandse SEO-strateeg voor HappyBeez: bijenhotels, wilde bijen, biodiversiteit, tuinen en educatie. Geef alleen geldige JSON terug.",
+              "Je bent een Nederlandse SEO-strateeg voor Happybeez: bijenhotels, wilde bijen, biodiversiteit, tuinen en educatie. Geef alleen geldige JSON terug.",
           },
           {
             role: "user",
@@ -126,7 +126,7 @@ async function aiKeywordIdeas(seed: string, database: string): Promise<FallbackI
 async function fetchPageText(url: string) {
   try {
     const res = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; HappyBeezSEOBot/1.0)" },
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; HappybeezSEOBot/1.0)" },
       redirect: "follow",
     });
     if (!res.ok) return "";
@@ -198,7 +198,7 @@ function fallbackActions(domain: string, keywords: SeoInsightKeyword[]): { ai_ac
       {
         priority: "hoog",
         action: "Versterk homepage-tekst met wilde bijen, metselbijen, biodiversiteit en bijvriendelijke tuin.",
-        why: "HappyBeez moet niet alleen op producttermen, maar ook op het educatieve biodiversiteitsdomein gevonden worden.",
+        why: "Happybeez moet niet alleen op producttermen, maar ook op het educatieve biodiversiteitsdomein gevonden worden.",
         where: "homepage",
       },
       {
@@ -269,7 +269,7 @@ async function buildSeoInsights(domain: string, topKeywords: SeoInsightKeyword[]
         body: JSON.stringify({
           model: "openai/gpt-5-mini",
           messages: [
-            { role: "system", content: "Je bent SEO-strateeg voor HappyBeez (bijenhotels, wilde bijen, biodiversiteit). Antwoord uitsluitend met geldige JSON." },
+            { role: "system", content: "Je bent SEO-strateeg voor Happybeez (bijenhotels, wilde bijen, biodiversiteit). Antwoord uitsluitend met geldige JSON." },
             { role: "user", content: `Domein: ${domain}\nTitle: ${ex?.title ?? "—"}\nMeta: ${ex?.metaDescription ?? "—"}\nH1: ${ex?.h1 ?? "—"}\nH2: ${ex?.h2s.join(" | ") ?? "—"}\nWoorden: ${ex?.wordCount ?? 0}\nProblemen: ${pageIssues.join("; ") || "—"}\nKeywords: ${topKeywords.map(k => k.keyword).join(", ")}\n\nGeef JSON: { "actions": [{"priority":"hoog|midden|laag","action":"...","why":"...","where":"homepage|productpagina|blog|technisch"}], "content_gaps": ["...blogonderwerp 1...", "..."] }. Geef 6 concrete acties en 8 blogonderwerpen.` },
           ],
         }),
@@ -775,7 +775,7 @@ export const auditPage = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const res = await fetch(data.url, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; HappyBeezSEOBot/1.0)" },
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; HappybeezSEOBot/1.0)" },
       redirect: "follow",
     });
     if (!res.ok) throw new Error(`Kan pagina niet ophalen (${res.status}).`);

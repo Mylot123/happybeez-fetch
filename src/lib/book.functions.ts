@@ -155,7 +155,7 @@ export const askBook = createServerFn({ method: "POST" })
       )
       .join("\n\n---\n\n");
 
-    const systemPrompt = `Je bent een onderzoeksassistent voor de HappyBeez-boekbibliotheek. Antwoord ALLEEN op basis van de meegegeven fragmenten. Citeer relevante delen kort. Gebruik bronverwijzingen als [1], [2] enzovoort. Als het antwoord niet in de fragmenten staat, zeg dat eerlijk. Schrijf in helder Nederlands, B1, maximaal 200 woorden.`;
+    const systemPrompt = `Je bent een onderzoeksassistent voor de Happybeez-boekbibliotheek. Antwoord ALLEEN op basis van de meegegeven fragmenten. Citeer relevante delen kort. Gebruik bronverwijzingen als [1], [2] enzovoort. Als het antwoord niet in de fragmenten staat, zeg dat eerlijk. Schrijf in helder Nederlands, B1, maximaal 200 woorden.`;
 
     const userPrompt = `Vraag: ${data.question}\n\nFRAGMENTEN:\n${contextBlock}`;
 

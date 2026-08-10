@@ -174,7 +174,7 @@ export function LinkedInMockup({ image, caption, overlayText }: { image: string 
       <div className="px-3 py-2 flex items-start gap-2">
         <div className="w-10 h-10 rounded-full shrink-0" style={{ background: "var(--hb-green)" }} />
         <div className="flex flex-col leading-tight">
-          <span className="text-[12px] font-semibold">HappyBeez</span>
+          <span className="text-[12px] font-semibold">Happybeez</span>
           <span className="text-[10px] text-neutral-500">Handgemaakte bijenhotels · Boekel</span>
           <span className="text-[10px] text-neutral-500">2 u · 🌍</span>
         </div>
@@ -216,7 +216,7 @@ export function FacebookMockup({ image, caption, overlayText }: { image: string 
       <div className="px-3 py-2 flex items-center gap-2">
         <div className="w-10 h-10 rounded-full shrink-0" style={{ background: "var(--hb-green)" }} />
         <div className="flex flex-col leading-tight">
-          <span className="text-[12px] font-semibold">HappyBeez</span>
+          <span className="text-[12px] font-semibold">Happybeez</span>
           <span className="text-[10px] text-neutral-500">2 u · 🌍</span>
         </div>
       </div>
@@ -260,13 +260,13 @@ export function BlogMockup({ image, caption, title }: { image: string | null; ca
           </div>
         )}
         <div className="px-4 py-3">
-          <span className="text-[10px] uppercase tracking-wider" style={{ color: "var(--hb-green-dark)" }}>HappyBeez · Blog</span>
+          <span className="text-[10px] uppercase tracking-wider" style={{ color: "var(--hb-green-dark)" }}>Happybeez · Blog</span>
           <h3 className="text-[16px] font-bold leading-tight mt-1 mb-2" style={{ color: "var(--hb-dark)" }}>
             {title || "Titel van je artikel"}
           </h3>
           <div className="flex items-center gap-2 text-[10px] text-neutral-500 mb-3">
             <div className="w-5 h-5 rounded-full" style={{ background: "var(--hb-green)" }} />
-            <span>HappyBeez · 4 min lezen</span>
+            <span>Happybeez · 4 min lezen</span>
           </div>
           <div className="text-[12px] leading-relaxed whitespace-pre-wrap text-neutral-800">
             {cleaned || "Je artikel verschijnt hier…"}

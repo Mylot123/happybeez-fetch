@@ -12,8 +12,8 @@ import { useAuth } from "@/lib/auth";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Inloggen — HappyBeez" },
-      { name: "description", content: "Log in op je HappyBeez Social Studio." },
+      { title: "Inloggen — Happybeez" },
+      { name: "description", content: "Log in op je Happybeez Social Studio." },
     ],
   }),
   component: AuthPage,
@@ -106,7 +106,7 @@ function AuthPage() {
             Social Studio
           </span>
           <h1 className="font-heading font-bold text-ink text-4xl mt-2">
-            HappyBeez
+            Happybeez
           </h1>
           <div className="mt-3 h-px bg-gold w-12 mx-auto" />
         </div>

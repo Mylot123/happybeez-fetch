@@ -84,7 +84,7 @@ export const CHANNEL_RULES: Record<Channel, ChannelRules> = {
     tips: [
       "Eén scherpe stelling of observatie",
       "Korte alinea's met witregels",
-      "Subtiele HappyBeez-koppeling pas ná de waarde",
+      "Subtiele Happybeez-koppeling pas ná de waarde",
       "Richt je op bedrijven, scholen, gemeenten, hoveniers",
     ],
     avoid: ["engagement farming", "clickbait", "overdreven claims", "generieke 'bijen'"],

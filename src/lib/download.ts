@@ -31,7 +31,7 @@ function triggerDownload(href: string, filename: string, revoke: boolean) {
 }
 
 /**
- * Downloadt een afbeelding als JPEG met HappyBeez-watermerk en (optioneel)
+ * Downloadt een afbeelding als JPEG met Happybeez-watermerk en (optioneel)
  * de tekst-overlay ingebrand, zoals in de preview.
  */
 export async function downloadImage(

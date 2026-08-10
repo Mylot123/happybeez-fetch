@@ -94,6 +94,15 @@ type Photo = {
   image_url: string;
 };
 
+/** Haalt AI-achtige gedachtestreepjes tussen zinsdelen weg. */
+function stripDashes(t: string) {
+  return t
+    .replace(/\s+[—–]\s+/g, ", ")
+    .replace(/(\S)\s+-\s+(\S)/g, "$1, $2")
+    .replace(/^[—–-]\s+/gm, "")
+    .replace(/ ,/g, ",");
+}
+
 const CHANNELS: { value: Channel; label: string; hint: string }[] = [
   { value: "instagram", label: "📸 Instagram", hint: "Emoji, persoonlijk, hashtags, max 2200 tekens" },
   { value: "linkedin", label: "💼 LinkedIn", hint: "Professioneel maar warm, storytelling, geen hashtag-spam" },
@@ -172,7 +181,7 @@ export const Route = createFileRoute("/content-studio")({
   }),
   head: () => ({
     meta: [
-      { title: "Content Studio — HappyBeez" },
+      { title: "Content Studio — Happybeez" },
       {
         name: "description",
         content: "AI-ondersteund content schrijven voor al je kanalen.",
@@ -619,7 +628,7 @@ FACEBOOK PLAYBOOK (verplicht volgen voor Facebook):
 • Doel: reacties + delen + community-gevoel. Niet "stoppen met scrollen" maar "meedoen met gesprek".
 • Persoonlijker dan Instagram. Open met een herkenbare vraag of observatie ("Heb jij vroeger ook meer bijen in de tuin gezien dan nu?").
 • EÉN HOOFDBOODSCHAP per post.
-• STRUCTUUR: herkenbare opening → kort probleem → praktische uitleg → HappyBeez-koppeling (zacht, pas ná de educatieve waarde) → één concrete vraag of deel-CTA.
+• STRUCTUUR: herkenbare opening → kort probleem → praktische uitleg → Happybeez-koppeling (zacht, pas ná de educatieve waarde) → één concrete vraag of deel-CTA.
 • LENGTE: 120–220 woorden. Mag iets langer en persoonlijker dan Instagram, maar nooit wollig. B1, "je/jij".
 • GEEN MARKDOWN. Geen sterretjes/bullets met * of -. Korte alinea's, witregels tussen blokken.
 • TOON: rustig, deskundig, natuurvriendelijk, menselijk. Lokale trots ("handgemaakt in Boekel") werkt hier sterker dan op Instagram.
@@ -633,13 +642,13 @@ FACEBOOK PLAYBOOK (verplicht volgen voor Facebook):
       const linkedinPlaybook = `
 LINKEDIN PLAYBOOK (verplicht volgen voor LinkedIn):
 • Doel: reacties, shares, profielbezoeken via professionele micro-inzichten. GEEN likes-jacht, GEEN engagement farming ("reageer BIJ als…"), GEEN harde verkoop.
-• TOON: professioneel, deskundig, rustig, toegankelijk, menselijk. HappyBeez = betrouwbare expert in wilde bijen, biodiversiteit en natuurvriendelijke bijenhotels.
+• TOON: professioneel, deskundig, rustig, toegankelijk, menselijk. Happybeez = betrouwbare expert in wilde bijen, biodiversiteit en natuurvriendelijke bijenhotels.
 • EÉN HOOFDBOODSCHAP per post. Eén scherpe stelling, observatie of misverstand.
 • STRUCTUUR (strikt):
   1. HOOK: sterke professionele observatie of stelling in MAX 12 woorden, als losse openingsregel.
   2. Korte uitleg van probleem of misverstand (1–2 zinnen).
   3. 2–4 praktische inzichten of tips, elk op een nieuwe regel met witregel ertussen. Mag een 🌿 / ☀️ / 🐝 / 📌 emoji vooraan, maximaal één per regel.
-  4. Subtiele HappyBeez-koppeling, PAS NA de educatieve waarde. Productdetails alleen als inhoudelijk relevant: handgemaakt in Boekel, onbehandeld beukenhout, Douglas hout, geborsteld RVS, diepe gladde nestgangen, verschillende diameters, verwisselbare cassettes.
+  4. Subtiele Happybeez-koppeling, PAS NA de educatieve waarde. Productdetails alleen als inhoudelijk relevant: handgemaakt in Boekel, onbehandeld beukenhout, Douglas hout, geborsteld RVS, diepe gladde nestgangen, verschillende diameters, verwisselbare cassettes.
   5. Afsluitende INHOUDELIJKE vraag waarop professionals vanuit eigen ervaring kunnen reageren — concreet over tuin, werkplek, bedrijfsterrein, schoolplein of duurzaam/MVO-beleid. NIET "Wat vind jij hiervan?".
 • LENGTE: 900–1400 tekens. Korte zinnen, korte alinea's, witregels tussen blokken.
 • GEEN MARKDOWN, geen sterretjes, geen ###-koppen, geen lijsten met "-" of "*".
@@ -657,7 +666,7 @@ BLOG PLAYBOOK (verplicht volgen voor Blog):
   1. TITEL: uniek, concreet, belofte aan lezer (max ~60 tekens).
   2. INTRO: vraag of probleem in 2-3 zinnen, beloof de oplossing.
   3. BODY: tussenkoppen (H2/H3), korte alinea's, bullets/tabellen, eigen inzichten of observaties.
-  4. HappyBeez-koppeling: productdetails alleen waar relevant (handgemaakt in Boekel, materialen, nestgangen).
+  4. Happybeez-koppeling: productdetails alleen waar relevant (handgemaakt in Boekel, materialen, nestgangen).
   5. CONCLUSIE: samenvatting + duidelijke CTA (nieuwsbrief, gerelateerd artikel, delen).
 • SEO: gebruik kernwoord natuurlijk in titel, intro en tussenkoppen. Geen keyword-stuffing.
 • META: unieke meta description (~150-160 tekens), beschrijvende alt-tekst voor beelden.
@@ -678,7 +687,7 @@ ${bp.usps && bp.usps.length ? `• USP's om (subtiel) te verweven: ${bp.usps.joi
 ${bp.website ? `• Website: ${bp.website}` : ""}`.replace(/\n\n+/g, "\n")
         : "";
 
-      const prompt = `Je schrijft een ${contentType.replace("_", " ")} post voor ${channel} namens HappyBeez — handgemaakte natuurvriendelijke bijenhotels uit Boekel.
+      const prompt = `Je schrijft een ${contentType.replace("_", " ")} post voor ${channel} namens Happybeez — handgemaakte natuurvriendelijke bijenhotels uit Boekel.
 
 ${brandBlock}
 
@@ -690,7 +699,7 @@ ${keywords ? `Kernwoorden: ${keywords}` : ""}
 MERKSTIJL: rustig, deskundig, natuurvriendelijk. Gebruik termen: solitaire/wilde bijen, nestelgelegenheid, biodiversiteit, onbehandeld beukenhout/Douglas, diepe gladde nestgangen, handgemaakt in Boekel.
 
 HARDE MERKFEITEN (nooit tegen ingaan):
-• HappyBeez verkoopt uitsluitend handgemaakte bijenhotels voor WILDE / SOLITAIRE bijen. Er wordt GEEN honing geproduceerd, geoogst of verkocht.
+• Happybeez verkoopt uitsluitend handgemaakte bijenhotels voor WILDE / SOLITAIRE bijen. Er wordt GEEN honing geproduceerd, geoogst of verkocht.
 • Solitaire bijen maken geen honing, leven niet in korven of volken en worden niet gehouden door imkers.
 • VERBODEN woorden en beelden: honing, honing oogsten, imker, bijenkorf, honingraat, bijenvolk, honingbij als eigen product, bijenpak, smaak/oogst van honing.
 • VERMIJD verder: absolute claims, generiek "bijen" (schrijf "wilde bijen"), suggestie dat een hotel voedsel biedt, garanties.
@@ -702,6 +711,8 @@ TITEL-CONSISTENTIE (belangrijk):
 HOOK-EIS (belangrijk):
 • De eerste regel noemt een concreet gevolg, risico of verrassend feit — geen algemene inleiding en geen vraag zonder inzet.
 • Voorbeeld van het gewenste niveau: "Een splinterige nestgang kan de vleugels van een wilde bij beschadigen."
+
+SCHRIJFSTIJL (streng): gebruik GEEN gedachtestreepjes of koppelstreepjes tussen zinsdelen (dus geen "—", "–" of " - "). Dat leest als AI-tekst. Splits de zin op, of gebruik een komma, dubbele punt of punt.
 
 AFSLUITING: sluit altijd af met één concrete, inhoudelijke uitnodiging (iets bekijken, delen, reageren of volgen voor praktische kennis over wilde bijen). Geen holle "like & follow".
 
@@ -717,14 +728,15 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
       const titleMatch = text.match(/^\s*TITEL:\s*(.+)$/m);
       const postMatch = text.match(/POST:\s*\n?([\s\S]*?)(?:\n\s*CAROUSEL:|$)/);
       const carouselMatch = text.match(/CAROUSEL:\s*\n?([\s\S]*)$/);
-      const postText = (postMatch?.[1] ?? text).trim();
+      const postText = stripDashes((postMatch?.[1] ?? text).trim());
       const slides = (carouselMatch?.[1] ?? "")
         .split(/\n/)
         .map((l) => l.replace(/^\s*\d+[).:]?\s*/, "").trim())
-        .filter((l) => l.length > 2 && !/^geen$/i.test(l));
+        .filter((l) => l.length > 2 && !/^geen$/i.test(l))
+        .map(stripDashes);
       setGenerated(postText);
       setCarousel(slides);
-      const newTitle = titleMatch?.[1]?.trim() ?? "";
+      const newTitle = stripDashes(titleMatch?.[1]?.trim() ?? "");
       setSuggestedTitle(newTitle);
       if (newTitle && !topic) setTopic(newTitle);
       toast.success("Content gegenereerd.");
@@ -813,7 +825,7 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
         >
           <div>
             <span className="text-[11px] tracking-[0.22em] uppercase opacity-80">
-              HappyBeez · Social Studio
+              Happybeez · Social Studio
             </span>
             <h1 className="font-bold text-2xl sm:text-3xl mt-1" style={{ letterSpacing: "-0.01em" }}>
               Schrijf in onze stem

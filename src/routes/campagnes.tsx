@@ -3,9 +3,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Sparkles, Loader2, CalendarRange, Check, Archive, History, RotateCcw, AlertTriangle, ArrowRight } from "lucide-react";
+import { Sparkles, Loader2, CalendarRange, Check, Archive, History, RotateCcw, AlertTriangle, ArrowRight, Pencil, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -22,7 +23,13 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { StandaloneCampaigns } from "@/components/StandaloneCampaigns";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrg } from "@/hooks/use-current-org";
-import { generateCampaignPlan, setCampaignPlanStatus, restoreCampaignPlanVersion } from "@/lib/campaigns.functions";
+import {
+  generateCampaignPlan,
+  setCampaignPlanStatus,
+  restoreCampaignPlanVersion,
+  updateCampaignPlanMeta,
+  regenerateCampaignWeek,
+} from "@/lib/campaigns.functions";
 
 
 export const Route = createFileRoute("/campagnes")({
@@ -60,9 +67,19 @@ function CampagnesPage() {
   const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [restoringId, setRestoringId] = useState<string | null>(null);
+  const [editTheme, setEditTheme] = useState(false);
+  const [themeDraft, setThemeDraft] = useState("");
+  const [goalDraft, setGoalDraft] = useState("");
+  const [summaryDraft, setSummaryDraft] = useState("");
+  const [savingTheme, setSavingTheme] = useState(false);
+  const [weekTarget, setWeekTarget] = useState<string | null>(null);
+  const [weekInstruction, setWeekInstruction] = useState("");
+  const [regenId, setRegenId] = useState<string | null>(null);
   const gen = useServerFn(generateCampaignPlan);
   const setStatus = useServerFn(setCampaignPlanStatus);
   const restoreFn = useServerFn(restoreCampaignPlanVersion);
+  const updateMeta = useServerFn(updateCampaignPlanMeta);
+  const regenWeek = useServerFn(regenerateCampaignWeek);
   const qc = useQueryClient();
 
   const planQuery = useQuery({
@@ -195,6 +212,51 @@ function CampagnesPage() {
       invalidate();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Kon status niet wijzigen");
+    }
+  };
+
+  const saveTheme = async () => {
+    if (!planQuery.data?.id) return;
+    if (!themeDraft.trim()) return toast.error("Geef het thema een naam");
+    setSavingTheme(true);
+    try {
+      await updateMeta({
+        data: {
+          plan_id: planQuery.data.id,
+          theme: themeDraft,
+          goal: goalDraft,
+          summary: summaryDraft,
+        },
+      });
+      toast.success("Thema bijgewerkt");
+      setEditTheme(false);
+      invalidate();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Opslaan mislukt");
+    } finally {
+      setSavingTheme(false);
+    }
+  };
+
+  const runWeekRegen = async (blockId: string) => {
+    if (!planQuery.data?.id) return;
+    setRegenId(blockId);
+    try {
+      await regenWeek({
+        data: {
+          plan_id: planQuery.data.id,
+          block_id: blockId,
+          instruction: weekInstruction.trim() || undefined,
+        },
+      });
+      toast.success("Week opnieuw gegenereerd");
+      setWeekTarget(null);
+      setWeekInstruction("");
+      invalidate();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Genereren mislukt");
+    } finally {
+      setRegenId(null);
     }
   };
 
@@ -364,19 +426,68 @@ function CampagnesPage() {
         <>
           <section className="bg-card border border-border/60 rounded-lg p-6 mb-6">
             <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
                   Maandthema
                 </p>
-                <h2 className="text-2xl font-heading font-bold text-ink mt-1">{plan.theme}</h2>
-                {plan.goal && <p className="text-sm text-foreground/80 mt-2"><span className="font-semibold">Doel:</span> {plan.goal}</p>}
-                {plan.summary && <p className="text-sm text-muted-foreground mt-2 whitespace-pre-line">{plan.summary}</p>}
+                {editTheme ? (
+                  <div className="grid gap-2 mt-2 max-w-xl">
+                    <Input
+                      value={themeDraft}
+                      maxLength={200}
+                      onChange={(e) => setThemeDraft(e.target.value)}
+                      placeholder="Thema van de maand"
+                    />
+                    <Input
+                      value={goalDraft}
+                      maxLength={2000}
+                      onChange={(e) => setGoalDraft(e.target.value)}
+                      placeholder="Doel van deze maand"
+                    />
+                    <Textarea
+                      rows={3}
+                      value={summaryDraft}
+                      maxLength={4000}
+                      onChange={(e) => setSummaryDraft(e.target.value)}
+                      placeholder="Korte toelichting"
+                    />
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={saveTheme} disabled={savingTheme}>
+                        {savingTheme ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : null}
+                        Opslaan
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setEditTheme(false)}>
+                        Annuleren
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <h2 className="text-2xl font-heading font-bold text-ink mt-1">{plan.theme}</h2>
+                    {plan.goal && <p className="text-sm text-foreground/80 mt-2"><span className="font-semibold">Doel:</span> {plan.goal}</p>}
+                    {plan.summary && <p className="text-sm text-muted-foreground mt-2 whitespace-pre-line">{plan.summary}</p>}
+                  </>
+                )}
               </div>
               <div className="flex flex-col items-end gap-2">
                 <Badge variant={plan.status === "approved" || plan.status === "active" ? "default" : "secondary"}>
                   {STATUS_LABEL[plan.status] ?? plan.status}
                 </Badge>
                 <div className="flex gap-2">
+                  {!editTheme && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setThemeDraft(plan.theme ?? "");
+                        setGoalDraft(plan.goal ?? "");
+                        setSummaryDraft(plan.summary ?? "");
+                        setEditTheme(true);
+                      }}
+                    >
+                      <Pencil className="w-3.5 h-3.5 mr-1" /> Thema wijzigen
+                    </Button>
+                  )}
                   {plan.status !== "approved" && (
                     <Button size="sm" variant="outline" onClick={() => changeStatus("approved")}>
                       <Check className="w-3.5 h-3.5 mr-1" /> Keur goed
@@ -395,9 +506,26 @@ function CampagnesPage() {
           <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {blocks.map((b) => (
               <article key={b.id} className="bg-card border border-border/60 rounded-lg p-5">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  {b.week && <span className="font-semibold text-wine">Week {b.week}</span>}
-                  {b.pillar && <span className="uppercase tracking-widest">· {b.pillar}</span>}
+                <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    {b.week && <span className="font-semibold text-wine">Week {b.week}</span>}
+                    {b.pillar && <span className="uppercase tracking-widest">· {b.pillar}</span>}
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => setWeekTarget(b.id)}
+                    disabled={regenId === b.id}
+                    title="Deze week opnieuw laten schrijven"
+                  >
+                    {regenId === b.id ? (
+                      <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                    )}
+                    Week opnieuw
+                  </Button>
                 </div>
                 <h3 className="text-lg font-heading font-semibold text-ink mt-1">{b.name}</h3>
                 {b.hook && <p className="text-sm text-foreground/80 mt-2 italic">"{b.hook}"</p>}
@@ -411,9 +539,29 @@ function CampagnesPage() {
                     ))}
                   </div>
                 )}
+                {weekTarget === b.id && (
+                  <div className="mt-3 border-t border-border/60 pt-3 grid gap-2">
+                    <Input
+                      value={weekInstruction}
+                      maxLength={1000}
+                      onChange={(e) => setWeekInstruction(e.target.value)}
+                      placeholder="Optioneel: waar moet deze week over gaan?"
+                    />
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => void runWeekRegen(b.id)} disabled={regenId === b.id}>
+                        {regenId === b.id ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : null}
+                        Opnieuw genereren
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => { setWeekTarget(null); setWeekInstruction(""); }}>
+                        Annuleren
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </article>
             ))}
           </section>
+
 
           {versions.length > 0 && (
             <section className="mt-8">
