@@ -765,16 +765,18 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
       return;
     }
     setSaving(true);
+    const cleanText = stripDashes(generated);
+    const fallbackTitle = `${contentType} ${channel}`;
     if (search.item) {
       // Update the existing calendar item the user came from.
       const { error } = await supabase
         .from("content_calendar_items")
         .update({
-          title: topic || `${contentType} — ${channel}`,
+          title: stripDashes(topic || fallbackTitle),
           channel,
           content_type: contentType,
           publish_date: saveDate,
-          content_text: generated,
+          content_text: cleanText,
           image_url: previewImage,
           image_storage_path: previewStoragePath,
         })
@@ -787,18 +789,19 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
     const { error } = await supabase.from("content_calendar_items").insert({
       user_id: user.id,
       org_id: currentOrg.id,
-      title: topic || `${contentType} — ${channel}`,
+      title: stripDashes(topic || fallbackTitle),
       channel,
       content_type: contentType,
       status: "draft",
       publish_date: saveDate,
-      content_text: generated,
+      content_text: cleanText,
       image_url: previewImage,
       image_storage_path: previewStoragePath,
     });
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Opgeslagen in kalender.");
+
   }
 
   const hasPreview = channel === "instagram" || channel === "linkedin" || channel === "facebook" || channel === "blog";
