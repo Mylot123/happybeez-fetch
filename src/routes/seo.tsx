@@ -1455,6 +1455,24 @@ function fmtNum(n: number | null | undefined): string {
   return String(n);
 }
 
+// Advies per keyword: hoe belangrijk is het om dit te claimen?
+function focusAdvice(
+  rank: number | null | undefined,
+  volume: number | null | undefined,
+): { label: string; tone: string; score: number } {
+  const v = volume ?? 0;
+  const p = rank ?? null;
+  if (v === 0 && p == null) return { label: "Geen data", tone: "bg-muted text-muted-foreground", score: 0 };
+  if (p != null && p <= 3) return { label: "Behouden", tone: "bg-green-100 text-green-800", score: v * 0.2 };
+  if (p != null && p <= 10) return { label: "Uitbouwen", tone: "bg-green-50 text-green-700", score: v * 0.6 };
+  if (p != null && p <= 20) return { label: "Quick win", tone: "bg-honey/20 text-ink", score: v * 1.5 };
+  if (p != null) return { label: "Verbeteren", tone: "bg-secondary text-muted-foreground", score: v * 0.8 };
+  if (v >= 100) return { label: "Claimen", tone: "bg-wine/10 text-wine", score: v * 1.0 };
+  if (v > 0) return { label: "Niche-kans", tone: "bg-secondary text-muted-foreground", score: v * 0.5 };
+  return { label: "Laag volume", tone: "bg-muted text-muted-foreground", score: 0 };
+}
+
+
 function scoreColor(s: number | null): string {
   if (s == null) return "text-muted-foreground";
   if (s >= 80) return "text-green-700";
