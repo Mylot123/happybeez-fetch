@@ -284,6 +284,8 @@ function CampagnesPage() {
         </Link>
       </section>
 
+      <StandaloneCampaigns />
+
       {/* Jaaroverzicht */}
       <section className="mb-6">
         <h2 className="font-heading text-base font-semibold text-ink mb-3">
