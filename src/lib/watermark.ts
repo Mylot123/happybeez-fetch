@@ -46,7 +46,7 @@ function drawOverlayText(
   const margin = Math.round(Math.min(width, height) * 0.06);
   const maxWidth = width - margin * 2;
 
-  ctx.font = `700 ${fontSize}px system-ui, -apple-system, "Segoe UI", sans-serif`;
+  ctx.font = `600 ${fontSize}px "Playfair Display", Georgia, serif`;
   ctx.textBaseline = "alphabetic";
 
   // Woorden afbreken over maximaal 3 regels.

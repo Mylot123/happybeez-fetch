@@ -1187,10 +1187,10 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
                 />
               )}
               {channel === "linkedin" && (
-                <LinkedInMockup image={previewImage} caption={generated} />
+                <LinkedInMockup image={previewImage} caption={generated} overlayText={suggestedTitle || topic || undefined} />
               )}
               {channel === "facebook" && (
-                <FacebookMockup image={previewImage} caption={generated} />
+                <FacebookMockup image={previewImage} caption={generated} overlayText={suggestedTitle || topic || undefined} />
               )}
               {channel === "blog" && (
                 <BlogMockup image={previewImage} caption={generated} title={topic} />

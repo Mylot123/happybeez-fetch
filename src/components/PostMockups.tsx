@@ -38,7 +38,7 @@ function ImageOverlay({ text }: { text?: string }) {
   if (!text) return null;
   return (
     <div className="absolute inset-x-0 bottom-0 p-4 flex items-end" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.25) 60%, transparent 100%)", minHeight: "35%" }}>
-      <p className="text-white font-bold text-[15px] leading-tight line-clamp-2 drop-shadow-md" style={{ textShadow: "0 1px 3px rgba(0,0,0,0.4)" }}>
+      <p className="text-white font-semibold text-[16px] leading-tight line-clamp-2 drop-shadow-md" style={{ textShadow: "0 1px 3px rgba(0,0,0,0.4)", fontFamily: "var(--font-heading)" }}>
         {text}
       </p>
     </div>
@@ -163,7 +163,7 @@ export function PhoneMockup({
   );
 }
 
-export function LinkedInMockup({ image, caption }: { image: string | null; caption: string }) {
+export function LinkedInMockup({ image, caption, overlayText }: { image: string | null; caption: string; overlayText?: string }) {
   const cleaned = cleanText(caption);
   return (
     <PhoneFrame>
@@ -183,8 +183,9 @@ export function LinkedInMockup({ image, caption }: { image: string | null; capti
         {cleaned || "Je post verschijnt hier…"}
       </div>
       {image && (
-        <div className="w-full bg-neutral-100" style={{ aspectRatio: "1.91 / 1" }}>
+        <div className="relative w-full bg-neutral-100" style={{ aspectRatio: "1.91 / 1" }}>
           <img src={image} alt="" className="w-full h-full object-cover" />
+          <ImageOverlay text={overlayText} />
         </div>
       )}
       <div className="px-3 py-2 flex items-center justify-between text-[11px] text-neutral-500 border-t border-neutral-200">
@@ -204,7 +205,7 @@ export function LinkedInMockup({ image, caption }: { image: string | null; capti
   );
 }
 
-export function FacebookMockup({ image, caption }: { image: string | null; caption: string }) {
+export function FacebookMockup({ image, caption, overlayText }: { image: string | null; caption: string; overlayText?: string }) {
   const cleaned = cleanText(caption);
   return (
     <PhoneFrame>
@@ -223,8 +224,9 @@ export function FacebookMockup({ image, caption }: { image: string | null; capti
         {cleaned || "Je post verschijnt hier…"}
       </div>
       {image && (
-        <div className="w-full bg-neutral-100" style={{ aspectRatio: "1 / 1" }}>
+        <div className="relative w-full bg-neutral-100" style={{ aspectRatio: "1 / 1" }}>
           <img src={image} alt="" className="w-full h-full object-cover" />
+          <ImageOverlay text={overlayText} />
         </div>
       )}
       <div className="px-3 py-2 flex items-center justify-between text-[11px] text-neutral-500 border-t border-neutral-200">
@@ -291,9 +293,9 @@ export function PostMockup({
 }) {
   const inner =
     channel === "linkedin" ? (
-      <LinkedInMockup image={image} caption={caption} />
+      <LinkedInMockup image={image} caption={caption} overlayText={title} />
     ) : channel === "facebook" ? (
-      <FacebookMockup image={image} caption={caption} />
+      <FacebookMockup image={image} caption={caption} overlayText={title} />
     ) : channel === "blog" || channel === "website" ? (
       <BlogMockup image={image} caption={caption} title={title ?? ""} />
     ) : (
