@@ -638,12 +638,42 @@ export type Database = {
           },
         ]
       }
+      library_folders: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          org_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          org_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_folders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       library_photos: {
         Row: {
           book_id: string | null
           caption: string | null
           created_at: string
           credit: string | null
+          folder_id: string | null
           height: number | null
           id: string
           image_url: string
@@ -659,6 +689,7 @@ export type Database = {
           caption?: string | null
           created_at?: string
           credit?: string | null
+          folder_id?: string | null
           height?: number | null
           id?: string
           image_url: string
@@ -674,6 +705,7 @@ export type Database = {
           caption?: string | null
           created_at?: string
           credit?: string | null
+          folder_id?: string | null
           height?: number | null
           id?: string
           image_url?: string
@@ -690,6 +722,13 @@ export type Database = {
             columns: ["book_id"]
             isOneToOne: false
             referencedRelation: "library_books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "library_photos_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "library_folders"
             referencedColumns: ["id"]
           },
           {
