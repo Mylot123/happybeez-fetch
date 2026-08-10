@@ -50,11 +50,13 @@ export function PhoneMockup({
   caption,
   overlayText,
   slides,
+  slideImages,
 }: {
   image: string | null;
   caption: string;
   overlayText?: string;
   slides?: string[];
+  slideImages?: (string | null | undefined)[];
 }) {
   const username = "happybeez";
   const cleaned = cleanText(caption);
@@ -63,6 +65,8 @@ export function PhoneMockup({
 
   const allOverlays = hasSlides ? slides : overlayText ? [overlayText] : [];
   const currentOverlay = allOverlays[slideIdx] ?? overlayText;
+  const currentImage = (hasSlides ? slideImages?.[slideIdx] : null) ?? image;
+
 
   function nextSlide(e: React.MouseEvent) {
     e.stopPropagation();
@@ -102,9 +106,10 @@ export function PhoneMockup({
           <MoreHorizontal className="w-4 h-4 text-neutral-700" />
         </div>
         <div className="relative w-full bg-neutral-100" style={{ aspectRatio: "1 / 1" }}>
-          {image ? (
-            <img src={image} alt="" className="w-full h-full object-cover" />
+          {currentImage ? (
+            <img src={currentImage} alt="" className="w-full h-full object-cover" />
           ) : (
+
             <div className="w-full h-full flex items-center justify-center text-neutral-400 text-xs">
               <ImageIcon className="w-8 h-8" />
             </div>

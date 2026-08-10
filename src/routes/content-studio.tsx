@@ -43,6 +43,7 @@ import { generatePostImage, uploadUserPhoto } from "@/lib/image.functions";
 import { watermarkImage, watermarkBase64 } from "@/lib/watermark";
 import { generateContentIdeas } from "@/lib/ideas.functions";
 import { signOne } from "@/lib/signed-images";
+import { downloadImage } from "@/lib/download";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -237,6 +238,9 @@ function ContentStudio() {
   const [keywords, setKeywords] = useState(search.keywords ?? "");
   const [generated, setGenerated] = useState("");
   const [carousel, setCarousel] = useState<string[]>([]);
+  const [slidePhotoIds, setSlidePhotoIds] = useState<Record<number, string>>({});
+  const [targetSlide, setTargetSlide] = useState<number | null>(null);
+  const [downloadingSlides, setDownloadingSlides] = useState(false);
   const [suggestedTitle, setSuggestedTitle] = useState("");
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -281,6 +285,15 @@ function ContentStudio() {
   function setSelectedPhotoId(id: string) {
     setUseExistingImage(false);
     setPhotoByChannel((prev) => ({ ...prev, [channel]: id }));
+  }
+
+  /** Kies een foto: voor een specifieke carrousel-slide, of voor de hoofdafbeelding. */
+  function pickPhoto(id: string) {
+    if (targetSlide !== null) {
+      setSlidePhotoIds((prev) => ({ ...prev, [targetSlide]: id }));
+      return;
+    }
+    setSelectedPhotoId(id);
   }
 
   // Haal de bestaande post op zodra je vanuit de kalender "Open in Content Studio" klikt.
@@ -467,6 +480,36 @@ function ContentStudio() {
   const previewStoragePath =
     useExistingImage && existingImage ? existingStoragePath : selectedPhoto?.storage_path ?? null;
 
+  // Per carrousel-slide een eigen afbeelding (valt terug op de hoofdafbeelding).
+  const slideImages = useMemo(
+    () =>
+      carousel.map((_, i) => {
+        const pid = slidePhotoIds[i];
+        const photo = pid ? photos.find((p) => p.id === pid) : null;
+        return photo?.image_url ?? previewImage;
+      }),
+    [carousel, slidePhotoIds, photos, previewImage],
+  );
+
+  async function downloadSlides() {
+    if (carousel.length === 0) return;
+    setDownloadingSlides(true);
+    try {
+      const base = (suggestedTitle || topic || "carrousel").slice(0, 60);
+      for (let i = 0; i < carousel.length; i++) {
+        const url = slideImages[i];
+        if (!url) continue;
+        await downloadImage(url, `${base}-slide-${i + 1}`, carousel[i]);
+        await new Promise((r) => setTimeout(r, 400));
+      }
+      toast.success("Slides gedownload (met watermerk en tekst).");
+    } catch (err) {
+      toast.error(err instanceof Error && err.message !== "open-fallback" ? err.message : "Downloaden mislukt.");
+    } finally {
+      setDownloadingSlides(false);
+    }
+  }
+
 
 
 
@@ -530,7 +573,7 @@ function ContentStudio() {
         image_url: photo.image_url,
       };
       setPhotos((prev) => [newPhoto, ...prev.filter((p) => p.id !== newPhoto.id)]);
-      setSelectedPhotoId(newPhoto.id);
+      pickPhoto(newPhoto.id);
       toast.success("Beeld gegenereerd, gewatermerkt en toegevoegd aan bibliotheek.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Beeldgeneratie mislukt.", {
@@ -578,7 +621,7 @@ function ContentStudio() {
         image_url: photo.image_url,
       };
       setPhotos((prev) => [newPhoto, ...prev.filter((p) => p.id !== newPhoto.id)]);
-      setSelectedPhotoId(newPhoto.id);
+      pickPhoto(newPhoto.id);
       toast.success("Foto geüpload en toegevoegd aan bibliotheek.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload mislukt.");
@@ -740,6 +783,8 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
         .map(stripDashes);
       setGenerated(postText);
       setCarousel(slides);
+      setSlidePhotoIds({});
+      setTargetSlide(null);
       const newTitle = stripDashes(titleMatch?.[1]?.trim() ?? "");
       setSuggestedTitle(newTitle);
       if (newTitle && !topic) setTopic(newTitle);
@@ -1034,14 +1079,80 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
 
                   {carousel.length > 0 && (
                     <div className="mx-5 mb-3 rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(111, 138, 58, 0.10)", border: "1px solid var(--hb-border)" }}>
-                      <div className="font-semibold mb-1" style={{ color: "var(--hb-dark)" }}>Carrousel-voorstel ({carousel.length} slides)</div>
-                      <ol className="list-decimal pl-5 space-y-0.5" style={{ color: "var(--hb-dark)", opacity: 0.85 }}>
-                        {carousel.map((s, i) => (
-                          <li key={i}>{s}</li>
-                        ))}
-                      </ol>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-semibold" style={{ color: "var(--hb-dark)" }}>Carrousel ({carousel.length} slides)</span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={downloadSlides}
+                          disabled={downloadingSlides}
+                          className="rounded-full h-7 text-[11px] font-semibold hover:brightness-110"
+                          style={{ background: "var(--hb-green)", color: "#fff" }}
+                        >
+                          {downloadingSlides ? "Downloaden…" : "Download alle slides"}
+                        </Button>
+                      </div>
+                      <p className="mb-2 text-[11px]" style={{ color: "var(--hb-dark)", opacity: 0.7 }}>
+                        Kies per slide een eigen foto uit de foto- &amp; kennisbank hieronder. Downloads bevatten watermerk en slide-tekst.
+                      </p>
+                      <div className="space-y-2">
+                        {carousel.map((s, i) => {
+                          const img = slideImages[i];
+                          const isTarget = targetSlide === i;
+                          return (
+                            <div
+                              key={i}
+                              className="flex items-center gap-3 rounded-lg p-2"
+                              style={{
+                                background: "#fff",
+                                border: isTarget ? "2px solid var(--hb-green)" : "1px solid var(--hb-border)",
+                              }}
+                            >
+                              <div className="w-12 h-12 rounded-md overflow-hidden shrink-0" style={{ background: "rgba(0,0,0,0.06)" }}>
+                                {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : null}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-[11px] font-semibold" style={{ color: "var(--hb-dark)", opacity: 0.6 }}>Slide {i + 1}</div>
+                                <div className="truncate" style={{ color: "var(--hb-dark)" }}>{s}</div>
+                              </div>
+                              <div className="flex flex-col items-end gap-1 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => setTargetSlide(isTarget ? null : i)}
+                                  className="text-[11px] underline"
+                                  style={{ color: "var(--hb-green-dark)" }}
+                                >
+                                  {isTarget ? "Klaar met kiezen" : "Kies foto"}
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={!img}
+                                  onClick={() =>
+                                    img &&
+                                    void downloadImage(
+                                      img,
+                                      `${(suggestedTitle || topic || "carrousel").slice(0, 60)}-slide-${i + 1}`,
+                                      s,
+                                    )
+                                  }
+                                  className="text-[11px] underline disabled:opacity-40"
+                                  style={{ color: "var(--hb-green-dark)" }}
+                                >
+                                  Download
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {targetSlide !== null && (
+                        <p className="mt-2 text-[11px] font-semibold" style={{ color: "var(--hb-green-dark)" }}>
+                          Klik hieronder een foto (of upload/genereer er één) voor slide {targetSlide + 1}.
+                        </p>
+                      )}
                     </div>
                   )}
+
 
                   {(hasPreview || photos.length > 0) && (
                     <div className="p-4 border-t" style={{ borderColor: "var(--hb-border)" }}>
@@ -1114,7 +1225,7 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
                                 <button
                                   key={p.id}
                                   type="button"
-                                  onClick={() => setSelectedPhotoId(p.id)}
+                                  onClick={() => pickPhoto(p.id)}
                                   title={p.title}
                                   className="aspect-square rounded-lg overflow-hidden transition-all"
                                   style={{
@@ -1203,6 +1314,7 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
                   caption={generated}
                   overlayText={suggestedTitle || topic || undefined}
                   slides={carousel.length > 0 ? carousel : undefined}
+                  slideImages={carousel.length > 0 ? slideImages : undefined}
                 />
               )}
               {channel === "linkedin" && (
