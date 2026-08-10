@@ -2,14 +2,8 @@
 import { watermarkBlob } from "@/lib/watermark";
 
 
-const EXT_BY_MIME: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/jpg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-  "image/gif": "gif",
-  "image/avif": "avif",
-};
+
+
 
 function safeBase(name: string) {
   const base = (name || "post")
