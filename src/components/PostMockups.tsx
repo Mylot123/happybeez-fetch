@@ -45,6 +45,76 @@ function ImageOverlay({ text }: { text?: string }) {
   );
 }
 
+/** Beeldvlak met optionele carrousel-navigatie (pijlen + dots). */
+export function SlideStage({
+  image,
+  overlayText,
+  slides,
+  slideImages,
+  aspect = "1 / 1",
+}: {
+  image: string | null;
+  overlayText?: string;
+  slides?: string[];
+  slideImages?: (string | null | undefined)[];
+  aspect?: string;
+}) {
+  const hasSlides = Array.isArray(slides) && slides.length > 0;
+  const [slideIdx, setSlideIdx] = useState(0);
+  const overlays = hasSlides ? slides : overlayText ? [overlayText] : [];
+  const idx = Math.min(slideIdx, Math.max(0, overlays.length - 1));
+  const currentOverlay = overlays[idx] ?? overlayText;
+  const currentImage = (hasSlides ? slideImages?.[idx] : null) ?? image;
+
+  return (
+    <div className="relative w-full bg-neutral-100" style={{ aspectRatio: aspect }}>
+      {currentImage ? (
+        <img src={currentImage} alt="" className="w-full h-full object-cover" />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center text-neutral-400 text-xs">
+          <ImageIcon className="w-8 h-8" />
+        </div>
+      )}
+      <ImageOverlay text={currentOverlay} />
+      {hasSlides && overlays.length > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setSlideIdx((i) => (i - 1 + overlays.length) % overlays.length); }}
+            className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition"
+            aria-label="Vorige slide"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setSlideIdx((i) => (i + 1) % overlays.length); }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition"
+            aria-label="Volgende slide"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+          <div className="absolute top-2 right-2 rounded-full bg-black/50 text-white text-[10px] px-2 py-0.5">
+            {idx + 1}/{overlays.length}
+          </div>
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+            {overlays.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setSlideIdx(i); }}
+                className="w-1.5 h-1.5 rounded-full transition"
+                style={{ background: i === idx ? "#fff" : "rgba(255,255,255,0.45)" }}
+                aria-label={`Ga naar slide ${i + 1}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function PhoneMockup({
   image,
   caption,
@@ -60,22 +130,6 @@ export function PhoneMockup({
 }) {
   const username = "happybeez";
   const cleaned = cleanText(caption);
-  const hasSlides = Array.isArray(slides) && slides.length > 0;
-  const [slideIdx, setSlideIdx] = useState(0);
-
-  const allOverlays = hasSlides ? slides : overlayText ? [overlayText] : [];
-  const currentOverlay = allOverlays[slideIdx] ?? overlayText;
-  const currentImage = (hasSlides ? slideImages?.[slideIdx] : null) ?? image;
-
-
-  function nextSlide(e: React.MouseEvent) {
-    e.stopPropagation();
-    setSlideIdx((i) => (i + 1) % allOverlays.length);
-  }
-  function prevSlide(e: React.MouseEvent) {
-    e.stopPropagation();
-    setSlideIdx((i) => (i - 1 + allOverlays.length) % allOverlays.length);
-  }
 
   return (
     <div
@@ -105,49 +159,7 @@ export function PhoneMockup({
           </div>
           <MoreHorizontal className="w-4 h-4 text-neutral-700" />
         </div>
-        <div className="relative w-full bg-neutral-100" style={{ aspectRatio: "1 / 1" }}>
-          {currentImage ? (
-            <img src={currentImage} alt="" className="w-full h-full object-cover" />
-          ) : (
-
-            <div className="w-full h-full flex items-center justify-center text-neutral-400 text-xs">
-              <ImageIcon className="w-8 h-8" />
-            </div>
-          )}
-          <ImageOverlay text={currentOverlay} />
-          {hasSlides && allOverlays.length > 1 && (
-            <>
-              <button
-                type="button"
-                onClick={prevSlide}
-                className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition"
-                aria-label="Vorige slide"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={nextSlide}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition"
-                aria-label="Volgende slide"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
-                {allOverlays.map((_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setSlideIdx(i); }}
-                    className="w-1.5 h-1.5 rounded-full transition"
-                    style={{ background: i === slideIdx ? "#fff" : "rgba(255,255,255,0.45)" }}
-                    aria-label={`Ga naar slide ${i + 1}`}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+        <SlideStage image={image} overlayText={overlayText} slides={slides} slideImages={slideImages} />
         <div className="px-3 pt-2 flex items-center justify-between">
           <div className="flex gap-3 text-neutral-900">
             <Heart className="w-6 h-6" />
@@ -210,7 +222,7 @@ export function LinkedInMockup({ image, caption, overlayText }: { image: string 
   );
 }
 
-export function FacebookMockup({ image, caption, overlayText }: { image: string | null; caption: string; overlayText?: string }) {
+export function FacebookMockup({ image, caption, overlayText, slides, slideImages }: { image: string | null; caption: string; overlayText?: string; slides?: string[]; slideImages?: (string | null | undefined)[] }) {
   const cleaned = cleanText(caption);
   return (
     <PhoneFrame>
@@ -228,11 +240,8 @@ export function FacebookMockup({ image, caption, overlayText }: { image: string 
       <div className="px-3 pb-2 text-[12px] leading-snug max-h-[200px] overflow-y-auto whitespace-pre-wrap text-neutral-800">
         {cleaned || "Je post verschijnt hier…"}
       </div>
-      {image && (
-        <div className="relative w-full bg-neutral-100" style={{ aspectRatio: "1 / 1" }}>
-          <img src={image} alt="" className="w-full h-full object-cover" />
-          <ImageOverlay text={overlayText} />
-        </div>
+      {(image || (slides && slides.length > 0)) && (
+        <SlideStage image={image} overlayText={overlayText} slides={slides} slideImages={slideImages} />
       )}
       <div className="px-3 py-2 flex items-center justify-between text-[11px] text-neutral-500 border-t border-neutral-200">
         <div className="flex items-center gap-1">
@@ -289,22 +298,24 @@ export function PostMockup({
   caption,
   title,
   slides,
+  slideImages,
 }: {
   channel: string;
   image: string | null;
   caption: string;
   title?: string;
   slides?: string[];
+  slideImages?: (string | null | undefined)[];
 }) {
   const inner =
     channel === "linkedin" ? (
       <LinkedInMockup image={image} caption={caption} overlayText={title} />
     ) : channel === "facebook" ? (
-      <FacebookMockup image={image} caption={caption} overlayText={title} />
+      <FacebookMockup image={image} caption={caption} overlayText={title} slides={slides} slideImages={slideImages} />
     ) : channel === "blog" || channel === "website" ? (
       <BlogMockup image={image} caption={caption} title={title ?? ""} />
     ) : (
-      <PhoneMockup image={image} caption={caption} overlayText={title} slides={slides} />
+      <PhoneMockup image={image} caption={caption} overlayText={title} slides={slides} slideImages={slideImages} />
     );
   return <div style={HB_VARS as React.CSSProperties}>{inner}</div>;
 }
