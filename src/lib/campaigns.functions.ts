@@ -306,3 +306,119 @@ export const restoreCampaignPlanVersion = createServerFn({ method: "POST" })
 
     return { plan_id: version.plan_id };
   });
+
+const metaSchema = z.object({
+  plan_id: z.string().uuid(),
+  theme: z.string().min(1).max(200),
+  goal: z.string().max(2000).nullable().optional(),
+  summary: z.string().max(4000).nullable().optional(),
+});
+
+/** Handmatig het maandthema/doel/samenvatting aanpassen. */
+export const updateCampaignPlanMeta = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => metaSchema.parse(data))
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase
+      .from("campaign_plans")
+      .update({
+        theme: data.theme.trim(),
+        goal: data.goal?.trim() || null,
+        summary: data.summary?.trim() || null,
+      })
+      .eq("id", data.plan_id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+const weekSchema = z.object({
+  plan_id: z.string().uuid(),
+  block_id: z.string().uuid(),
+  instruction: z.string().max(1000).optional(),
+});
+
+/** Eén weekblok opnieuw laten schrijven door de AI. */
+export const regenerateCampaignWeek = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => weekSchema.parse(data))
+  .handler(async ({ context, data }) => {
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) throw new Error("LOVABLE_API_KEY is niet beschikbaar.");
+
+    const { data: block, error: blkErr } = await context.supabase
+      .from("campaign_blocks")
+      .select("id, plan_id, org_id, week, pillar, name, sort_order")
+      .eq("id", data.block_id)
+      .maybeSingle();
+    if (blkErr) throw new Error(blkErr.message);
+    if (!block || block.plan_id !== data.plan_id) throw new Error("Weekblok niet gevonden.");
+
+    const { data: plan } = await context.supabase
+      .from("campaign_plans")
+      .select("theme, goal, summary, month, year")
+      .eq("id", data.plan_id)
+      .maybeSingle();
+
+    const { data: siblings } = await context.supabase
+      .from("campaign_blocks")
+      .select("week, name, hook, pillar")
+      .eq("plan_id", data.plan_id)
+      .neq("id", block.id);
+
+    const { data: brand } = await context.supabase
+      .from("brand_profiles")
+      .select("industry, audience, tone, pillars, usps")
+      .eq("org_id", block.org_id)
+      .maybeSingle();
+
+    const system =
+      "Je bent een senior social media strateeg voor Happybeez (handgemaakte bijenhotels uit Boekel, GEEN honing). " +
+      "Je schrijft één contentblok voor één week. Antwoord uitsluitend in geldig JSON in het Nederlands: " +
+      `{"name": string, "pillar": string, "hook": string, "platforms": string[], "notes": string}. ` +
+      "Gebruik geen gedachtestreepjes (- of —) in de teksten; schrijf normale zinnen met komma's of punten.";
+
+    const prompt = [
+      `Maandthema: ${plan?.theme ?? "onbekend"}${plan?.goal ? `; doel: ${plan.goal}` : ""}.`,
+      brand
+        ? `Merk: doelgroep=${brand.audience ?? "onbekend"}; tone=${brand.tone ?? "warm en deskundig"}; pijlers=${(brand.pillars ?? []).join(" | ")}.`
+        : "",
+      `Dit blok is voor week ${block.week ?? block.sort_order + 1}. Huidig blok: "${block.name}".`,
+      (siblings ?? []).length
+        ? `Andere weken (niet herhalen): ${(siblings ?? [])
+            .map((s) => `week ${s.week}: ${s.name}`)
+            .join(" | ")}.`
+        : "",
+      data.instruction ? `Extra wens van de gebruiker: ${data.instruction}` : "Maak een fris, ander idee dan het huidige blok.",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const raw = await callGateway(apiKey, system, prompt);
+    let parsed: {
+      name?: string;
+      pillar?: string;
+      hook?: string;
+      platforms?: string[];
+      notes?: string;
+    };
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      throw new Error("AI-antwoord kon niet gelezen worden (geen geldig JSON).");
+    }
+    if (!parsed.name) throw new Error("AI-antwoord miste een naam voor het blok.");
+
+    const { error: updErr } = await context.supabase
+      .from("campaign_blocks")
+      .update({
+        name: parsed.name.slice(0, 200),
+        pillar: parsed.pillar ?? block.pillar,
+        hook: parsed.hook ?? null,
+        platforms: Array.isArray(parsed.platforms) ? parsed.platforms.slice(0, 6) : [],
+        notes: parsed.notes ?? null,
+      })
+      .eq("id", block.id);
+    if (updErr) throw new Error(updErr.message);
+
+    return { ok: true };
+  });
