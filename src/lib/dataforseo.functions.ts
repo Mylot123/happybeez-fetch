@@ -272,14 +272,45 @@ export const refreshDfsRankings = createServerFn({ method: "POST" })
       }
     }
 
+    // Verrijk direct zoekvolume / CPC / concurrentie voor dezelfde keywords,
+    // zodat de rankings-tabel nooit lege volumes toont.
+    let volumesFilled = 0;
+    try {
+      const ov = await dfsPost<{ items?: DfsOverviewItem[] }>(
+        "/dataforseo_labs/google/keyword_overview/live",
+        [{ keywords: keywords.slice(0, 700), location_code, language_code }],
+      );
+      for (const it of ov.flatMap((r) => r.items ?? [])) {
+        const kd = it.keyword_data;
+        const kw = kd?.keyword?.toLowerCase();
+        if (!kw) continue;
+        const { error } = await context.supabase
+          .from("seo_keywords")
+          .update({
+            search_volume: kd?.keyword_info?.search_volume ?? null,
+            cpc: kd?.keyword_info?.cpc ?? null,
+            competition: kd?.keyword_info?.competition ?? null,
+            intent: kd?.search_intent_info?.main_intent ?? null,
+          })
+          .eq("keyword", kw)
+          .eq("domain", own)
+          .eq("database_code", data.database);
+        if (!error) volumesFilled += 1;
+      }
+    } catch {
+      // volume-verrijking is best-effort; rankings blijven staan
+    }
+
     return {
       checked: results.length,
       keywords: keywords.length,
       own_found: ownFound,
       competitors: competitorDomains.length,
+      volumes: volumesFilled,
       soft_error: null,
     };
   });
+
 
 // ─────────────────────────────────────────────────────────────
 // Related keywords research (DataForSEO Labs)

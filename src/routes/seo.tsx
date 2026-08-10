@@ -268,7 +268,7 @@ function Seo() {
     try {
       const res = await refreshDfsRankings({ data: { own_domain: domain.trim(), database } });
       if (res.soft_error) toast.info(res.soft_error);
-      else toast.success(`DataForSEO check: ${res.checked}/${res.keywords} keywords · ${res.own_found ?? 0} in top-100.`);
+      else toast.success(`DataForSEO check: ${res.checked}/${res.keywords} keywords · ${res.own_found ?? 0} in top-100 · ${res.volumes ?? 0} volumes bijgewerkt.`);
       await loadAll();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "DataForSEO refresh mislukt.");
@@ -851,6 +851,51 @@ function Seo() {
             />
           </div>
 
+          {/* Focus-advies: welke zoekwoorden claimen? */}
+          {(() => {
+            const active = tracked.filter((r) => (r as SeoRow & { is_active?: boolean }).is_active !== false);
+            const scored = active
+              .map((r) => ({ row: r, ...focusAdvice(r.current_rank, r.search_volume) }))
+              .filter((x) => x.score > 0)
+              .sort((a, b) => b.score - a.score)
+              .slice(0, 6);
+            const missingVol = active.filter((r) => r.search_volume == null).length;
+            return (
+              <div className="rounded-xl border border-border bg-card p-5">
+                <h3 className="font-heading text-lg text-ink">Waar moet je op focussen?</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Gerangschikt op kans: zoekvolume × hoe dicht je bij pagina 1 staat. Pak deze eerst.
+                </p>
+                {scored.length === 0 ? (
+                  <p className="text-sm text-muted-foreground mt-3">
+                    Nog geen advies — klik op “Refresh nu” om posities én zoekvolumes op te halen.
+                  </p>
+                ) : (
+                  <ol className="mt-3 space-y-2">
+                    {scored.map((x, i) => (
+                      <li key={x.row.id} className="flex items-center gap-3 text-sm border-b border-border/50 last:border-0 pb-2 last:pb-0">
+                        <span className="w-5 text-muted-foreground tabular-nums">{i + 1}.</span>
+                        <span className="font-medium text-ink flex-1">{x.row.keyword}</span>
+                        <span className="text-xs text-muted-foreground tabular-nums w-20 text-right">
+                          {fmtNum(x.row.search_volume)} /mnd
+                        </span>
+                        <span className="text-xs text-muted-foreground w-24 text-right">
+                          {x.row.current_rank != null ? `positie ${x.row.current_rank}` : "niet rankend"}
+                        </span>
+                        <span className={`text-xs px-2 py-0.5 rounded ${x.tone}`}>{x.label}</span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+                {missingVol > 0 ? (
+                  <p className="text-xs text-muted-foreground mt-3">
+                    {missingVol} keyword(s) hebben nog geen zoekvolume. “Refresh nu” haalt volume, CPC en positie in één keer op bij DataForSEO.
+                  </p>
+                ) : null}
+              </div>
+            );
+          })()}
+
           <div className="flex flex-wrap gap-2">
             {([
               { id: "all", label: "Alle" },
@@ -892,7 +937,8 @@ function Seo() {
                     <thead className="bg-muted/40">
                       <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
                         <th className="py-3 pl-4 pr-4">Keyword</th>
-                        <th className="py-3 pr-4 text-right">Volume</th>
+                        <th className="py-3 pr-4 text-right">Volume /mnd</th>
+                        <th className="py-3 pr-4">Focus</th>
                         <th className="py-3 pr-4">Positie</th>
                         <th className="py-3 pr-4 text-right">Verandering</th>
                         <th className="py-3 pr-4">Rankt op</th>
@@ -907,10 +953,21 @@ function Seo() {
                         const prev = hist[1];
                         const rankDelta =
                           prev?.rank != null && row.current_rank != null ? prev.rank - row.current_rank : null;
+                        const advice = focusAdvice(row.current_rank, row.search_volume);
                         return (
                           <tr key={row.id} className="hover:bg-secondary/30">
                             <td className="py-2 pl-4 pr-4 font-medium text-ink">{row.keyword}</td>
-                            <td className="py-2 pr-4 text-right tabular-nums">{fmtNum(row.search_volume)}</td>
+                            <td className="py-2 pr-4 text-right tabular-nums">
+                              {row.search_volume != null ? (
+                                fmtNum(row.search_volume)
+                              ) : (
+                                <span className="text-xs text-muted-foreground">nog niet opgehaald</span>
+                              )}
+                            </td>
+                            <td className="py-2 pr-4">
+                              <span className={`text-xs px-2 py-0.5 rounded ${advice.tone}`}>{advice.label}</span>
+                            </td>
+
                             <td className="py-2 pr-4">
                               {row.current_rank != null ? (
                                 positionBadge(row.current_rank)
@@ -1409,6 +1466,24 @@ function fmtNum(n: number | null | undefined): string {
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return String(n);
 }
+
+// Advies per keyword: hoe belangrijk is het om dit te claimen?
+function focusAdvice(
+  rank: number | null | undefined,
+  volume: number | null | undefined,
+): { label: string; tone: string; score: number } {
+  const v = volume ?? 0;
+  const p = rank ?? null;
+  if (v === 0 && p == null) return { label: "Geen data", tone: "bg-muted text-muted-foreground", score: 0 };
+  if (p != null && p <= 3) return { label: "Behouden", tone: "bg-green-100 text-green-800", score: v * 0.2 };
+  if (p != null && p <= 10) return { label: "Uitbouwen", tone: "bg-green-50 text-green-700", score: v * 0.6 };
+  if (p != null && p <= 20) return { label: "Quick win", tone: "bg-honey/20 text-ink", score: v * 1.5 };
+  if (p != null) return { label: "Verbeteren", tone: "bg-secondary text-muted-foreground", score: v * 0.8 };
+  if (v >= 100) return { label: "Claimen", tone: "bg-wine/10 text-wine", score: v * 1.0 };
+  if (v > 0) return { label: "Niche-kans", tone: "bg-secondary text-muted-foreground", score: v * 0.5 };
+  return { label: "Laag volume", tone: "bg-muted text-muted-foreground", score: 0 };
+}
+
 
 function scoreColor(s: number | null): string {
   if (s == null) return "text-muted-foreground";
