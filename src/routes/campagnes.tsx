@@ -3,9 +3,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Sparkles, Loader2, CalendarRange, Check, Archive, History, RotateCcw, AlertTriangle, ArrowRight } from "lucide-react";
+import { Sparkles, Loader2, CalendarRange, Check, Archive, History, RotateCcw, AlertTriangle, ArrowRight, Pencil, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -22,7 +23,13 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { StandaloneCampaigns } from "@/components/StandaloneCampaigns";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrg } from "@/hooks/use-current-org";
-import { generateCampaignPlan, setCampaignPlanStatus, restoreCampaignPlanVersion } from "@/lib/campaigns.functions";
+import {
+  generateCampaignPlan,
+  setCampaignPlanStatus,
+  restoreCampaignPlanVersion,
+  updateCampaignPlanMeta,
+  regenerateCampaignWeek,
+} from "@/lib/campaigns.functions";
 
 
 export const Route = createFileRoute("/campagnes")({
@@ -60,9 +67,19 @@ function CampagnesPage() {
   const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [restoringId, setRestoringId] = useState<string | null>(null);
+  const [editTheme, setEditTheme] = useState(false);
+  const [themeDraft, setThemeDraft] = useState("");
+  const [goalDraft, setGoalDraft] = useState("");
+  const [summaryDraft, setSummaryDraft] = useState("");
+  const [savingTheme, setSavingTheme] = useState(false);
+  const [weekTarget, setWeekTarget] = useState<string | null>(null);
+  const [weekInstruction, setWeekInstruction] = useState("");
+  const [regenId, setRegenId] = useState<string | null>(null);
   const gen = useServerFn(generateCampaignPlan);
   const setStatus = useServerFn(setCampaignPlanStatus);
   const restoreFn = useServerFn(restoreCampaignPlanVersion);
+  const updateMeta = useServerFn(updateCampaignPlanMeta);
+  const regenWeek = useServerFn(regenerateCampaignWeek);
   const qc = useQueryClient();
 
   const planQuery = useQuery({
@@ -195,6 +212,51 @@ function CampagnesPage() {
       invalidate();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Kon status niet wijzigen");
+    }
+  };
+
+  const saveTheme = async () => {
+    if (!planQuery.data?.id) return;
+    if (!themeDraft.trim()) return toast.error("Geef het thema een naam");
+    setSavingTheme(true);
+    try {
+      await updateMeta({
+        data: {
+          plan_id: planQuery.data.id,
+          theme: themeDraft,
+          goal: goalDraft,
+          summary: summaryDraft,
+        },
+      });
+      toast.success("Thema bijgewerkt");
+      setEditTheme(false);
+      invalidate();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Opslaan mislukt");
+    } finally {
+      setSavingTheme(false);
+    }
+  };
+
+  const runWeekRegen = async (blockId: string) => {
+    if (!planQuery.data?.id) return;
+    setRegenId(blockId);
+    try {
+      await regenWeek({
+        data: {
+          plan_id: planQuery.data.id,
+          block_id: blockId,
+          instruction: weekInstruction.trim() || undefined,
+        },
+      });
+      toast.success("Week opnieuw gegenereerd");
+      setWeekTarget(null);
+      setWeekInstruction("");
+      invalidate();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Genereren mislukt");
+    } finally {
+      setRegenId(null);
     }
   };
 
