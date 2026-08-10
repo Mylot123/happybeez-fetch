@@ -268,7 +268,7 @@ function Seo() {
     try {
       const res = await refreshDfsRankings({ data: { own_domain: domain.trim(), database } });
       if (res.soft_error) toast.info(res.soft_error);
-      else toast.success(`DataForSEO check: ${res.checked}/${res.keywords} keywords · ${res.own_found ?? 0} in top-100.`);
+      else toast.success(`DataForSEO check: ${res.checked}/${res.keywords} keywords · ${res.own_found ?? 0} in top-100 · ${res.volumes ?? 0} volumes bijgewerkt.`);
       await loadAll();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "DataForSEO refresh mislukt.");
