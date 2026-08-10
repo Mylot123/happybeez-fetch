@@ -24,6 +24,7 @@ const uploadSchema = z.object({
   caption: z.string().max(500).optional(),
   channel: z.string().max(50).optional(),
   extra_tags: z.array(z.string().max(40)).max(10).optional(),
+  folder_id: z.string().uuid().nullable().optional(),
 });
 
 const FALLBACK_STYLE =
@@ -264,6 +265,7 @@ export const uploadUserPhoto = createServerFn({ method: "POST" })
         caption: data.caption ?? null,
         tags: ["upload", ...(data.channel ? [data.channel] : []), ...(data.extra_tags ?? [])],
         suggested_channels: data.channel ? [data.channel] : [],
+        folder_id: data.folder_id ?? null,
         storage_path: path,
         image_url: path,
       })

@@ -97,11 +97,15 @@ type Photo = {
 /** Haalt AI-achtige gedachtestreepjes tussen zinsdelen weg. */
 function stripDashes(t: string) {
   return t
+    .replace(/^\s*[—–-]\s+/gm, "")
     .replace(/\s+[—–]\s+/g, ", ")
     .replace(/(\S)\s+-\s+(\S)/g, "$1, $2")
-    .replace(/^[—–-]\s+/gm, "")
-    .replace(/ ,/g, ",");
+    .replace(/(\w)[—–](\w)/g, "$1, $2")
+    .replace(/\s+[—–-]$/gm, "")
+    .replace(/ ,/g, ",")
+    .replace(/,\s*,/g, ",");
 }
+
 
 const CHANNELS: { value: Channel; label: string; hint: string }[] = [
   { value: "instagram", label: "📸 Instagram", hint: "Emoji, persoonlijk, hashtags, max 2200 tekens" },
@@ -761,16 +765,18 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
       return;
     }
     setSaving(true);
+    const cleanText = stripDashes(generated);
+    const fallbackTitle = `${contentType} ${channel}`;
     if (search.item) {
       // Update the existing calendar item the user came from.
       const { error } = await supabase
         .from("content_calendar_items")
         .update({
-          title: topic || `${contentType} — ${channel}`,
+          title: stripDashes(topic || fallbackTitle),
           channel,
           content_type: contentType,
           publish_date: saveDate,
-          content_text: generated,
+          content_text: cleanText,
           image_url: previewImage,
           image_storage_path: previewStoragePath,
         })
@@ -783,18 +789,19 @@ ${channel === "instagram" || channel === "facebook" ? `CAROUSEL:
     const { error } = await supabase.from("content_calendar_items").insert({
       user_id: user.id,
       org_id: currentOrg.id,
-      title: topic || `${contentType} — ${channel}`,
+      title: stripDashes(topic || fallbackTitle),
       channel,
       content_type: contentType,
       status: "draft",
       publish_date: saveDate,
-      content_text: generated,
+      content_text: cleanText,
       image_url: previewImage,
       image_storage_path: previewStoragePath,
     });
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Opgeslagen in kalender.");
+
   }
 
   const hasPreview = channel === "instagram" || channel === "linkedin" || channel === "facebook" || channel === "blog";

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { BookOpen, Copy, Download, ExternalLink, Images, Search, Trash2 } from "lucide-react";
+import { BookOpen, Copy, Download, ExternalLink, FolderPlus, Images, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,11 +10,13 @@ import { PhotoUploadButton } from "@/components/PhotoUploadButton";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
+import { useCurrentOrg } from "@/hooks/use-current-org";
 import { downloadImage } from "@/lib/download";
 
 type Book = Database["public"]["Tables"]["library_books"]["Row"];
 type Section = Database["public"]["Tables"]["library_book_sections"]["Row"];
 type Photo = Database["public"]["Tables"]["library_photos"]["Row"];
+type Folder = Database["public"]["Tables"]["library_folders"]["Row"];
 
 export const Route = createFileRoute("/foto-bibliotheek")({
   head: () => ({
@@ -42,6 +44,10 @@ function Kennisbank() {
   const [books, setBooks] = useState<Book[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [folders, setFolders] = useState<Folder[]>([]);
+  const [activeFolder, setActiveFolder] = useState<string | "all" | "none">("all");
+  const [newFolder, setNewFolder] = useState("");
+  const { currentOrgId } = useCurrentOrg();
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -52,7 +58,7 @@ function Kennisbank() {
 
   async function load() {
     setLoading(true);
-    const [b, s, p] = await Promise.all([
+    const [b, s, p, f] = await Promise.all([
       supabase.from("library_books").select("*"),
       supabase
         .from("library_book_sections")
@@ -62,6 +68,7 @@ function Kennisbank() {
         .from("library_photos")
         .select("*")
         .order("created_at", { ascending: true }),
+      supabase.from("library_folders").select("*").order("name", { ascending: true }),
     ]);
     setLoading(false);
     if (b.error || s.error || p.error) {
@@ -71,6 +78,7 @@ function Kennisbank() {
       return;
     }
     const photoRows = (p.data ?? []) as Photo[];
+    setFolders((f.data ?? []) as Folder[]);
     setBooks((b.data ?? []) as Book[]);
     setSections((s.data ?? []) as Section[]);
     setPhotos(photoRows);
@@ -96,15 +104,41 @@ function Kennisbank() {
   }
 
   const filteredPhotos = useMemo(() => {
-    if (!query.trim()) return photos;
-    const q = query.toLowerCase();
-    return photos.filter(
-      (p) =>
+    const q = query.trim().toLowerCase();
+    return photos.filter((p) => {
+      if (activeFolder === "none" && p.folder_id) return false;
+      if (activeFolder !== "all" && activeFolder !== "none" && p.folder_id !== activeFolder)
+        return false;
+      if (!q) return true;
+      return (
         p.title.toLowerCase().includes(q) ||
         (p.caption ?? "").toLowerCase().includes(q) ||
-        p.tags.some((t) => t.toLowerCase().includes(q)),
-    );
-  }, [photos, query]);
+        p.tags.some((t) => t.toLowerCase().includes(q))
+      );
+    });
+  }, [photos, query, activeFolder]);
+
+  async function createFolder() {
+    const name = newFolder.trim();
+    if (!name) return;
+    if (!currentOrgId) return toast.error("Geen organisatie gekozen.");
+    const { error } = await supabase
+      .from("library_folders")
+      .insert({ org_id: currentOrgId, name });
+    if (error) return toast.error(error.message);
+    setNewFolder("");
+    toast.success(`Mapje "${name}" aangemaakt.`);
+    void load();
+  }
+
+  async function deleteFolder(folder: Folder) {
+    if (!window.confirm(`Mapje "${folder.name}" verwijderen? De foto's blijven bestaan.`)) return;
+    const { error } = await supabase.from("library_folders").delete().eq("id", folder.id);
+    if (error) return toast.error(error.message);
+    if (activeFolder === folder.id) setActiveFolder("all");
+    toast.success("Mapje verwijderd.");
+    void load();
+  }
 
   const filteredSections = useMemo(() => {
     if (!query.trim()) return sections;
@@ -157,8 +191,52 @@ function Kennisbank() {
               automatisch een licht <span className="font-semibold text-ink">Happybeez</span>-watermerk
               rechtsonder toegevoegd voordat de foto wordt opgeslagen.
             </div>
-            <PhotoUploadButton onUploaded={() => void load()} />
+            <PhotoUploadButton
+              folderId={activeFolder !== "all" && activeFolder !== "none" ? activeFolder : null}
+              onUploaded={() => void load()}
+            />
           </div>
+          <div className="mb-4 rounded-lg border border-border bg-card px-4 py-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <FolderChip
+                active={activeFolder === "all"}
+                label={`Alle foto's (${photos.length})`}
+                onClick={() => setActiveFolder("all")}
+              />
+              <FolderChip
+                active={activeFolder === "none"}
+                label={`Zonder mapje (${photos.filter((p) => !p.folder_id).length})`}
+                onClick={() => setActiveFolder("none")}
+              />
+              {folders.map((f) => (
+                <FolderChip
+                  key={f.id}
+                  active={activeFolder === f.id}
+                  label={`${f.name} (${photos.filter((p) => p.folder_id === f.id).length})`}
+                  onClick={() => setActiveFolder(f.id)}
+                  onDelete={() => void deleteFolder(f)}
+                />
+              ))}
+            </div>
+            <div className="mt-3 flex items-center gap-2 max-w-sm">
+              <Input
+                value={newFolder}
+                onChange={(e) => setNewFolder(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void createFolder();
+                }}
+                placeholder="Naam nieuw mapje…"
+                className="h-9"
+              />
+              <Button size="sm" variant="outline" onClick={() => void createFolder()}>
+                <FolderPlus className="h-4 w-4" /> Mapje
+              </Button>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Kies eerst een mapje, dan komen nieuwe uploads daar automatisch in terecht.
+            </p>
+          </div>
+
           {loading ? (
             <p className="text-sm text-muted-foreground">Foto's laden…</p>
           ) : filteredPhotos.length === 0 ? (
@@ -171,6 +249,7 @@ function Kennisbank() {
                 <PhotoCard
                   key={photo.id}
                   photo={photo}
+                  folders={folders}
                   onDeleted={() => void load()}
                   displayUrl={
                     (photo.storage_path && signedUrls[photo.storage_path]) ||
@@ -227,13 +306,49 @@ function Kennisbank() {
   );
 }
 
+function FolderChip({
+  label,
+  active,
+  onClick,
+  onDelete,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  onDelete?: () => void;
+}) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs ${
+        active ? "border-transparent bg-primary text-primary-foreground" : "border-border bg-background"
+      }`}
+    >
+      <button type="button" onClick={onClick} className="font-medium">
+        {label}
+      </button>
+      {onDelete ? (
+        <button
+          type="button"
+          onClick={onDelete}
+          title="Mapje verwijderen"
+          className="opacity-60 hover:opacity-100"
+        >
+          <Trash2 className="h-3 w-3" />
+        </button>
+      ) : null}
+    </span>
+  );
+}
+
 function PhotoCard({
   photo,
   displayUrl,
+  folders,
   onDeleted,
 }: {
   photo: Photo;
   displayUrl: string;
+  folders: Folder[];
   onDeleted: () => void;
 }) {
   const { user } = useAuth();
@@ -310,6 +425,27 @@ function PhotoCard({
             </span>
           ))}
         </div>
+        <select
+          value={photo.folder_id ?? ""}
+          onChange={async (e) => {
+            const value = e.target.value || null;
+            const { error } = await supabase
+              .from("library_photos")
+              .update({ folder_id: value })
+              .eq("id", photo.id);
+            if (error) return toast.error(error.message);
+            toast.success("Mapje bijgewerkt.");
+            onDeleted();
+          }}
+          className="h-8 rounded-md border border-border bg-background px-2 text-xs"
+        >
+          <option value="">Geen mapje</option>
+          {folders.map((f) => (
+            <option key={f.id} value={f.id}>
+              {f.name}
+            </option>
+          ))}
+        </select>
         <div className="flex gap-2 mt-auto pt-2">
           <Button
             size="sm"
