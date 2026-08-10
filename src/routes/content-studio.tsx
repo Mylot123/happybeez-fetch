@@ -94,6 +94,15 @@ type Photo = {
   image_url: string;
 };
 
+/** Haalt AI-achtige gedachtestreepjes tussen zinsdelen weg. */
+function stripDashes(t: string) {
+  return t
+    .replace(/\s+[—–]\s+/g, ", ")
+    .replace(/(\S)\s+-\s+(\S)/g, "$1, $2")
+    .replace(/^[—–-]\s+/gm, "")
+    .replace(/ ,/g, ",");
+}
+
 const CHANNELS: { value: Channel; label: string; hint: string }[] = [
   { value: "instagram", label: "📸 Instagram", hint: "Emoji, persoonlijk, hashtags, max 2200 tekens" },
   { value: "linkedin", label: "💼 LinkedIn", hint: "Professioneel maar warm, storytelling, geen hashtag-spam" },
