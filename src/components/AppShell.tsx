@@ -70,6 +70,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  useBrandStyle();
+
 
   const handleSignOut = async () => {
     await signOut();
