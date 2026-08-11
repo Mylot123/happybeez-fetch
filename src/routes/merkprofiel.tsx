@@ -28,7 +28,7 @@ import {
 } from "@/lib/brand-style";
 
 
-import { cn } from "@/lib/utils";
+import { brandName, cn } from "@/lib/utils";
 
 type WebsiteAnalysis = {
   summary: string;
