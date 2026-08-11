@@ -50,7 +50,7 @@ export function OrgSwitcher() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[13px] font-bold text-white truncate leading-tight">
-            {currentOrg.name}
+            {brandName(currentOrg.name)}
           </p>
           <p className="text-[11px] text-white/50 truncate">
             {currentRole ? ROLE_LABEL[currentRole] : ""}
