@@ -200,6 +200,9 @@ Geef terug in dit JSON-formaat (kleuren als hex met #):
       if (!Array.isArray(v)) return [];
       return v.filter((x): x is string => typeof x === "string").slice(0, 8);
     };
+    const aiPalette = arr("palette")
+      .map((c) => c.toLowerCase().trim())
+      .filter((c) => /^#[0-9a-f]{6}$/i.test(c));
     const hex = (k: string, fb: string) => {
       const v = str(k);
       return /^#[0-9a-f]{6}$/i.test(v) ? v.toLowerCase() : fb;
@@ -212,8 +215,8 @@ Geef terug in dit JSON-formaat (kleuren als hex met #):
       visual_direction: str("visual_direction"),
       suggested_primary: hex("suggested_primary", palette[0] ?? ""),
       suggested_secondary: hex("suggested_secondary", palette[1] ?? ""),
-      palette,
-      fonts,
+      palette: [...new Set([...aiPalette, ...palette])].slice(0, 8),
+      fonts: [...new Set([...arr("fonts"), ...fonts])].slice(0, 6),
       meta,
     };
   });
