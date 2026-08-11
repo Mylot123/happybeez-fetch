@@ -68,7 +68,7 @@ export function OrgSwitcher() {
               onClick={() => setCurrentOrgId(m.org_id)}
               className="flex items-center gap-2"
             >
-              <span className="flex-1 truncate">{m.organization.name}</span>
+              <span className="flex-1 truncate">{brandName(m.organization.name)}</span>
               {m.org_id === currentOrg.id && <Check className="w-3.5 h-3.5 text-wine" />}
             </DropdownMenuItem>
           ))}
