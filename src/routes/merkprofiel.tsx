@@ -237,7 +237,7 @@ function MerkprofielPage() {
           <Palette className="w-3.5 h-3.5" /> Strategie
         </div>
         <h1 className="text-3xl font-heading font-bold text-ink mt-2">
-          Merkprofiel — {currentOrg?.name ?? "…"}
+          Merkprofiel {currentOrg?.name ? brandName(currentOrg.name) : "…"}
         </h1>
         <p className="text-muted-foreground mt-2 text-sm">
           Deze basis voedt de campagneplanner, content-studio en AI-suggesties. Werk hem bij zodra jullie merk verandert.
