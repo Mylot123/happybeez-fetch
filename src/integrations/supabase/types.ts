@@ -171,8 +171,10 @@ export type Database = {
       brand_profiles: {
         Row: {
           audience: string | null
+          color_palette: Json
           created_at: string
           extra: Json
+          font_roles: Json
           id: string
           industry: string | null
           org_id: string
@@ -187,8 +189,10 @@ export type Database = {
         }
         Insert: {
           audience?: string | null
+          color_palette?: Json
           created_at?: string
           extra?: Json
+          font_roles?: Json
           id?: string
           industry?: string | null
           org_id: string
@@ -203,8 +207,10 @@ export type Database = {
         }
         Update: {
           audience?: string | null
+          color_palette?: Json
           created_at?: string
           extra?: Json
+          font_roles?: Json
           id?: string
           industry?: string | null
           org_id?: string
