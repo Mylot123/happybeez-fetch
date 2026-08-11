@@ -343,42 +343,23 @@ function MerkprofielPage() {
 
             {step === 4 && (
               <div className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="primary_color">Primaire kleur</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="primary_color"
-                        value={form.primary_color}
-                        onChange={(e) => setField("primary_color", e.target.value)}
-                        placeholder="#B0985C"
-                      />
-                      {form.primary_color && (
-                        <div
-                          className="w-10 h-10 rounded border border-border shrink-0"
-                          style={{ backgroundColor: form.primary_color }}
-                        />
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="secondary_color">Secundaire kleur</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="secondary_color"
-                        value={form.secondary_color}
-                        onChange={(e) => setField("secondary_color", e.target.value)}
-                        placeholder="#7A1F3D"
-                      />
-                      {form.secondary_color && (
-                        <div
-                          className="w-10 h-10 rounded border border-border shrink-0"
-                          style={{ backgroundColor: form.secondary_color }}
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <PaletteField
+                  values={form.color_palette}
+                  onChange={(v) =>
+                    setForm((f) => ({
+                      ...f,
+                      color_palette: v,
+                      primary_color: v[0]?.hex ?? "",
+                      secondary_color: v[1]?.hex ?? "",
+                    }))
+                  }
+                />
+
+                <FontRolesField
+                  values={form.font_roles}
+                  onChange={(v) => setField("font_roles", v)}
+                />
+
 
                 <div className="border-t border-border pt-5">
                   <div className="flex items-start justify-between gap-3 mb-3">
