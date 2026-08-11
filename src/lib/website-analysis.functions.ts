@@ -177,9 +177,12 @@ Geef terug in dit JSON-formaat (kleuren als hex met #):
   "tone_of_voice": "1 zin, bijvoorbeeld: warm, deskundig, natuurgericht",
   "style_keywords": ["max 6 kernwoorden voor de visuele stijl"],
   "visual_direction": "1-2 zinnen: welke stijl past bij dit merk (kleuren, typografie, beeldtaal)",
-  "suggested_primary": "#hex — de sterkste merkkleur",
-  "suggested_secondary": "#hex — passende tweede kleur"
+  "suggested_primary": "#hex, de sterkste merkkleur",
+  "suggested_secondary": "#hex, passende tweede kleur",
+  "palette": ["minimaal 4 en maximaal 8 hex kleuren die samen het merkpalet vormen, inclusief accent- en achtergrondkleuren"],
+  "fonts": ["max 4 lettertypen, eerst het lettertype voor koppen, daarna dat voor bodytekst"]
 }`;
+
 
     let ai: Record<string, unknown> = {};
     try {
@@ -197,6 +200,9 @@ Geef terug in dit JSON-formaat (kleuren als hex met #):
       if (!Array.isArray(v)) return [];
       return v.filter((x): x is string => typeof x === "string").slice(0, 8);
     };
+    const aiPalette = arr("palette")
+      .map((c) => c.toLowerCase().trim())
+      .filter((c) => /^#[0-9a-f]{6}$/i.test(c));
     const hex = (k: string, fb: string) => {
       const v = str(k);
       return /^#[0-9a-f]{6}$/i.test(v) ? v.toLowerCase() : fb;
@@ -209,8 +215,8 @@ Geef terug in dit JSON-formaat (kleuren als hex met #):
       visual_direction: str("visual_direction"),
       suggested_primary: hex("suggested_primary", palette[0] ?? ""),
       suggested_secondary: hex("suggested_secondary", palette[1] ?? ""),
-      palette,
-      fonts,
+      palette: [...new Set([...aiPalette, ...palette])].slice(0, 8),
+      fonts: [...new Set([...arr("fonts"), ...fonts])].slice(0, 6),
       meta,
     };
   });

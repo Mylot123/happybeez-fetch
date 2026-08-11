@@ -15,8 +15,22 @@ const upsertSchema = z.object({
   usps: z.array(z.string().max(200)).max(12).default([]),
   primary_color: z.string().max(20).optional().nullable(),
   secondary_color: z.string().max(20).optional().nullable(),
+  color_palette: z
+    .array(z.object({ hex: z.string().max(20), label: z.string().max(60).default("") }))
+    .max(12)
+    .default([]),
+  font_roles: z
+    .array(
+      z.object({
+        role: z.enum(["heading", "body", "overlay", "accent"]),
+        family: z.string().max(80),
+      }),
+    )
+    .max(8)
+    .default([]),
   website: z.string().max(400).optional().nullable(),
 });
+
 
 export const saveBrandProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

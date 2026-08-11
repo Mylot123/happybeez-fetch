@@ -15,6 +15,18 @@ import { saveBrandProfile } from "@/lib/brand.functions";
 import { analyzeWebsiteForBrand } from "@/lib/website-analysis.functions";
 import { BrandDocumentUpload } from "@/components/BrandDocumentUpload";
 import { BrandDataOverview } from "@/components/BrandDataOverview";
+import {
+  DEFAULT_FONT_ROLES,
+  FONT_ROLES,
+  fontStack,
+  isHex,
+  normalizeColors,
+  normalizeFontRoles,
+  ensureFontsLoaded,
+  type BrandColor,
+  type BrandFontRole,
+} from "@/lib/brand-style";
+
 
 import { cn } from "@/lib/utils";
 
@@ -55,6 +67,8 @@ type FormState = {
   usps: string[];
   primary_color: string;
   secondary_color: string;
+  color_palette: BrandColor[];
+  font_roles: BrandFontRole[];
   website: string;
 };
 
@@ -67,8 +81,11 @@ const EMPTY: FormState = {
   usps: [],
   primary_color: "",
   secondary_color: "",
+  color_palette: [],
+  font_roles: DEFAULT_FONT_ROLES,
   website: "",
 };
+
 
 const STEPS = [
   { key: "branche", label: "Branche" },
@@ -95,7 +112,7 @@ function MerkprofielPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("brand_profiles")
-        .select("industry, audience, tone, pillars, pillar_mix, usps, primary_color, secondary_color, website")
+        .select("industry, audience, tone, pillars, pillar_mix, usps, primary_color, secondary_color, color_palette, font_roles, website")
         .eq("org_id", currentOrgId!)
         .maybeSingle();
       if (error) throw error;
@@ -106,6 +123,10 @@ function MerkprofielPage() {
   useEffect(() => {
     if (profile) {
       const rawMix = Array.isArray(profile.pillar_mix) ? (profile.pillar_mix as unknown as PillarMix[]) : [];
+      const palette = normalizeColors(profile.color_palette);
+      const legacy = [profile.primary_color, profile.secondary_color]
+        .filter((c): c is string => !!c && isHex(c))
+        .map((hex, i) => ({ hex: hex.toLowerCase(), label: i === 0 ? "Primair" : "Secundair" }));
       setForm({
         industry: profile.industry ?? "",
         audience: profile.audience ?? "",
@@ -115,9 +136,12 @@ function MerkprofielPage() {
         usps: profile.usps ?? [],
         primary_color: profile.primary_color ?? "",
         secondary_color: profile.secondary_color ?? "",
+        color_palette: palette.length > 0 ? palette : legacy,
+        font_roles: normalizeFontRoles(profile.font_roles),
         website: profile.website ?? "",
       });
     }
+
   }, [profile]);
 
   const setField = <K extends keyof FormState>(k: K, v: FormState[K]) =>
@@ -157,16 +181,54 @@ function MerkprofielPage() {
     }
   };
 
-  const applyAnalysis = (opts: { colors?: boolean; tone?: boolean }) => {
+  const applyAnalysis = (opts: { colors?: boolean; tone?: boolean; fonts?: boolean }) => {
     if (!analysis) return;
-    setForm((f) => ({
-      ...f,
-      primary_color: opts.colors && analysis.suggested_primary ? analysis.suggested_primary : f.primary_color,
-      secondary_color: opts.colors && analysis.suggested_secondary ? analysis.suggested_secondary : f.secondary_color,
-      tone: opts.tone && analysis.tone_of_voice ? analysis.tone_of_voice : f.tone,
-    }));
+    setForm((f) => {
+      let palette = f.color_palette;
+      if (opts.colors) {
+        const found = normalizeColors([
+          ...(analysis.suggested_primary ? [analysis.suggested_primary] : []),
+          ...(analysis.suggested_secondary ? [analysis.suggested_secondary] : []),
+          ...analysis.palette,
+        ]);
+        const merged: BrandColor[] = [];
+        for (const c of found) {
+          if (merged.some((m) => m.hex === c.hex)) continue;
+          merged.push({
+            hex: c.hex,
+            label: merged.length === 0 ? "Primair" : merged.length === 1 ? "Secundair" : `Accent ${merged.length - 1}`,
+          });
+        }
+        if (merged.length > 0) palette = merged.slice(0, 8);
+      }
+
+      let fonts = f.font_roles;
+      if (opts.fonts && analysis.fonts.length > 0) {
+        const [a, b] = analysis.fonts;
+        fonts = normalizeFontRoles([
+          { role: "heading", family: a },
+          { role: "body", family: b ?? a },
+          { role: "overlay", family: a },
+          { role: "accent", family: b ?? a },
+        ]);
+      }
+
+      return {
+        ...f,
+        color_palette: palette,
+        font_roles: fonts,
+        primary_color: opts.colors ? palette[0]?.hex ?? f.primary_color : f.primary_color,
+        secondary_color: opts.colors ? palette[1]?.hex ?? f.secondary_color : f.secondary_color,
+        tone: opts.tone && analysis.tone_of_voice ? analysis.tone_of_voice : f.tone,
+      };
+    });
     toast.success("Overgenomen in het profiel");
   };
+
+  useEffect(() => {
+    ensureFontsLoaded(form.font_roles.map((r) => r.family));
+  }, [form.font_roles]);
+
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-10">
@@ -281,42 +343,23 @@ function MerkprofielPage() {
 
             {step === 4 && (
               <div className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="primary_color">Primaire kleur</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="primary_color"
-                        value={form.primary_color}
-                        onChange={(e) => setField("primary_color", e.target.value)}
-                        placeholder="#B0985C"
-                      />
-                      {form.primary_color && (
-                        <div
-                          className="w-10 h-10 rounded border border-border shrink-0"
-                          style={{ backgroundColor: form.primary_color }}
-                        />
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="secondary_color">Secundaire kleur</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="secondary_color"
-                        value={form.secondary_color}
-                        onChange={(e) => setField("secondary_color", e.target.value)}
-                        placeholder="#7A1F3D"
-                      />
-                      {form.secondary_color && (
-                        <div
-                          className="w-10 h-10 rounded border border-border shrink-0"
-                          style={{ backgroundColor: form.secondary_color }}
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <PaletteField
+                  values={form.color_palette}
+                  onChange={(v) =>
+                    setForm((f) => ({
+                      ...f,
+                      color_palette: v,
+                      primary_color: v[0]?.hex ?? "",
+                      secondary_color: v[1]?.hex ?? "",
+                    }))
+                  }
+                />
+
+                <FontRolesField
+                  values={form.font_roles}
+                  onChange={(v) => setField("font_roles", v)}
+                />
+
 
                 <div className="border-t border-border pt-5">
                   <div className="flex items-start justify-between gap-3 mb-3">
@@ -402,11 +445,16 @@ function MerkprofielPage() {
                         <div>
                           <div className="flex items-center justify-between mb-1">
                             <p className="text-xs uppercase tracking-widest text-muted-foreground">Kleurenpalet</p>
-                            {(analysis.suggested_primary || analysis.suggested_secondary) && (
+                            <div className="flex gap-1">
                               <Button size="sm" variant="ghost" onClick={() => applyAnalysis({ colors: true })}>
-                                Kleuren overnemen
+                                Hele palet overnemen
                               </Button>
-                            )}
+                              {analysis.fonts.length > 0 && (
+                                <Button size="sm" variant="ghost" onClick={() => applyAnalysis({ fonts: true })}>
+                                  Lettertypen overnemen
+                                </Button>
+                              )}
+                            </div>
                           </div>
                           <div className="flex flex-wrap gap-2">
                             {analysis.palette.map((c) => {
@@ -417,10 +465,27 @@ function MerkprofielPage() {
                                   key={c}
                                   type="button"
                                   onClick={() => {
-                                    if (!form.primary_color) setField("primary_color", c);
-                                    else setField("secondary_color", c);
-                                    toast.success(`Kleur ${c} toegepast`);
+                                    setForm((f) => {
+                                      if (f.color_palette.some((p) => p.hex === c.toLowerCase())) return f;
+                                      const next = [
+                                        ...f.color_palette,
+                                        {
+                                          hex: c.toLowerCase(),
+                                          label:
+                                            PALETTE_PLACEHOLDERS[f.color_palette.length] ??
+                                            `Accent ${Math.max(1, f.color_palette.length - 1)}`,
+                                        },
+                                      ];
+                                      return {
+                                        ...f,
+                                        color_palette: next,
+                                        primary_color: next[0]?.hex ?? "",
+                                        secondary_color: next[1]?.hex ?? "",
+                                      };
+                                    });
+                                    toast.success(`Kleur ${c} toegevoegd aan het palet`);
                                   }}
+
                                   className={cn(
                                     "group flex items-center gap-2 rounded border border-border bg-background px-2 py-1 text-xs font-mono hover:border-wine",
                                     (isPri || isSec) && "ring-1 ring-wine",
@@ -655,6 +720,157 @@ function PillarMixField({
             Normaliseer naar 100%
           </Button>
         )}
+      </div>
+    </div>
+  );
+}
+
+const PALETTE_PLACEHOLDERS = ["Primair", "Secundair", "Accent 1", "Accent 2"];
+
+function PaletteField({
+  values,
+  onChange,
+}: {
+  values: BrandColor[];
+  onChange: (v: BrandColor[]) => void;
+}) {
+  const list = values;
+  const update = (i: number, patch: Partial<BrandColor>) =>
+    onChange(list.map((c, j) => (j === i ? { ...c, ...patch } : c)));
+  const remove = (i: number) => onChange(list.filter((_, j) => j !== i));
+  const add = () =>
+    onChange([
+      ...list,
+      { hex: "#b0985c", label: PALETTE_PLACEHOLDERS[list.length] ?? `Accent ${Math.max(1, list.length - 1)}` },
+    ]);
+
+  const tooFew = list.length < 4;
+
+  return (
+    <div>
+      <div className="flex items-baseline justify-between mb-1">
+        <Label>Kleurenpalet</Label>
+        <span className={cn("text-xs font-semibold", tooFew ? "text-wine" : "text-emerald-600")}>
+          {list.length} kleuren {tooFew ? "— minimaal 4 aanbevolen" : "✓"}
+        </span>
+      </div>
+      <p className="text-xs text-muted-foreground mb-3">
+        De eerste kleur is de primaire, de tweede de secundaire. Alle overige kleuren gebruiken we als
+        accenten in beeld en campagnes. Geef elke kleur een naam zoals Achtergrond of Accent.
+      </p>
+
+      <div className="space-y-2">
+        {list.map((c, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-3 bg-muted/30 border border-border/60 rounded-md px-3 py-2"
+          >
+            <input
+              type="color"
+              value={isHex(c.hex) ? c.hex : "#000000"}
+              onChange={(e) => update(i, { hex: e.target.value.toLowerCase() })}
+              className="h-8 w-10 rounded border border-border bg-background p-0.5"
+              aria-label="Kies kleur"
+            />
+            <Input
+              value={c.hex}
+              onChange={(e) => update(i, { hex: e.target.value.toLowerCase() })}
+              className="w-32 h-8 bg-background font-mono text-xs"
+              placeholder="#b0985c"
+            />
+            <Input
+              value={c.label}
+              onChange={(e) => update(i, { label: e.target.value })}
+              className="flex-1 h-8 bg-background"
+              placeholder={PALETTE_PLACEHOLDERS[i] ?? "Rol van deze kleur"}
+            />
+            <button
+              type="button"
+              onClick={() => remove(i)}
+              className="text-muted-foreground hover:text-wine text-lg leading-none px-1"
+              aria-label="Verwijder kleur"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-2 mt-3">
+        <Button type="button" variant="outline" size="sm" onClick={add}>
+          + Kleur toevoegen
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+const FONT_SUGGESTIONS = [
+  "Playfair Display",
+  "Inter",
+  "Lora",
+  "Merriweather",
+  "Montserrat",
+  "Work Sans",
+  "Source Serif 4",
+  "Nunito Sans",
+  "Libre Baskerville",
+  "DM Sans",
+];
+
+function FontRolesField({
+  values,
+  onChange,
+}: {
+  values: BrandFontRole[];
+  onChange: (v: BrandFontRole[]) => void;
+}) {
+  const list = normalizeFontRoles(values);
+  const update = (role: string, family: string) =>
+    onChange(list.map((r) => (r.role === role ? { ...r, family } : r)));
+
+  return (
+    <div className="border-t border-border pt-5">
+      <Label>Lettertypen per rol</Label>
+      <p className="text-xs text-muted-foreground mt-0.5 mb-3">
+        Bepaal welk lettertype waar gebruikt wordt. De beeldtekst-rol wordt in de afbeeldingen gebrand,
+        de overige rollen sturen de previews en teksten in de content studio.
+      </p>
+
+      <datalist id="font-suggesties">
+        {FONT_SUGGESTIONS.map((f) => (
+          <option key={f} value={f} />
+        ))}
+      </datalist>
+
+      <div className="space-y-2">
+        {FONT_ROLES.map((r) => {
+          const current = list.find((x) => x.role === r.key)!;
+          return (
+            <div
+              key={r.key}
+              className="flex items-center gap-3 bg-muted/30 border border-border/60 rounded-md px-3 py-2"
+            >
+              <div className="w-44 shrink-0">
+                <p className="text-sm font-medium text-ink">{r.label}</p>
+                <p className="text-[11px] text-muted-foreground leading-tight">{r.hint}</p>
+              </div>
+              <Input
+                list="font-suggesties"
+                value={current.family}
+                onChange={(e) => update(r.key, e.target.value)}
+                className="h-8 bg-background w-52"
+                placeholder="Bv. Playfair Display"
+              />
+              <span
+                className="flex-1 truncate text-base text-ink"
+                style={{ fontFamily: fontStack(current.family) }}
+              >
+                Wilde bijen in Boekel
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

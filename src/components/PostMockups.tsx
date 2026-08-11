@@ -38,7 +38,7 @@ function ImageOverlay({ text }: { text?: string }) {
   if (!text) return null;
   return (
     <div className="absolute inset-x-0 bottom-0 p-4 flex items-end" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.25) 60%, transparent 100%)", minHeight: "35%" }}>
-      <p className="text-white font-semibold text-[16px] leading-tight line-clamp-2 drop-shadow-md" style={{ textShadow: "0 1px 3px rgba(0,0,0,0.4)", fontFamily: "var(--font-heading)" }}>
+      <p className="text-white font-semibold text-[16px] leading-tight line-clamp-2 drop-shadow-md" style={{ textShadow: "0 1px 3px rgba(0,0,0,0.4)", fontFamily: "var(--font-overlay, var(--font-heading))" }}>
         {text}
       </p>
     </div>
