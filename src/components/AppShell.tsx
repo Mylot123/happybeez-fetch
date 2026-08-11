@@ -25,6 +25,7 @@ import pptxAsset from "@/assets/HappyBeez-Social-Studio.pptx.asset.json";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/auth";
 import { OrgSwitcher } from "@/components/OrgSwitcher";
+import { useBrandStyle } from "@/hooks/use-brand-style";
 
 type NavItem = { path: string; label: string; icon: LucideIcon; ai?: boolean };
 type NavGroup = { label: string; items: NavItem[] };
