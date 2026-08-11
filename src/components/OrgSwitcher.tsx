@@ -1,7 +1,7 @@
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useState } from "react";
 import { useCurrentOrg } from "@/hooks/use-current-org";
-import { cn } from "@/lib/utils";
+import { brandName, cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
