@@ -3,6 +3,15 @@ import watermarkAsset from "@/assets/happybeez-watermark.png";
 const WM_URL = watermarkAsset as unknown as string;
 const MAX_DIM = 2400;
 
+/** Lettertype voor tekst in de afbeelding, gestuurd door het merkprofiel. */
+let overlayFontFamily = "Playfair Display";
+export function setOverlayFont(family: string) {
+  if (family && family.trim()) overlayFontFamily = family.trim();
+}
+export function getOverlayFont() {
+  return overlayFontFamily;
+}
+
 let cachedLogo: Promise<HTMLImageElement> | null = null;
 function loadLogo() {
   if (cachedLogo) return cachedLogo;
@@ -46,7 +55,7 @@ function drawOverlayText(
   const margin = Math.round(Math.min(width, height) * 0.06);
   const maxWidth = width - margin * 2;
 
-  ctx.font = `600 ${fontSize}px "Playfair Display", Georgia, serif`;
+  ctx.font = `600 ${fontSize}px "${overlayFontFamily}", Georgia, serif`;
   ctx.textBaseline = "alphabetic";
 
   // Woorden afbreken over maximaal 3 regels.
