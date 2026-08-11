@@ -55,6 +55,8 @@ type FormState = {
   usps: string[];
   primary_color: string;
   secondary_color: string;
+  color_palette: BrandColor[];
+  font_roles: BrandFontRole[];
   website: string;
 };
 
@@ -67,8 +69,11 @@ const EMPTY: FormState = {
   usps: [],
   primary_color: "",
   secondary_color: "",
+  color_palette: [],
+  font_roles: DEFAULT_FONT_ROLES,
   website: "",
 };
+
 
 const STEPS = [
   { key: "branche", label: "Branche" },
