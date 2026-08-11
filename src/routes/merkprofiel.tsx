@@ -181,16 +181,54 @@ function MerkprofielPage() {
     }
   };
 
-  const applyAnalysis = (opts: { colors?: boolean; tone?: boolean }) => {
+  const applyAnalysis = (opts: { colors?: boolean; tone?: boolean; fonts?: boolean }) => {
     if (!analysis) return;
-    setForm((f) => ({
-      ...f,
-      primary_color: opts.colors && analysis.suggested_primary ? analysis.suggested_primary : f.primary_color,
-      secondary_color: opts.colors && analysis.suggested_secondary ? analysis.suggested_secondary : f.secondary_color,
-      tone: opts.tone && analysis.tone_of_voice ? analysis.tone_of_voice : f.tone,
-    }));
+    setForm((f) => {
+      let palette = f.color_palette;
+      if (opts.colors) {
+        const found = normalizeColors([
+          ...(analysis.suggested_primary ? [analysis.suggested_primary] : []),
+          ...(analysis.suggested_secondary ? [analysis.suggested_secondary] : []),
+          ...analysis.palette,
+        ]);
+        const merged: BrandColor[] = [];
+        for (const c of found) {
+          if (merged.some((m) => m.hex === c.hex)) continue;
+          merged.push({
+            hex: c.hex,
+            label: merged.length === 0 ? "Primair" : merged.length === 1 ? "Secundair" : `Accent ${merged.length - 1}`,
+          });
+        }
+        if (merged.length > 0) palette = merged.slice(0, 8);
+      }
+
+      let fonts = f.font_roles;
+      if (opts.fonts && analysis.fonts.length > 0) {
+        const [a, b] = analysis.fonts;
+        fonts = normalizeFontRoles([
+          { role: "heading", family: a },
+          { role: "body", family: b ?? a },
+          { role: "overlay", family: a },
+          { role: "accent", family: b ?? a },
+        ]);
+      }
+
+      return {
+        ...f,
+        color_palette: palette,
+        font_roles: fonts,
+        primary_color: opts.colors ? palette[0]?.hex ?? f.primary_color : f.primary_color,
+        secondary_color: opts.colors ? palette[1]?.hex ?? f.secondary_color : f.secondary_color,
+        tone: opts.tone && analysis.tone_of_voice ? analysis.tone_of_voice : f.tone,
+      };
+    });
     toast.success("Overgenomen in het profiel");
   };
+
+  useEffect(() => {
+    ensureFontsLoaded(form.font_roles.map((r) => r.family));
+  }, [form.font_roles]);
+
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-10">
