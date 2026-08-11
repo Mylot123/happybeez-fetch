@@ -100,7 +100,7 @@ function MerkprofielPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("brand_profiles")
-        .select("industry, audience, tone, pillars, pillar_mix, usps, primary_color, secondary_color, website")
+        .select("industry, audience, tone, pillars, pillar_mix, usps, primary_color, secondary_color, color_palette, font_roles, website")
         .eq("org_id", currentOrgId!)
         .maybeSingle();
       if (error) throw error;
@@ -111,6 +111,10 @@ function MerkprofielPage() {
   useEffect(() => {
     if (profile) {
       const rawMix = Array.isArray(profile.pillar_mix) ? (profile.pillar_mix as unknown as PillarMix[]) : [];
+      const palette = normalizeColors(profile.color_palette);
+      const legacy = [profile.primary_color, profile.secondary_color]
+        .filter((c): c is string => !!c && isHex(c))
+        .map((hex, i) => ({ hex: hex.toLowerCase(), label: i === 0 ? "Primair" : "Secundair" }));
       setForm({
         industry: profile.industry ?? "",
         audience: profile.audience ?? "",
@@ -120,9 +124,12 @@ function MerkprofielPage() {
         usps: profile.usps ?? [],
         primary_color: profile.primary_color ?? "",
         secondary_color: profile.secondary_color ?? "",
+        color_palette: palette.length > 0 ? palette : legacy,
+        font_roles: normalizeFontRoles(profile.font_roles),
         website: profile.website ?? "",
       });
     }
+
   }, [profile]);
 
   const setField = <K extends keyof FormState>(k: K, v: FormState[K]) =>
