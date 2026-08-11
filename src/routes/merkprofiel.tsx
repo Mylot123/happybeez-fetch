@@ -15,6 +15,18 @@ import { saveBrandProfile } from "@/lib/brand.functions";
 import { analyzeWebsiteForBrand } from "@/lib/website-analysis.functions";
 import { BrandDocumentUpload } from "@/components/BrandDocumentUpload";
 import { BrandDataOverview } from "@/components/BrandDataOverview";
+import {
+  DEFAULT_FONT_ROLES,
+  FONT_ROLES,
+  fontStack,
+  isHex,
+  normalizeColors,
+  normalizeFontRoles,
+  ensureFontsLoaded,
+  type BrandColor,
+  type BrandFontRole,
+} from "@/lib/brand-style";
+
 
 import { cn } from "@/lib/utils";
 
