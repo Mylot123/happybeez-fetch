@@ -445,11 +445,16 @@ function MerkprofielPage() {
                         <div>
                           <div className="flex items-center justify-between mb-1">
                             <p className="text-xs uppercase tracking-widest text-muted-foreground">Kleurenpalet</p>
-                            {(analysis.suggested_primary || analysis.suggested_secondary) && (
+                            <div className="flex gap-1">
                               <Button size="sm" variant="ghost" onClick={() => applyAnalysis({ colors: true })}>
-                                Kleuren overnemen
+                                Hele palet overnemen
                               </Button>
-                            )}
+                              {analysis.fonts.length > 0 && (
+                                <Button size="sm" variant="ghost" onClick={() => applyAnalysis({ fonts: true })}>
+                                  Lettertypen overnemen
+                                </Button>
+                              )}
+                            </div>
                           </div>
                           <div className="flex flex-wrap gap-2">
                             {analysis.palette.map((c) => {
@@ -460,10 +465,27 @@ function MerkprofielPage() {
                                   key={c}
                                   type="button"
                                   onClick={() => {
-                                    if (!form.primary_color) setField("primary_color", c);
-                                    else setField("secondary_color", c);
-                                    toast.success(`Kleur ${c} toegepast`);
+                                    setForm((f) => {
+                                      if (f.color_palette.some((p) => p.hex === c.toLowerCase())) return f;
+                                      const next = [
+                                        ...f.color_palette,
+                                        {
+                                          hex: c.toLowerCase(),
+                                          label:
+                                            PALETTE_PLACEHOLDERS[f.color_palette.length] ??
+                                            `Accent ${Math.max(1, f.color_palette.length - 1)}`,
+                                        },
+                                      ];
+                                      return {
+                                        ...f,
+                                        color_palette: next,
+                                        primary_color: next[0]?.hex ?? "",
+                                        secondary_color: next[1]?.hex ?? "",
+                                      };
+                                    });
+                                    toast.success(`Kleur ${c} toegevoegd aan het palet`);
                                   }}
+
                                   className={cn(
                                     "group flex items-center gap-2 rounded border border-border bg-background px-2 py-1 text-xs font-mono hover:border-wine",
                                     (isPri || isSec) && "ring-1 ring-wine",
