@@ -1,7 +1,7 @@
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useState } from "react";
 import { useCurrentOrg } from "@/hooks/use-current-org";
-import { cn } from "@/lib/utils";
+import { brandName, cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,7 +50,7 @@ export function OrgSwitcher() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[13px] font-bold text-white truncate leading-tight">
-            {currentOrg.name}
+            {brandName(currentOrg.name)}
           </p>
           <p className="text-[11px] text-white/50 truncate">
             {currentRole ? ROLE_LABEL[currentRole] : ""}
@@ -68,7 +68,7 @@ export function OrgSwitcher() {
               onClick={() => setCurrentOrgId(m.org_id)}
               className="flex items-center gap-2"
             >
-              <span className="flex-1 truncate">{m.organization.name}</span>
+              <span className="flex-1 truncate">{brandName(m.organization.name)}</span>
               {m.org_id === currentOrg.id && <Check className="w-3.5 h-3.5 text-wine" />}
             </DropdownMenuItem>
           ))}

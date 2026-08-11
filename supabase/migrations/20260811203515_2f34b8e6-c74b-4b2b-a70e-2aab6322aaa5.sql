@@ -1,0 +1,1 @@
+UPDATE public.organizations SET name = 'Happybeez' WHERE name ILIKE 'happy beez' OR name ILIKE 'happybeez';
