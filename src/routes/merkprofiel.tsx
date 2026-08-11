@@ -702,3 +702,154 @@ function PillarMixField({
     </div>
   );
 }
+
+const PALETTE_PLACEHOLDERS = ["Primair", "Secundair", "Accent 1", "Accent 2"];
+
+function PaletteField({
+  values,
+  onChange,
+}: {
+  values: BrandColor[];
+  onChange: (v: BrandColor[]) => void;
+}) {
+  const list = values;
+  const update = (i: number, patch: Partial<BrandColor>) =>
+    onChange(list.map((c, j) => (j === i ? { ...c, ...patch } : c)));
+  const remove = (i: number) => onChange(list.filter((_, j) => j !== i));
+  const add = () =>
+    onChange([
+      ...list,
+      { hex: "#b0985c", label: PALETTE_PLACEHOLDERS[list.length] ?? `Accent ${Math.max(1, list.length - 1)}` },
+    ]);
+
+  const tooFew = list.length < 4;
+
+  return (
+    <div>
+      <div className="flex items-baseline justify-between mb-1">
+        <Label>Kleurenpalet</Label>
+        <span className={cn("text-xs font-semibold", tooFew ? "text-wine" : "text-emerald-600")}>
+          {list.length} kleuren {tooFew ? "— minimaal 4 aanbevolen" : "✓"}
+        </span>
+      </div>
+      <p className="text-xs text-muted-foreground mb-3">
+        De eerste kleur is de primaire, de tweede de secundaire. Alle overige kleuren gebruiken we als
+        accenten in beeld en campagnes. Geef elke kleur een naam zoals Achtergrond of Accent.
+      </p>
+
+      <div className="space-y-2">
+        {list.map((c, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-3 bg-muted/30 border border-border/60 rounded-md px-3 py-2"
+          >
+            <input
+              type="color"
+              value={isHex(c.hex) ? c.hex : "#000000"}
+              onChange={(e) => update(i, { hex: e.target.value.toLowerCase() })}
+              className="h-8 w-10 rounded border border-border bg-background p-0.5"
+              aria-label="Kies kleur"
+            />
+            <Input
+              value={c.hex}
+              onChange={(e) => update(i, { hex: e.target.value.toLowerCase() })}
+              className="w-32 h-8 bg-background font-mono text-xs"
+              placeholder="#b0985c"
+            />
+            <Input
+              value={c.label}
+              onChange={(e) => update(i, { label: e.target.value })}
+              className="flex-1 h-8 bg-background"
+              placeholder={PALETTE_PLACEHOLDERS[i] ?? "Rol van deze kleur"}
+            />
+            <button
+              type="button"
+              onClick={() => remove(i)}
+              className="text-muted-foreground hover:text-wine text-lg leading-none px-1"
+              aria-label="Verwijder kleur"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-2 mt-3">
+        <Button type="button" variant="outline" size="sm" onClick={add}>
+          + Kleur toevoegen
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+const FONT_SUGGESTIONS = [
+  "Playfair Display",
+  "Inter",
+  "Lora",
+  "Merriweather",
+  "Montserrat",
+  "Work Sans",
+  "Source Serif 4",
+  "Nunito Sans",
+  "Libre Baskerville",
+  "DM Sans",
+];
+
+function FontRolesField({
+  values,
+  onChange,
+}: {
+  values: BrandFontRole[];
+  onChange: (v: BrandFontRole[]) => void;
+}) {
+  const list = normalizeFontRoles(values);
+  const update = (role: string, family: string) =>
+    onChange(list.map((r) => (r.role === role ? { ...r, family } : r)));
+
+  return (
+    <div className="border-t border-border pt-5">
+      <Label>Lettertypen per rol</Label>
+      <p className="text-xs text-muted-foreground mt-0.5 mb-3">
+        Bepaal welk lettertype waar gebruikt wordt. De beeldtekst-rol wordt in de afbeeldingen gebrand,
+        de overige rollen sturen de previews en teksten in de content studio.
+      </p>
+
+      <datalist id="font-suggesties">
+        {FONT_SUGGESTIONS.map((f) => (
+          <option key={f} value={f} />
+        ))}
+      </datalist>
+
+      <div className="space-y-2">
+        {FONT_ROLES.map((r) => {
+          const current = list.find((x) => x.role === r.key)!;
+          return (
+            <div
+              key={r.key}
+              className="flex items-center gap-3 bg-muted/30 border border-border/60 rounded-md px-3 py-2"
+            >
+              <div className="w-44 shrink-0">
+                <p className="text-sm font-medium text-ink">{r.label}</p>
+                <p className="text-[11px] text-muted-foreground leading-tight">{r.hint}</p>
+              </div>
+              <Input
+                list="font-suggesties"
+                value={current.family}
+                onChange={(e) => update(r.key, e.target.value)}
+                className="h-8 bg-background w-52"
+                placeholder="Bv. Playfair Display"
+              />
+              <span
+                className="flex-1 truncate text-base text-ink"
+                style={{ fontFamily: fontStack(current.family) }}
+              >
+                Wilde bijen in Boekel
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
