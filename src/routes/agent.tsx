@@ -404,6 +404,27 @@ function AgentPage() {
         </p>
       </div>
 
+      <div className="inline-flex rounded-lg border border-border bg-card p-1 mb-4">
+        <button
+          onClick={() => setMode("chat")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors",
+            mode === "chat" ? "bg-wine text-primary-foreground" : "text-muted-foreground hover:text-ink",
+          )}
+        >
+          <Keyboard className="w-4 h-4" /> Chatten
+        </button>
+        <button
+          onClick={() => setMode("voice")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors",
+            mode === "voice" ? "bg-wine text-primary-foreground" : "text-muted-foreground hover:text-ink",
+          )}
+        >
+          <Mic className="w-4 h-4" /> Spraak
+        </button>
+      </div>
+
       <div className="bg-card border border-border rounded-lg p-6 shadow-sm mb-8">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
