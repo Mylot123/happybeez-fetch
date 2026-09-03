@@ -549,8 +549,48 @@ function AgentPage() {
               })}
             </div>
           )}
+
+          {chatSending && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-3">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" /> De Bijenspecialist denkt na…
+            </div>
+          )}
+
+          {(mode === "chat" || isConnected) && (
+            <div className="flex items-end gap-2 mt-4">
+              <textarea
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void sendChat();
+                  }
+                }}
+                rows={2}
+                placeholder={
+                  isConnected
+                    ? "Typ mee tijdens het gesprek…"
+                    : "Stel je vraag aan de Bijenspecialist…"
+                }
+                className="flex-1 resize-none rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wine/30"
+              />
+              <Button
+                onClick={() => void sendChat()}
+                disabled={chatSending || !chatInput.trim()}
+                className="bg-wine text-primary-foreground hover:bg-wine/90 h-[42px]"
+              >
+                {chatSending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
+
 
       <div className="mb-8">
         <h2 className="font-heading font-semibold text-ink text-xl mb-4 flex items-center gap-2">
