@@ -542,7 +542,7 @@ function AgentPage() {
                           : "bg-secondary text-ink",
                       )}
                     >
-                      {m.content}
+                      {m.role === "user" ? m.content : <ChatMarkdown content={m.content} />
                     </div>
                   </div>
                 );
