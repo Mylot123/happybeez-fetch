@@ -1,3 +1,4 @@
+import { ChatMarkdown } from "@/components/ChatMarkdown";
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useConversation, ConversationProvider } from "@elevenlabs/react";
@@ -709,7 +710,7 @@ function AgentPage() {
                               >
                                 {m.role === "user" ? "Jij:" : "De Bijenspecialist:"}
                               </span>
-                              <span className="text-ink">{m.content}</span>
+                              <span className="text-ink"><ChatMarkdown content={m.content} className="inline" /></span>
                             </div>
                           ))}
                         </div>
