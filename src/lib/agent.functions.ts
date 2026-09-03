@@ -142,3 +142,79 @@ export const backfillAgentSummaries = createServerFn({ method: "POST" })
     }
     return { processed: done };
   });
+
+const SYSTEM_PROMPT = `Je bent "De Bijenspecialist", de AI-assistent van Happybeez.
+Happybeez maakt handgemaakte, natuurvriendelijke bijenhotels in Boekel en verkoopt GEEN honing.
+Je helpt met wilde en solitaire bijen, biodiversiteit, tuininrichting, de producten van Happybeez
+en met vragen over dit platform (content, SEO, planning).
+Schrijf in het Nederlands, warm en deskundig, kort en concreet.
+Gebruik nooit gedachtestreepjes of koppelstreepjes tussen zinsdelen. Schrijf de merknaam altijd als "Happybeez".`;
+
+async function chatAI(messages: Array<{ role: string; content: string }>): Promise<string> {
+  const apiKey = process.env.LOVABLE_API_KEY;
+  if (!apiKey) throw new Error("LOVABLE_API_KEY ontbreekt");
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ model: "google/gemini-2.5-flash", messages }),
+  });
+  if (res.status === 429) throw new Error("Even te druk. Probeer het zo nog eens.");
+  if (res.status === 402) throw new Error("AI-tegoed op. Voeg credits toe in je Lovable-werkruimte.");
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error(`AI Gateway ${res.status}: ${t.slice(0, 200)}`);
+  }
+  const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+  return json.choices?.[0]?.message?.content?.trim() ?? "";
+}
+
+export const chatWithSpecialist = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({ conversationId: z.string().uuid(), message: z.string().min(1).max(4000) })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const supabase = context.supabase;
+
+    const { data: prior } = await supabase
+      .from("agent_messages")
+      .select("role,content,seq")
+      .eq("conversation_id", data.conversationId)
+      .order("seq", { ascending: true })
+      .limit(60);
+
+    const history = (prior ?? []).map((m) => ({
+      role: m.role === "user" ? "user" : "assistant",
+      content: m.content,
+    }));
+    let seq = (prior ?? []).reduce((max, m) => Math.max(max, (m.seq as number) ?? 0), -1) + 1;
+
+    await supabase.from("agent_messages").insert({
+      conversation_id: data.conversationId,
+      user_id: context.userId,
+      role: "user",
+      content: data.message,
+      seq: seq++,
+    });
+
+    const reply =
+      (await chatAI([
+        { role: "system", content: SYSTEM_PROMPT },
+        ...history,
+        { role: "user", content: data.message },
+      ])) || "Sorry, ik kon geen antwoord genereren.";
+
+    const clean = reply.replace(/\s+[—–]\s+/g, ", ").replace(/\s+-\s+/g, ", ");
+
+    await supabase.from("agent_messages").insert({
+      conversation_id: data.conversationId,
+      user_id: context.userId,
+      role: "agent",
+      content: clean,
+      seq: seq++,
+    });
+
+    return { reply: clean };
+  });
