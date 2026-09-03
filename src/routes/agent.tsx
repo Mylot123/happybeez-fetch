@@ -107,6 +107,11 @@ function AgentPage() {
   const summarizeFn = useServerFn(summarizeAgentConversation);
   const backfillFn = useServerFn(backfillAgentSummaries);
   const backfilledRef = useRef(false);
+  const chatFn = useServerFn(chatWithSpecialist);
+  const [mode, setMode] = useState<"voice" | "chat">("chat");
+  const [chatInput, setChatInput] = useState("");
+  const [chatSending, setChatSending] = useState(false);
+
 
   const conversation = useConversation({
     onConnect: () => toast.success("Verbonden met de Bijenspecialist"),
