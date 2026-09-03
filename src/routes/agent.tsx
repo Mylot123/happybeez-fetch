@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useConversation, ConversationProvider } from "@elevenlabs/react";
-import { Mic, MicOff, Loader2, MessageSquare, Trash2, ChevronDown, ChevronRight, ExternalLink, Tag } from "lucide-react";
+import { Mic, MicOff, Loader2, MessageSquare, Trash2, ChevronDown, ChevronRight, ExternalLink, Tag, Send, Keyboard } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
