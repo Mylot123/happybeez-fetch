@@ -9,7 +9,11 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useServerFn } from "@tanstack/react-start";
-import { summarizeAgentConversation, backfillAgentSummaries } from "@/lib/agent.functions";
+import {
+  summarizeAgentConversation,
+  backfillAgentSummaries,
+  chatWithSpecialist,
+} from "@/lib/agent.functions";
 
 const CATEGORY_LIST = [
   "SEO & Vindbaarheid",
