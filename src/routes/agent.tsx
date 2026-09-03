@@ -284,6 +284,80 @@ function AgentPage() {
     void loadHistory();
   }
 
+  async function ensureConversation(): Promise<string | null> {
+    if (convIdRef.current) return convIdRef.current;
+    if (!user) return null;
+    const { data, error } = await supabase
+      .from("agent_conversations")
+      .insert({
+        user_id: user.id,
+        agent_id: AGENT_ID,
+        title: `Chat ${new Date().toLocaleString("nl-NL")}`,
+      })
+      .select()
+      .single();
+    if (error || !data) {
+      toast.error("Kon gesprek niet starten");
+      return null;
+    }
+    convIdRef.current = data.id;
+    setConversationId(data.id);
+    seqRef.current = 0;
+    void loadHistory();
+    return data.id;
+  }
+
+  async function sendChat() {
+    const text = chatInput.trim();
+    if (!text || chatSending) return;
+
+    // Tijdens een spraakgesprek gaat getypte tekst rechtstreeks naar de agent.
+    if (isConnected) {
+      const send = (conversation as unknown as { sendUserMessage?: (t: string) => void })
+        .sendUserMessage;
+      if (typeof send === "function") {
+        send(text);
+        setChatInput("");
+        return;
+      }
+    }
+
+    const cid = await ensureConversation();
+    if (!cid) return;
+    setChatInput("");
+    setMessages((prev) => [...prev, { role: "user", content: text, ts: Date.now() }]);
+    setChatSending(true);
+    try {
+      const res = await chatFn({ data: { conversationId: cid, message: text } });
+      setMessages((prev) => [
+        ...prev,
+        { role: "agent", content: res.reply, ts: Date.now() },
+      ]);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Kon geen antwoord ophalen");
+    } finally {
+      setChatSending(false);
+    }
+  }
+
+  async function endChat() {
+    const cid = convIdRef.current;
+    if (!cid) return;
+    await supabase
+      .from("agent_conversations")
+      .update({ ended_at: new Date().toISOString() })
+      .eq("id", cid);
+    summarizeFn({ data: { conversationId: cid } })
+      .then(() => loadHistory())
+      .catch(() => {
+        /* stil */
+      });
+    convIdRef.current = null;
+    setConversationId(null);
+    setMessages([]);
+    void loadHistory();
+  }
+
   async function toggleExpand(id: string) {
     if (expanded[id]) {
       const copy = { ...expanded };
