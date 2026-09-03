@@ -435,19 +435,45 @@ function AgentPage() {
                   ? isSpeaking
                     ? "bg-gold/20 text-gold animate-pulse"
                     : "bg-wine/10 text-wine"
-                  : "bg-muted text-muted-foreground",
+                  : mode === "chat"
+                    ? "bg-wine/10 text-wine"
+                    : "bg-muted text-muted-foreground",
               )}
             >
-              {isConnected ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+              {mode === "chat" ? (
+                <MessageSquare className="w-5 h-5" />
+              ) : isConnected ? (
+                <Mic className="w-5 h-5" />
+              ) : (
+                <MicOff className="w-5 h-5" />
+              )}
             </div>
             <div>
               <p className="font-semibold text-ink text-sm">
-                {isConnected ? (isSpeaking ? "De Bijenspecialist praat…" : "De Bijenspecialist luistert…") : "Niet verbonden"}
+                {isConnected
+                  ? isSpeaking
+                    ? "De Bijenspecialist praat…"
+                    : "De Bijenspecialist luistert…"
+                  : mode === "chat"
+                    ? "Chat met de Bijenspecialist"
+                    : "Niet verbonden"}
               </p>
-              <p className="text-xs text-muted-foreground">Status: {conversation.status}</p>
+              <p className="text-xs text-muted-foreground">
+                {mode === "chat"
+                  ? conversationId
+                    ? "Gesprek loopt en wordt opgeslagen"
+                    : "Typ je vraag hieronder"
+                  : `Status: ${conversation.status}`}
+              </p>
             </div>
           </div>
-          {isConnected ? (
+          {mode === "chat" ? (
+            conversationId ? (
+              <Button onClick={endChat} variant="outline">
+                Gesprek afsluiten
+              </Button>
+            ) : null
+          ) : isConnected ? (
             <Button onClick={stop} variant="outline">
               Stop gesprek
             </Button>
@@ -474,8 +500,10 @@ function AgentPage() {
           {messages.length === 0 ? (
             <p className="text-sm text-muted-foreground italic text-center py-8">
               {isConnected
-                ? "Begin gewoon te praten — de Bijenspecialist luistert."
-                : "Klik op Start gesprek om met de Bijenspecialist te praten."}
+                ? "Begin gewoon te praten, de Bijenspecialist luistert."
+                : mode === "chat"
+                  ? "Stel je vraag hieronder, bijvoorbeeld: welke bijenhotel past in een kleine stadstuin?"
+                  : "Klik op Start gesprek om met de Bijenspecialist te praten."}
             </p>
           ) : (
             <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
