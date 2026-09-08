@@ -26,7 +26,6 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AgentRouteImport } from './routes/agent'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as EmbedBijenkennerRouteImport } from './routes/embed.bijenkenner'
 import { Route as ApiPublicBeeChatRouteImport } from './routes/api/public/bee-chat'
 import { Route as ApiPublicHooksCreatomateRouteImport } from './routes/api/public/hooks/creatomate'
 import { Route as ApiPublicHooksAyrshareRouteImport } from './routes/api/public/hooks/ayrshare'
@@ -119,11 +118,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EmbedBijenkennerRoute = EmbedBijenkennerRouteImport.update({
-  id: '/embed/bijenkenner',
-  path: '/embed/bijenkenner',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicBeeChatRoute = ApiPublicBeeChatRouteImport.update({
   id: '/api/public/bee-chat',
   path: '/api/public/bee-chat',
@@ -175,7 +169,6 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
-  '/embed/bijenkenner': typeof EmbedBijenkennerRoute
   '/api/public/bee-chat': typeof ApiPublicBeeChatRoute
   '/api/public/cron/analytics': typeof ApiPublicCronAnalyticsRoute
   '/api/public/cron/publish': typeof ApiPublicCronPublishRoute
@@ -201,7 +194,6 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
-  '/embed/bijenkenner': typeof EmbedBijenkennerRoute
   '/api/public/bee-chat': typeof ApiPublicBeeChatRoute
   '/api/public/cron/analytics': typeof ApiPublicCronAnalyticsRoute
   '/api/public/cron/publish': typeof ApiPublicCronPublishRoute
@@ -228,7 +220,6 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
-  '/embed/bijenkenner': typeof EmbedBijenkennerRoute
   '/api/public/bee-chat': typeof ApiPublicBeeChatRoute
   '/api/public/cron/analytics': typeof ApiPublicCronAnalyticsRoute
   '/api/public/cron/publish': typeof ApiPublicCronPublishRoute
@@ -256,7 +247,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/seo'
     | '/social-profielen'
-    | '/embed/bijenkenner'
     | '/api/public/bee-chat'
     | '/api/public/cron/analytics'
     | '/api/public/cron/publish'
@@ -282,7 +272,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/seo'
     | '/social-profielen'
-    | '/embed/bijenkenner'
     | '/api/public/bee-chat'
     | '/api/public/cron/analytics'
     | '/api/public/cron/publish'
@@ -308,7 +297,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/seo'
     | '/social-profielen'
-    | '/embed/bijenkenner'
     | '/api/public/bee-chat'
     | '/api/public/cron/analytics'
     | '/api/public/cron/publish'
@@ -335,7 +323,6 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SeoRoute: typeof SeoRoute
   SocialProfielenRoute: typeof SocialProfielenRoute
-  EmbedBijenkennerRoute: typeof EmbedBijenkennerRoute
   ApiPublicBeeChatRoute: typeof ApiPublicBeeChatRoute
   ApiPublicCronAnalyticsRoute: typeof ApiPublicCronAnalyticsRoute
   ApiPublicCronPublishRoute: typeof ApiPublicCronPublishRoute
@@ -465,13 +452,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/embed/bijenkenner': {
-      id: '/embed/bijenkenner'
-      path: '/embed/bijenkenner'
-      fullPath: '/embed/bijenkenner'
-      preLoaderRoute: typeof EmbedBijenkennerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/bee-chat': {
       id: '/api/public/bee-chat'
       path: '/api/public/bee-chat'
@@ -535,7 +515,6 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SeoRoute: SeoRoute,
   SocialProfielenRoute: SocialProfielenRoute,
-  EmbedBijenkennerRoute: EmbedBijenkennerRoute,
   ApiPublicBeeChatRoute: ApiPublicBeeChatRoute,
   ApiPublicCronAnalyticsRoute: ApiPublicCronAnalyticsRoute,
   ApiPublicCronPublishRoute: ApiPublicCronPublishRoute,
