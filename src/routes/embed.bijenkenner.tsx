@@ -127,7 +127,7 @@ function BijenkennerPage() {
       style={{
         background: PAGE,
         color: GREEN,
-        fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+        fontFamily: "'Open Sans', system-ui, -apple-system, sans-serif",
       }}
       className="min-h-screen flex flex-col"
     >
