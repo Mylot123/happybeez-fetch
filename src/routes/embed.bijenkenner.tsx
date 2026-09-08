@@ -112,7 +112,21 @@ function BijenkennerPage() {
             href="https://www.happybeez.nl"
             target="_top"
             rel="noopener"
-            className="inline-flex items-center gap-2 text-sm font-semibold"
+            onClick={(e) => {
+              const url = "https://www.happybeez.nl";
+              try {
+                if (window.top && window.top !== window.self) {
+                  e.preventDefault();
+                  window.top.location.href = url;
+                  return;
+                }
+              } catch {
+                /* sandboxed cross-origin top — fall through to same-frame nav */
+              }
+              e.preventDefault();
+              window.location.href = url;
+            }}
+            className="inline-flex items-center gap-2 text-sm font-semibold cursor-pointer"
             style={{ color: "#ffffff" }}
           >
             <ArrowLeft className="w-4 h-4" /> Terug naar happybeez.nl
