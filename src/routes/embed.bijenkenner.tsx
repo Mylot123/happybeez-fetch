@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useConversation } from "@elevenlabs/react";
+import { useConversation, ConversationProvider } from "@elevenlabs/react";
 import { Mic, MicOff, Send, Loader2, ArrowLeft, MessageSquare } from "lucide-react";
 import { ChatMarkdown } from "@/components/ChatMarkdown";
 
@@ -39,6 +39,14 @@ const MUTED = "#5b7a63";
 type Msg = { role: "user" | "assistant"; content: string };
 
 function EmbedBijenkenner() {
+  return (
+    <ConversationProvider>
+      <BijenkennerPage />
+    </ConversationProvider>
+  );
+}
+
+function BijenkennerPage() {
   const [mode, setMode] = useState<"chat" | "voice">("chat");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -67,15 +75,6 @@ function EmbedBijenkenner() {
     if (mode === "chat") inputRef.current?.focus();
   }, [mode]);
 
-  function goBack() {
-    if (typeof window === "undefined") return;
-    if (window.self !== window.top) {
-      window.parent.postMessage({ type: "happybeez:close-bijenkenner" }, "*");
-      return;
-    }
-    if (window.history.length > 1) window.history.back();
-    else window.location.href = "https://www.happybeez.nl";
-  }
 
   async function send() {
     const text = input.trim();
@@ -128,13 +127,15 @@ function EmbedBijenkenner() {
         style={{ background: DARK }}
         className="flex items-center justify-between px-4 sm:px-6 py-3"
       >
-        <button
-          onClick={goBack}
+        <a
+          href="https://www.happybeez.nl"
+          target="_top"
+          rel="noopener"
           className="inline-flex items-center gap-2 text-sm font-medium"
           style={{ color: "#ffffff" }}
         >
           <ArrowLeft className="w-4 h-4" /> Terug naar happybeez.nl
-        </button>
+        </a>
         <span className="text-xs tracking-wide" style={{ color: "#c9d8c9" }}>
           happybeez
         </span>
