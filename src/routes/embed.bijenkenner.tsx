@@ -38,7 +38,7 @@ const MUTED = "#5b7a63";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
-function EmbedBijenkenner() {
+export function EmbedBijenkenner() {
   return (
     <ConversationProvider>
       <BijenkennerPage />
