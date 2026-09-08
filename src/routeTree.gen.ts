@@ -21,6 +21,7 @@ import { Route as FotoBibliotheekRouteImport } from './routes/foto-bibliotheek'
 import { Route as ContentStudioRouteImport } from './routes/content-studio'
 import { Route as CampagnesRouteImport } from './routes/campagnes'
 import { Route as BoekRouteImport } from './routes/boek'
+import { Route as BijenkennerRouteImport } from './routes/bijenkenner'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AgentRouteImport } from './routes/agent'
@@ -93,6 +94,11 @@ const BoekRoute = BoekRouteImport.update({
   path: '/boek',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BijenkennerRoute = BijenkennerRouteImport.update({
+  id: '/bijenkenner',
+  path: '/bijenkenner',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/agent': typeof AgentRoute
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
+  '/bijenkenner': typeof BijenkennerRoute
   '/boek': typeof BoekRoute
   '/campagnes': typeof CampagnesRoute
   '/content-studio': typeof ContentStudioRoute
@@ -181,6 +188,7 @@ export interface FileRoutesByTo {
   '/agent': typeof AgentRoute
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
+  '/bijenkenner': typeof BijenkennerRoute
   '/boek': typeof BoekRoute
   '/campagnes': typeof CampagnesRoute
   '/content-studio': typeof ContentStudioRoute
@@ -207,6 +215,7 @@ export interface FileRoutesById {
   '/agent': typeof AgentRoute
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
+  '/bijenkenner': typeof BijenkennerRoute
   '/boek': typeof BoekRoute
   '/campagnes': typeof CampagnesRoute
   '/content-studio': typeof ContentStudioRoute
@@ -234,6 +243,7 @@ export interface FileRouteTypes {
     | '/agent'
     | '/analytics'
     | '/auth'
+    | '/bijenkenner'
     | '/boek'
     | '/campagnes'
     | '/content-studio'
@@ -259,6 +269,7 @@ export interface FileRouteTypes {
     | '/agent'
     | '/analytics'
     | '/auth'
+    | '/bijenkenner'
     | '/boek'
     | '/campagnes'
     | '/content-studio'
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
     | '/agent'
     | '/analytics'
     | '/auth'
+    | '/bijenkenner'
     | '/boek'
     | '/campagnes'
     | '/content-studio'
@@ -310,6 +322,7 @@ export interface RootRouteChildren {
   AgentRoute: typeof AgentRoute
   AnalyticsRoute: typeof AnalyticsRoute
   AuthRoute: typeof AuthRoute
+  BijenkennerRoute: typeof BijenkennerRoute
   BoekRoute: typeof BoekRoute
   CampagnesRoute: typeof CampagnesRoute
   ContentStudioRoute: typeof ContentStudioRoute
@@ -417,6 +430,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BoekRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bijenkenner': {
+      id: '/bijenkenner'
+      path: '/bijenkenner'
+      fullPath: '/bijenkenner'
+      preLoaderRoute: typeof BijenkennerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -502,6 +522,7 @@ const rootRouteChildren: RootRouteChildren = {
   AgentRoute: AgentRoute,
   AnalyticsRoute: AnalyticsRoute,
   AuthRoute: AuthRoute,
+  BijenkennerRoute: BijenkennerRoute,
   BoekRoute: BoekRoute,
   CampagnesRoute: CampagnesRoute,
   ContentStudioRoute: ContentStudioRoute,
