@@ -23,6 +23,14 @@ export const Route = createFileRoute("/embed/bijenkenner")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
+    links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap",
+      },
+    ],
   }),
 });
 
@@ -119,37 +127,36 @@ function BijenkennerPage() {
       style={{
         background: PAGE,
         color: GREEN,
-        fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+        fontFamily: "'Open Sans', system-ui, -apple-system, sans-serif",
       }}
       className="min-h-screen flex flex-col"
     >
-      <div
-        style={{ background: DARK }}
-        className="flex items-center justify-between px-4 sm:px-6 py-3"
-      >
-        <a
-          href="https://www.happybeez.nl"
-          target="_top"
-          rel="noopener"
-          className="inline-flex items-center gap-2 text-sm font-medium"
-          style={{ color: "#ffffff" }}
+      <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-4">
+        <div
+          style={{ background: DARK, borderRadius: 8 }}
+          className="flex items-center justify-between px-4 sm:px-6 py-3"
         >
-          <ArrowLeft className="w-4 h-4" /> Terug naar happybeez.nl
-        </a>
-        <span className="text-xs tracking-wide" style={{ color: "#c9d8c9" }}>
-          happybeez
-        </span>
+          <span className="text-base font-bold tracking-tight" style={{ color: "#ffffff" }}>
+            happybeez
+          </span>
+          <a
+            href="https://www.happybeez.nl"
+            target="_top"
+            rel="noopener"
+            className="inline-flex items-center gap-2 text-sm font-semibold"
+            style={{ color: "#ffffff" }}
+          >
+            <ArrowLeft className="w-4 h-4" /> Terug naar happybeez.nl
+          </a>
+        </div>
       </div>
 
-      <main className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-5">
-        <header className="text-center sm:text-left">
-          <h1
-            className="text-2xl sm:text-3xl font-semibold tracking-tight"
-            style={{ color: GREEN }}
-          >
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-5">
+        <header className="text-center">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight" style={{ color: GREEN }}>
             De Bijenkenner
           </h1>
-          <p className="mt-1 text-sm sm:text-base" style={{ color: MUTED }}>
+          <p className="mt-2 text-sm sm:text-base max-w-2xl mx-auto" style={{ color: MUTED }}>
             Stel je vraag over wilde bijen, bijenhotels en biodiversiteit in je tuin. Typ je vraag of
             stel hem hardop.
           </p>
