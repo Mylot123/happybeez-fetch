@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useConversation } from "@elevenlabs/react";
-import { Mic, MicOff, Send, Loader2, MessageSquare } from "lucide-react";
+import { Mic, MicOff, Send, Loader2, ArrowLeft, MessageSquare } from "lucide-react";
 import { ChatMarkdown } from "@/components/ChatMarkdown";
 
 export const Route = createFileRoute("/embed/bijenkenner")({
@@ -28,10 +28,15 @@ export const Route = createFileRoute("/embed/bijenkenner")({
 
 const AGENT_ID = "agent_9401kvw93hayexdrbs6z367s52m9";
 
-type Msg = { role: "user" | "assistant"; content: string };
+/* Huisstijl happybeez.nl */
+const DARK = "#23301f"; // donkergroene balk
+const GREEN = "#0f6b34"; // diep groen voor koppen en tekst
+const GREEN_SOFT = "#e7efe7"; // zacht groen vlak
+const PAGE = "#e8efe8"; // paginaachtergrond
+const ORANGE = "#e2662a"; // accentknop
+const MUTED = "#5b7a63";
 
-const GREEN = "#2f5d3a";
-const GREEN_SOFT = "#eaf1ea";
+type Msg = { role: "user" | "assistant"; content: string };
 
 function EmbedBijenkenner() {
   const [mode, setMode] = useState<"chat" | "voice">("chat");
@@ -40,6 +45,7 @@ function EmbedBijenkenner() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const conversation = useConversation({
     onMessage: (m: { message?: string; source?: string }) => {
@@ -56,6 +62,20 @@ function EmbedBijenkenner() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, sending]);
+
+  useEffect(() => {
+    if (mode === "chat") inputRef.current?.focus();
+  }, [mode]);
+
+  function goBack() {
+    if (typeof window === "undefined") return;
+    if (window.self !== window.top) {
+      window.parent.postMessage({ type: "happybeez:close-bijenkenner" }, "*");
+      return;
+    }
+    if (window.history.length > 1) window.history.back();
+    else window.location.href = "https://www.happybeez.nl";
+  }
 
   async function send() {
     const text = input.trim();
@@ -81,6 +101,7 @@ function EmbedBijenkenner() {
       setError("Geen verbinding. Probeer het opnieuw.");
     } finally {
       setSending(false);
+      inputRef.current?.focus();
     }
   }
 
@@ -96,130 +117,163 @@ function EmbedBijenkenner() {
 
   return (
     <div
-      style={{ background: "#ffffff", color: GREEN, fontFamily: "'Inter', system-ui, sans-serif" }}
-      className="min-h-screen flex flex-col p-4 gap-3"
+      style={{
+        background: PAGE,
+        color: GREEN,
+        fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+      }}
+      className="min-h-screen flex flex-col"
     >
-      <header className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold" style={{ color: GREEN }}>
-            De Bijenkenner
-          </h1>
-          <p className="text-xs" style={{ color: "#5b7a63" }}>
-            Stel je vraag over wilde bijen, bijenhotels en je tuin
-          </p>
-        </div>
-        <div className="flex rounded-full p-1" style={{ background: GREEN_SOFT }}>
-          {(["chat", "voice"] as const).map((m) => (
-            <button
-              key={m}
-              onClick={() => setMode(m)}
-              className="px-3 py-1.5 text-xs font-medium rounded-full transition-colors"
-              style={
-                mode === m
-                  ? { background: GREEN, color: "#ffffff" }
-                  : { background: "transparent", color: GREEN }
-              }
-            >
-              {m === "chat" ? "Chatten" : "Spraak"}
-            </button>
-          ))}
-        </div>
-      </header>
-
       <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto rounded-xl p-3 space-y-3"
-        style={{ border: `1px solid ${GREEN_SOFT}`, background: "#ffffff", minHeight: 220 }}
+        style={{ background: DARK }}
+        className="flex items-center justify-between px-4 sm:px-6 py-3"
       >
-        {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center gap-2 py-8">
-            <MessageSquare className="w-6 h-6" style={{ color: GREEN }} />
-            <p className="text-sm" style={{ color: "#5b7a63" }}>
-              {mode === "chat"
-                ? "Bijvoorbeeld: welk bijenhotel past in een kleine stadstuin?"
-                : "Klik op Start gesprek en stel je vraag hardop."}
-            </p>
-          </div>
-        ) : (
-          messages.map((m, i) => (
-            <div key={i} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
-              <div
-                className="max-w-[85%] rounded-xl px-3 py-2 text-sm"
-                style={
-                  m.role === "user"
-                    ? { background: GREEN, color: "#ffffff" }
-                    : { background: GREEN_SOFT, color: GREEN }
-                }
-              >
-                {m.role === "user" ? m.content : <ChatMarkdown content={m.content} />}
-              </div>
-            </div>
-          ))
-        )}
-        {sending && (
-          <div className="flex items-center gap-2 text-xs" style={{ color: "#5b7a63" }}>
-            <Loader2 className="w-3.5 h-3.5 animate-spin" /> De Bijenkenner denkt na…
-          </div>
-        )}
+        <button
+          onClick={goBack}
+          className="inline-flex items-center gap-2 text-sm font-medium"
+          style={{ color: "#ffffff" }}
+        >
+          <ArrowLeft className="w-4 h-4" /> Terug naar happybeez.nl
+        </button>
+        <span className="text-xs tracking-wide" style={{ color: "#c9d8c9" }}>
+          happybeez
+        </span>
       </div>
 
-      {error && (
-        <p className="text-xs" style={{ color: "#a33" }} role="alert">
-          {error}
-        </p>
-      )}
-
-      {mode === "chat" ? (
-        <div className="flex items-end gap-2">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                void send();
-              }
-            }}
-            rows={2}
-            placeholder="Stel je vraag aan de Bijenkenner…"
-            className="flex-1 resize-none rounded-xl px-3 py-2 text-sm outline-none"
-            style={{ border: `1px solid ${GREEN}`, color: GREEN, background: "#ffffff" }}
-          />
-          <button
-            onClick={() => void send()}
-            disabled={sending || !input.trim()}
-            aria-label="Verstuur vraag"
-            className="rounded-xl p-3 disabled:opacity-50"
-            style={{ background: GREEN, color: "#ffffff" }}
+      <main className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-5">
+        <header className="text-center sm:text-left">
+          <h1
+            className="text-2xl sm:text-3xl font-semibold tracking-tight"
+            style={{ color: GREEN }}
           >
-            <Send className="w-4 h-4" />
-          </button>
-        </div>
-      ) : (
-        <div className="flex justify-center">
-          {isConnected ? (
-            <button
-              onClick={() => void conversation.endSession()}
-              className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium"
-              style={{ background: GREEN_SOFT, color: GREEN, border: `1px solid ${GREEN}` }}
-            >
-              <MicOff className="w-4 h-4" /> Gesprek stoppen
-            </button>
+            De Bijenkenner
+          </h1>
+          <p className="mt-1 text-sm sm:text-base" style={{ color: MUTED }}>
+            Stel je vraag over wilde bijen, bijenhotels en biodiversiteit in je tuin. Typ je vraag of
+            stel hem hardop.
+          </p>
+        </header>
+
+        <div
+          className="rounded-2xl bg-white p-4 sm:p-6 flex flex-col gap-4"
+          style={{ boxShadow: "0 12px 30px -20px rgba(20,60,35,0.45)" }}
+        >
+          <div className="flex justify-center sm:justify-start">
+            <div className="inline-flex rounded-full p-1" style={{ background: GREEN_SOFT }}>
+              {(["chat", "voice"] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMode(m)}
+                  className="px-4 py-1.5 text-sm font-medium rounded-full transition-colors"
+                  style={
+                    mode === m
+                      ? { background: GREEN, color: "#ffffff" }
+                      : { background: "transparent", color: GREEN }
+                  }
+                >
+                  {m === "chat" ? "Chatten" : "Spraak"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div
+            ref={scrollRef}
+            className="flex-1 overflow-y-auto rounded-xl p-3 sm:p-4 space-y-3"
+            style={{ border: `1px solid ${GREEN_SOFT}`, background: "#ffffff", minHeight: 300, maxHeight: "50vh" }}
+          >
+            {messages.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center gap-2 py-10">
+                <MessageSquare className="w-6 h-6" style={{ color: GREEN }} />
+                <p className="text-sm max-w-sm" style={{ color: MUTED }}>
+                  {mode === "chat"
+                    ? "Bijvoorbeeld: welk bijenhotel past in een kleine stadstuin en op welke hoogte hang ik het op?"
+                    : "Klik op Start gesprek en stel je vraag hardop."}
+                </p>
+              </div>
+            ) : (
+              messages.map((m, i) => (
+                <div key={i} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
+                  <div
+                    className="max-w-[85%] rounded-2xl px-4 py-2.5 text-sm"
+                    style={
+                      m.role === "user"
+                        ? { background: GREEN, color: "#ffffff" }
+                        : { background: GREEN_SOFT, color: GREEN }
+                    }
+                  >
+                    {m.role === "user" ? m.content : <ChatMarkdown content={m.content} />}
+                  </div>
+                </div>
+              ))
+            )}
+            {sending && (
+              <div className="flex items-center gap-2 text-xs" style={{ color: MUTED }}>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> De Bijenkenner denkt na…
+              </div>
+            )}
+          </div>
+
+          {error && (
+            <p className="text-xs" style={{ color: "#a33" }} role="alert">
+              {error}
+            </p>
+          )}
+
+          {mode === "chat" ? (
+            <div className="flex items-end gap-2">
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void send();
+                  }
+                }}
+                rows={2}
+                placeholder="Stel je vraag aan de Bijenkenner…"
+                className="flex-1 resize-none rounded-xl px-3 py-2.5 text-sm outline-none"
+                style={{ border: `1px solid ${GREEN_SOFT}`, color: GREEN, background: "#ffffff" }}
+              />
+              <button
+                onClick={() => void send()}
+                disabled={sending || !input.trim()}
+                aria-label="Verstuur vraag"
+                className="rounded-xl p-3 disabled:opacity-50"
+                style={{ background: ORANGE, color: "#ffffff" }}
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
           ) : (
-            <button
-              onClick={() => void startVoice()}
-              className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium"
-              style={{ background: GREEN, color: "#ffffff" }}
-            >
-              <Mic className="w-4 h-4" /> Start gesprek
-            </button>
+            <div className="flex justify-center">
+              {isConnected ? (
+                <button
+                  onClick={() => void conversation.endSession()}
+                  className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium"
+                  style={{ background: GREEN_SOFT, color: GREEN, border: `1px solid ${GREEN}` }}
+                >
+                  <MicOff className="w-4 h-4" /> Gesprek stoppen
+                </button>
+              ) : (
+                <button
+                  onClick={() => void startVoice()}
+                  className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium"
+                  style={{ background: ORANGE, color: "#ffffff" }}
+                >
+                  <Mic className="w-4 h-4" /> Start gesprek
+                </button>
+              )}
+            </div>
           )}
         </div>
-      )}
 
-      <p className="text-[11px] text-center" style={{ color: "#7d9384" }}>
-        Happybeez helpt je graag verder met natuurvriendelijke bijenhotels.
-      </p>
+        <p className="text-[11px] text-center" style={{ color: "#7d9384" }}>
+          Happybeez maakt handgemaakte, natuurvriendelijke bijenhotels in Boekel.
+        </p>
+      </main>
     </div>
   );
 }
