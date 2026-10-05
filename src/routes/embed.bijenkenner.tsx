@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useConversation, ConversationProvider } from "@elevenlabs/react";
 import { Mic, MicOff, Send, Loader2, ArrowLeft, MessageSquare } from "lucide-react";
 import { ChatMarkdown } from "@/components/ChatMarkdown";
+import { DefaultChatTransport, readUIMessageStream, type UIMessage } from "ai";
 
 const AGENT_ID = "agent_9401kvw93hayexdrbs6z367s52m9";
 
@@ -87,19 +88,28 @@ function BijenkennerPage() {
     setMessages(next);
     setSending(true);
     try {
-      const res = await fetch("/api/public/bee-chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: next.slice(-16) }),
+      const transport = new DefaultChatTransport({
+        api: "/api/public/bee-chat",
+        prepareSendMessagesRequest: () => ({ body: { messages: next } }),
       });
-      const json = (await res.json()) as { reply?: string; error?: string };
-      if (!res.ok || !json.reply) {
-        setError(json.error ?? "Er ging iets mis. Probeer het opnieuw.");
-      } else {
-        setMessages((prev) => [...prev, { role: "assistant", content: json.reply as string }]);
+      const uiMessages: UIMessage[] = next.map((m, i) => ({
+        id: String(i), role: m.role, parts: [{ type: "text", text: m.content }],
+      }));
+      const stream = await transport.sendMessages({
+        trigger: "submit-message", chatId: "bijenkenner", messages: uiMessages,
+        messageId: undefined, abortSignal: undefined,
+      });
+      let received = false;
+      for await (const message of readUIMessageStream({ stream, terminateOnError: true })) {
+        const content = message.parts.filter((p) => p.type === "text").map((p) => p.text).join("")
+          .replace(/\s+[—–]\s+/g, ", ").replace(/([^\n]) +- +/g, "$1, ");
+        if (!content) continue;
+        received = true;
+        setMessages([...next, { role: "assistant", content }]);
       }
-    } catch {
-      setError("Geen verbinding. Probeer het opnieuw.");
+      if (!received) setError("Er is geen antwoord ontvangen. Stel je vraag opnieuw.");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Geen verbinding. Probeer het opnieuw.");
     } finally {
       setSending(false);
       inputRef.current?.focus();
@@ -175,7 +185,7 @@ function BijenkennerPage() {
         )}
 
         <div
-          className="rounded-2xl bg-white p-4 sm:p-6 flex flex-col gap-4"
+          className="rounded-2xl bg-white p-2 sm:p-3 flex flex-col gap-4"
           style={{ boxShadow: embed ? "none" : "0 12px 30px -20px rgba(20,60,35,0.45)" }}
         >
           <div className="flex justify-center sm:justify-start">
@@ -207,7 +217,7 @@ function BijenkennerPage() {
                 <MessageSquare className="w-6 h-6" style={{ color: GREEN }} />
                 <p className="text-sm max-w-sm" style={{ color: MUTED }}>
                   {mode === "chat"
-                    ? "Bijvoorbeeld: welk bijenhotel past in een kleine stadstuin en op welke hoogte hang ik het op?"
+                    ? ""
                     : "Klik op Start gesprek en stel je vraag hardop."}
                 </p>
               </div>
@@ -215,7 +225,7 @@ function BijenkennerPage() {
               messages.map((m, i) => (
                 <div key={i} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
                   <div
-                    className="max-w-[85%] rounded-2xl px-4 py-2.5 text-sm"
+                    className="max-w-[95%] rounded-2xl px-3 py-2.5 text-sm"
                     style={
                       m.role === "user"
                         ? { background: GREEN, color: "#ffffff" }
@@ -227,7 +237,7 @@ function BijenkennerPage() {
                 </div>
               ))
             )}
-            {sending && (
+            {sending && messages[messages.length - 1]?.role !== "assistant" && (
               <div className="flex items-center gap-2 text-xs" style={{ color: MUTED }}>
                 <Loader2 className="w-3.5 h-3.5 animate-spin" /> De Bijenkenner denkt na…
               </div>
@@ -253,7 +263,8 @@ function BijenkennerPage() {
                   }
                 }}
                 rows={2}
-                placeholder="Stel je vraag aan de Bijenkenner…"
+                placeholder="Bijvoorbeeld: welk bijenhotel past in een kleine stadstuin en op welke hoogte hang ik het op?"
+                aria-label="Stel je vraag aan de Bijenkenner"
                 className="flex-1 resize-none rounded-xl px-3 py-2.5 text-sm outline-none"
                 style={{ border: `1px solid ${GREEN_SOFT}`, color: GREEN, background: "#ffffff" }}
               />

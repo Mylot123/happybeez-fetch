@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { createResponsesCall } from "@/lib/bee-ai/responses.server";
+import { withLovableAiGatewayRunIdHeader } from "@/lib/bee-ai/run-id.server";
 
 const ALLOWED_ORIGINS = [
   "https://happybeez.nl",
@@ -28,7 +30,7 @@ const Body = z.object({
       }),
     )
     .min(1)
-    .max(24),
+    .max(200),
 });
 
 const SYSTEM_PROMPT = `Je bent de Bijenkenner van Happybeez, de online expert op de website van Happybeez.
@@ -38,20 +40,6 @@ Schrijf in het Nederlands, warm, deskundig en concreet. Houd antwoorden kort, ma
 Opmaak: korte alinea's van maximaal twee zinnen. Opsommingen op aparte regels met "- " ervoor. Vet alleen losse labels met **label**.
 Gebruik nooit gedachtestreepjes of koppelstreepjes tussen zinsdelen. Schrijf de merknaam altijd als "Happybeez".
 Weet je iets niet zeker, verwijs dan vriendelijk naar happybeez.nl of het contactformulier. Verzin geen prijzen, voorraad of levertijden.`;
-
-async function askAI(messages: Array<{ role: string; content: string }>) {
-  const apiKey = process.env["LOVABLE_API_KEY"];
-  if (!apiKey) throw new Error("missing_key");
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
-    }),
-  });
-  return res;
-}
 
 export const Route = createFileRoute("/api/public/bee-chat")({
   server: {
@@ -71,33 +59,22 @@ export const Route = createFileRoute("/api/public/bee-chat")({
         }
 
         try {
-          const res = await askAI(parsed.messages);
-          if (res.status === 429) {
-            return new Response(
-              JSON.stringify({ error: "Het is even druk. Probeer het zo nog eens." }),
-              { status: 429, headers },
-            );
-          }
-          if (res.status === 402) {
-            return new Response(
-              JSON.stringify({ error: "De assistent is tijdelijk niet beschikbaar." }),
-              { status: 503, headers },
-            );
-          }
-          if (!res.ok) {
-            return new Response(
-              JSON.stringify({ error: "De assistent is tijdelijk niet bereikbaar." }),
-              { status: 502, headers },
-            );
-          }
-          const json = (await res.json()) as {
-            choices?: Array<{ message?: { content?: string } }>;
-          };
-          const raw = json.choices?.[0]?.message?.content?.trim() ?? "";
-          const reply =
-            raw.replace(/\s+[—–]\s+/g, ", ").replace(/\s+-\s+/g, ", ") ||
-            "Sorry, ik kon even geen antwoord geven.";
-          return new Response(JSON.stringify({ reply }), { status: 200, headers });
+          const apiKey = process.env["LOVABLE_API_KEY"];
+          if (!apiKey) return new Response(JSON.stringify({ error: "De AI-configuratie ontbreekt." }), { status: 401, headers });
+          const call = createResponsesCall(request, {
+            baseURL: "https://ai.gateway.lovable.dev/v1",
+            apiKey,
+            model: "openai/gpt-6-astra",
+          }, parsed.messages, SYSTEM_PROMPT);
+          const { "Content-Type": _contentType, ...cors } = headers;
+          return await withLovableAiGatewayRunIdHeader(
+            call.result.toUIMessageStreamResponse({
+              sendReasoning: false,
+              onError: (error) => error instanceof Error ? error.message : "Er ging iets mis bij het antwoorden.",
+            }),
+            call.runIdFetch,
+            cors,
+          );
         } catch {
           return new Response(
             JSON.stringify({ error: "De assistent is tijdelijk niet bereikbaar." }),
