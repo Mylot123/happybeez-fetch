@@ -1,5 +1,5 @@
 import { createOpenAI } from "@ai-sdk/openai";
-import { streamText, type ModelMessage } from "ai";
+import { smoothStream, streamText, type ModelMessage } from "ai";
 
 import {
   createLovableAiGatewayRunIdFetch,
@@ -28,6 +28,7 @@ export function createResponsesCall(
     messages,
     abortSignal: request.signal,
     maxRetries: 0,
+    experimental_transform: smoothStream({ chunking: "word", delayInMs: 35 }),
     providerOptions: {
       openai: {
         store: false,
@@ -44,6 +45,7 @@ export function createResponsesCall(
   });
   return {
     result,
+    runIdFetch,
     response: () =>
       withLovableAiGatewayRunIdHeader(result.toUIMessageStreamResponse({ sendReasoning: true }), runIdFetch),
   };
