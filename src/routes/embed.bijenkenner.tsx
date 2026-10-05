@@ -246,6 +246,7 @@ function BijenkennerPage() {
               </div>
             )}
           </div>
+          )}
 
           {error && (
             <p className="text-xs" style={{ color: "#a33" }} role="alert">
