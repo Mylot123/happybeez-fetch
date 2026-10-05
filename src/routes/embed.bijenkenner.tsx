@@ -213,7 +213,7 @@ function BijenkennerPage() {
           <div
             ref={scrollRef}
             className="flex-1 min-h-0 overflow-y-auto rounded-xl p-3 sm:p-4 space-y-3"
-            style={{ border: `1px solid ${GREEN_SOFT}`, background: "#ffffff", minHeight: embed ? 200 : 300, maxHeight: embed ? "none" : "50vh" }}
+            style={{ border: `1px solid ${GREEN_SOFT}`, background: "#ffffff", minHeight: embed ? 0 : 300, maxHeight: embed ? "none" : "50vh" }}
           >
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center gap-2 py-10">
