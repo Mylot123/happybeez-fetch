@@ -49,8 +49,32 @@ function BijenkennerPage() {
   }, [messages, sending]);
 
   useEffect(() => {
-    if (mode === "chat") inputRef.current?.focus();
-  }, [mode]);
+    if (mode === "chat" && !embed) inputRef.current?.focus();
+  }, [mode, embed]);
+
+  useEffect(() => {
+    let inFrame = false;
+    try {
+      inFrame = window.self !== window.top;
+    } catch {
+      inFrame = true;
+    }
+    const param = new URLSearchParams(window.location.search).get("embed") === "1";
+    if (!inFrame && !param) return;
+    setEmbed(true);
+    const h = document.documentElement;
+    const b = document.body;
+    const prev = [h.style.background, b.style.background, h.style.overflow, b.style.overflow, b.style.margin];
+    h.style.background = "transparent";
+    b.style.background = "transparent";
+    h.style.overflow = "auto";
+    b.style.overflow = "visible";
+    b.style.margin = "0";
+    return () => {
+      [h.style.background, b.style.background, h.style.overflow, b.style.overflow, b.style.margin] = prev;
+    };
+  }, []);
+
 
 
   async function send() {
