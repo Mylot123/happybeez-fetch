@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { createResponsesCall } from "@/lib/bee-ai/responses.server";
+import { withLovableAiGatewayRunIdHeader } from "@/lib/bee-ai/run-id.server";
 
 const ALLOWED_ORIGINS = [
   "https://happybeez.nl",
