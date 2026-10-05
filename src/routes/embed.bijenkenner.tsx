@@ -133,7 +133,7 @@ function BijenkennerPage() {
         color: GREEN,
         fontFamily: "'Open Sans', system-ui, -apple-system, sans-serif",
       }}
-      className={embed ? "flex flex-col" : "min-h-screen flex flex-col"}
+      className={embed ? "h-screen w-full flex flex-col overflow-hidden" : "min-h-screen flex flex-col"}
     >
       {!embed && (
       <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-4">
@@ -185,7 +185,7 @@ function BijenkennerPage() {
         )}
 
         <div
-          className="rounded-2xl bg-white p-2 sm:p-3 flex flex-col gap-4"
+          className="rounded-2xl bg-white p-2 sm:p-3 flex flex-col gap-4 flex-1 min-h-0"
           style={{ boxShadow: embed ? "none" : "0 12px 30px -20px rgba(20,60,35,0.45)" }}
         >
           <div className="flex justify-center sm:justify-start">
@@ -209,8 +209,8 @@ function BijenkennerPage() {
 
           <div
             ref={scrollRef}
-            className="flex-1 overflow-y-auto rounded-xl p-3 sm:p-4 space-y-3"
-            style={{ border: `1px solid ${GREEN_SOFT}`, background: "#ffffff", minHeight: 300, maxHeight: "50vh" }}
+            className="flex-1 min-h-0 overflow-y-auto rounded-xl p-3 sm:p-4 space-y-3"
+            style={{ border: `1px solid ${GREEN_SOFT}`, background: "#ffffff", minHeight: embed ? 200 : 300, maxHeight: embed ? "none" : "50vh" }}
           >
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center gap-2 py-10">
