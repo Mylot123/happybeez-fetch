@@ -9,103 +9,33 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SocialProfielenRouteImport } from './routes/social-profielen'
-import { Route as SeoRouteImport } from './routes/seo'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as PlanningRouteImport } from './routes/planning'
-import { Route as NieuwsRouteImport } from './routes/nieuws'
-import { Route as MerkprofielRouteImport } from './routes/merkprofiel'
-import { Route as KalenderRouteImport } from './routes/kalender'
-import { Route as GoogleAdsRouteImport } from './routes/google-ads'
-import { Route as FotoBibliotheekRouteImport } from './routes/foto-bibliotheek'
-import { Route as ContentStudioRouteImport } from './routes/content-studio'
-import { Route as CampagnesRouteImport } from './routes/campagnes'
-import { Route as BoekRouteImport } from './routes/boek'
-import { Route as BijenkennerRouteImport } from './routes/bijenkenner'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AnalyticsRouteImport } from './routes/analytics'
-import { Route as AgentRouteImport } from './routes/agent'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AgentRouteImport } from './routes/agent'
+import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BijenkennerRouteImport } from './routes/bijenkenner'
+import { Route as BoekRouteImport } from './routes/boek'
+import { Route as CampagnesRouteImport } from './routes/campagnes'
+import { Route as ContentStudioRouteImport } from './routes/content-studio'
+import { Route as FotoBibliotheekRouteImport } from './routes/foto-bibliotheek'
+import { Route as GoogleAdsRouteImport } from './routes/google-ads'
+import { Route as KalenderRouteImport } from './routes/kalender'
+import { Route as MerkprofielRouteImport } from './routes/merkprofiel'
+import { Route as NieuwsRouteImport } from './routes/nieuws'
+import { Route as PlanningRouteImport } from './routes/planning'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SeoRouteImport } from './routes/seo'
+import { Route as SocialProfielenRouteImport } from './routes/social-profielen'
 import { Route as ApiPublicBeeChatRouteImport } from './routes/api/public/bee-chat'
-import { Route as ApiPublicHooksCreatomateRouteImport } from './routes/api/public/hooks/creatomate'
-import { Route as ApiPublicHooksAyrshareRouteImport } from './routes/api/public/hooks/ayrshare'
-import { Route as ApiPublicCronSeoTrackingRouteImport } from './routes/api/public/cron/seo-tracking'
-import { Route as ApiPublicCronPublishRouteImport } from './routes/api/public/cron/publish'
 import { Route as ApiPublicCronAnalyticsRouteImport } from './routes/api/public/cron/analytics'
+import { Route as ApiPublicCronPublishRouteImport } from './routes/api/public/cron/publish'
+import { Route as ApiPublicCronSeoTrackingRouteImport } from './routes/api/public/cron/seo-tracking'
+import { Route as ApiPublicHooksAyrshareRouteImport } from './routes/api/public/hooks/ayrshare'
+import { Route as ApiPublicHooksCreatomateRouteImport } from './routes/api/public/hooks/creatomate'
 
-const SocialProfielenRoute = SocialProfielenRouteImport.update({
-  id: '/social-profielen',
-  path: '/social-profielen',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SeoRoute = SeoRouteImport.update({
-  id: '/seo',
-  path: '/seo',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PlanningRoute = PlanningRouteImport.update({
-  id: '/planning',
-  path: '/planning',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NieuwsRoute = NieuwsRouteImport.update({
-  id: '/nieuws',
-  path: '/nieuws',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MerkprofielRoute = MerkprofielRouteImport.update({
-  id: '/merkprofiel',
-  path: '/merkprofiel',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const KalenderRoute = KalenderRouteImport.update({
-  id: '/kalender',
-  path: '/kalender',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GoogleAdsRoute = GoogleAdsRouteImport.update({
-  id: '/google-ads',
-  path: '/google-ads',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FotoBibliotheekRoute = FotoBibliotheekRouteImport.update({
-  id: '/foto-bibliotheek',
-  path: '/foto-bibliotheek',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContentStudioRoute = ContentStudioRouteImport.update({
-  id: '/content-studio',
-  path: '/content-studio',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CampagnesRoute = CampagnesRouteImport.update({
-  id: '/campagnes',
-  path: '/campagnes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BoekRoute = BoekRouteImport.update({
-  id: '/boek',
-  path: '/boek',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BijenkennerRoute = BijenkennerRouteImport.update({
-  id: '/bijenkenner',
-  path: '/bijenkenner',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AnalyticsRoute = AnalyticsRouteImport.update({
-  id: '/analytics',
-  path: '/analytics',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AgentRoute = AgentRouteImport.update({
@@ -113,9 +43,79 @@ const AgentRoute = AgentRouteImport.update({
   path: '/agent',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AnalyticsRoute = AnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BijenkennerRoute = BijenkennerRouteImport.update({
+  id: '/bijenkenner',
+  path: '/bijenkenner',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BoekRoute = BoekRouteImport.update({
+  id: '/boek',
+  path: '/boek',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CampagnesRoute = CampagnesRouteImport.update({
+  id: '/campagnes',
+  path: '/campagnes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContentStudioRoute = ContentStudioRouteImport.update({
+  id: '/content-studio',
+  path: '/content-studio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FotoBibliotheekRoute = FotoBibliotheekRouteImport.update({
+  id: '/foto-bibliotheek',
+  path: '/foto-bibliotheek',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GoogleAdsRoute = GoogleAdsRouteImport.update({
+  id: '/google-ads',
+  path: '/google-ads',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KalenderRoute = KalenderRouteImport.update({
+  id: '/kalender',
+  path: '/kalender',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MerkprofielRoute = MerkprofielRouteImport.update({
+  id: '/merkprofiel',
+  path: '/merkprofiel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NieuwsRoute = NieuwsRouteImport.update({
+  id: '/nieuws',
+  path: '/nieuws',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanningRoute = PlanningRouteImport.update({
+  id: '/planning',
+  path: '/planning',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SeoRoute = SeoRouteImport.update({
+  id: '/seo',
+  path: '/seo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SocialProfielenRoute = SocialProfielenRouteImport.update({
+  id: '/social-profielen',
+  path: '/social-profielen',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicBeeChatRoute = ApiPublicBeeChatRouteImport.update({
@@ -123,15 +123,14 @@ const ApiPublicBeeChatRoute = ApiPublicBeeChatRouteImport.update({
   path: '/api/public/bee-chat',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicHooksCreatomateRoute =
-  ApiPublicHooksCreatomateRouteImport.update({
-    id: '/api/public/hooks/creatomate',
-    path: '/api/public/hooks/creatomate',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksAyrshareRoute = ApiPublicHooksAyrshareRouteImport.update({
-  id: '/api/public/hooks/ayrshare',
-  path: '/api/public/hooks/ayrshare',
+const ApiPublicCronAnalyticsRoute = ApiPublicCronAnalyticsRouteImport.update({
+  id: '/api/public/cron/analytics',
+  path: '/api/public/cron/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicCronPublishRoute = ApiPublicCronPublishRouteImport.update({
+  id: '/api/public/cron/publish',
+  path: '/api/public/cron/publish',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicCronSeoTrackingRoute =
@@ -140,16 +139,17 @@ const ApiPublicCronSeoTrackingRoute =
     path: '/api/public/cron/seo-tracking',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicCronPublishRoute = ApiPublicCronPublishRouteImport.update({
-  id: '/api/public/cron/publish',
-  path: '/api/public/cron/publish',
+const ApiPublicHooksAyrshareRoute = ApiPublicHooksAyrshareRouteImport.update({
+  id: '/api/public/hooks/ayrshare',
+  path: '/api/public/hooks/ayrshare',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicCronAnalyticsRoute = ApiPublicCronAnalyticsRouteImport.update({
-  id: '/api/public/cron/analytics',
-  path: '/api/public/cron/analytics',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const ApiPublicHooksCreatomateRoute =
+  ApiPublicHooksCreatomateRouteImport.update({
+    id: '/api/public/hooks/creatomate',
+    path: '/api/public/hooks/creatomate',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -333,109 +333,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/social-profielen': {
-      id: '/social-profielen'
-      path: '/social-profielen'
-      fullPath: '/social-profielen'
-      preLoaderRoute: typeof SocialProfielenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/seo': {
-      id: '/seo'
-      path: '/seo'
-      fullPath: '/seo'
-      preLoaderRoute: typeof SeoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/planning': {
-      id: '/planning'
-      path: '/planning'
-      fullPath: '/planning'
-      preLoaderRoute: typeof PlanningRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/nieuws': {
-      id: '/nieuws'
-      path: '/nieuws'
-      fullPath: '/nieuws'
-      preLoaderRoute: typeof NieuwsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/merkprofiel': {
-      id: '/merkprofiel'
-      path: '/merkprofiel'
-      fullPath: '/merkprofiel'
-      preLoaderRoute: typeof MerkprofielRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/kalender': {
-      id: '/kalender'
-      path: '/kalender'
-      fullPath: '/kalender'
-      preLoaderRoute: typeof KalenderRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/google-ads': {
-      id: '/google-ads'
-      path: '/google-ads'
-      fullPath: '/google-ads'
-      preLoaderRoute: typeof GoogleAdsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/foto-bibliotheek': {
-      id: '/foto-bibliotheek'
-      path: '/foto-bibliotheek'
-      fullPath: '/foto-bibliotheek'
-      preLoaderRoute: typeof FotoBibliotheekRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/content-studio': {
-      id: '/content-studio'
-      path: '/content-studio'
-      fullPath: '/content-studio'
-      preLoaderRoute: typeof ContentStudioRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/campagnes': {
-      id: '/campagnes'
-      path: '/campagnes'
-      fullPath: '/campagnes'
-      preLoaderRoute: typeof CampagnesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/boek': {
-      id: '/boek'
-      path: '/boek'
-      fullPath: '/boek'
-      preLoaderRoute: typeof BoekRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/bijenkenner': {
-      id: '/bijenkenner'
-      path: '/bijenkenner'
-      fullPath: '/bijenkenner'
-      preLoaderRoute: typeof BijenkennerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/analytics': {
-      id: '/analytics'
-      path: '/analytics'
-      fullPath: '/analytics'
-      preLoaderRoute: typeof AnalyticsRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/agent': {
@@ -445,11 +347,109 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AgentRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/analytics': {
+      id: '/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bijenkenner': {
+      id: '/bijenkenner'
+      path: '/bijenkenner'
+      fullPath: '/bijenkenner'
+      preLoaderRoute: typeof BijenkennerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/boek': {
+      id: '/boek'
+      path: '/boek'
+      fullPath: '/boek'
+      preLoaderRoute: typeof BoekRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/campagnes': {
+      id: '/campagnes'
+      path: '/campagnes'
+      fullPath: '/campagnes'
+      preLoaderRoute: typeof CampagnesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/content-studio': {
+      id: '/content-studio'
+      path: '/content-studio'
+      fullPath: '/content-studio'
+      preLoaderRoute: typeof ContentStudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/foto-bibliotheek': {
+      id: '/foto-bibliotheek'
+      path: '/foto-bibliotheek'
+      fullPath: '/foto-bibliotheek'
+      preLoaderRoute: typeof FotoBibliotheekRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/google-ads': {
+      id: '/google-ads'
+      path: '/google-ads'
+      fullPath: '/google-ads'
+      preLoaderRoute: typeof GoogleAdsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kalender': {
+      id: '/kalender'
+      path: '/kalender'
+      fullPath: '/kalender'
+      preLoaderRoute: typeof KalenderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/merkprofiel': {
+      id: '/merkprofiel'
+      path: '/merkprofiel'
+      fullPath: '/merkprofiel'
+      preLoaderRoute: typeof MerkprofielRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nieuws': {
+      id: '/nieuws'
+      path: '/nieuws'
+      fullPath: '/nieuws'
+      preLoaderRoute: typeof NieuwsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/planning': {
+      id: '/planning'
+      path: '/planning'
+      fullPath: '/planning'
+      preLoaderRoute: typeof PlanningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/seo': {
+      id: '/seo'
+      path: '/seo'
+      fullPath: '/seo'
+      preLoaderRoute: typeof SeoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/social-profielen': {
+      id: '/social-profielen'
+      path: '/social-profielen'
+      fullPath: '/social-profielen'
+      preLoaderRoute: typeof SocialProfielenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/bee-chat': {
@@ -459,25 +459,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBeeChatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/creatomate': {
-      id: '/api/public/hooks/creatomate'
-      path: '/api/public/hooks/creatomate'
-      fullPath: '/api/public/hooks/creatomate'
-      preLoaderRoute: typeof ApiPublicHooksCreatomateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/ayrshare': {
-      id: '/api/public/hooks/ayrshare'
-      path: '/api/public/hooks/ayrshare'
-      fullPath: '/api/public/hooks/ayrshare'
-      preLoaderRoute: typeof ApiPublicHooksAyrshareRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/cron/seo-tracking': {
-      id: '/api/public/cron/seo-tracking'
-      path: '/api/public/cron/seo-tracking'
-      fullPath: '/api/public/cron/seo-tracking'
-      preLoaderRoute: typeof ApiPublicCronSeoTrackingRouteImport
+    '/api/public/cron/analytics': {
+      id: '/api/public/cron/analytics'
+      path: '/api/public/cron/analytics'
+      fullPath: '/api/public/cron/analytics'
+      preLoaderRoute: typeof ApiPublicCronAnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/cron/publish': {
@@ -487,11 +473,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronPublishRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/cron/analytics': {
-      id: '/api/public/cron/analytics'
-      path: '/api/public/cron/analytics'
-      fullPath: '/api/public/cron/analytics'
-      preLoaderRoute: typeof ApiPublicCronAnalyticsRouteImport
+    '/api/public/cron/seo-tracking': {
+      id: '/api/public/cron/seo-tracking'
+      path: '/api/public/cron/seo-tracking'
+      fullPath: '/api/public/cron/seo-tracking'
+      preLoaderRoute: typeof ApiPublicCronSeoTrackingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/ayrshare': {
+      id: '/api/public/hooks/ayrshare'
+      path: '/api/public/hooks/ayrshare'
+      fullPath: '/api/public/hooks/ayrshare'
+      preLoaderRoute: typeof ApiPublicHooksAyrshareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/creatomate': {
+      id: '/api/public/hooks/creatomate'
+      path: '/api/public/hooks/creatomate'
+      fullPath: '/api/public/hooks/creatomate'
+      preLoaderRoute: typeof ApiPublicHooksCreatomateRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
