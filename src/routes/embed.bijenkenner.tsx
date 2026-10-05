@@ -25,6 +25,7 @@ export function EmbedBijenkenner() {
 
 function BijenkennerPage() {
   const [mode, setMode] = useState<"chat" | "voice">("chat");
+  const [embed, setEmbed] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -118,12 +119,13 @@ function BijenkennerPage() {
   return (
     <div
       style={{
-        background: PAGE,
+        background: embed ? "transparent" : PAGE,
         color: GREEN,
         fontFamily: "'Open Sans', system-ui, -apple-system, sans-serif",
       }}
-      className="min-h-screen flex flex-col"
+      className={embed ? "flex flex-col" : "min-h-screen flex flex-col"}
     >
+      {!embed && (
       <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-4">
         <div
           style={{ background: DARK, borderRadius: 8 }}
@@ -157,8 +159,10 @@ function BijenkennerPage() {
           </a>
         </div>
       </div>
+      )}
 
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-5">
+      <main className={embed ? "w-full flex flex-col" : "flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-5"}>
+        {!embed && (
         <header className="text-center">
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight" style={{ color: GREEN }}>
             De Bijenkenner
@@ -168,10 +172,11 @@ function BijenkennerPage() {
             stel hem hardop.
           </p>
         </header>
+        )}
 
         <div
           className="rounded-2xl bg-white p-4 sm:p-6 flex flex-col gap-4"
-          style={{ boxShadow: "0 12px 30px -20px rgba(20,60,35,0.45)" }}
+          style={{ boxShadow: embed ? "none" : "0 12px 30px -20px rgba(20,60,35,0.45)" }}
         >
           <div className="flex justify-center sm:justify-start">
             <div className="inline-flex rounded-full p-1" style={{ background: GREEN_SOFT }}>
@@ -285,9 +290,9 @@ function BijenkennerPage() {
           )}
         </div>
 
-        <p className="text-[11px] text-center" style={{ color: "#7d9384" }}>
+        {!embed && <p className="text-[11px] text-center" style={{ color: "#7d9384" }}>
           Happybeez maakt handgemaakte, natuurvriendelijke bijenhotels in Boekel.
-        </p>
+        </p>}
       </main>
     </div>
   );
