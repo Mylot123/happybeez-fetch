@@ -171,7 +171,7 @@ function BijenkennerPage() {
       </div>
       )}
 
-      <main className={embed ? "w-full flex flex-col" : "flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-5"}>
+      <main className={embed ? "w-full flex-1 min-h-0 flex flex-col" : "flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-5"}>
         {!embed && (
         <header className="text-center">
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight" style={{ color: GREEN }}>
