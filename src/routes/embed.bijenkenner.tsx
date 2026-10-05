@@ -263,7 +263,7 @@ function BijenkennerPage() {
                   }
                 }}
                 rows={2}
-                placeholder="Bijvoorbeeld: welke bloemen zijn geschikt voor wilde bijen?"
+                placeholder="Bijvoorbeeld: welk bijenhotel past in een kleine stadstuin en op welke hoogte hang ik het op?"
                 aria-label="Stel je vraag aan de Bijenkenner"
                 className="flex-1 resize-none rounded-xl px-3 py-2.5 text-sm outline-none"
                 style={{ border: `1px solid ${GREEN_SOFT}`, color: GREEN, background: "#ffffff" }}
