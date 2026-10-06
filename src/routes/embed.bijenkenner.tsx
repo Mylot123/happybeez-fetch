@@ -6,6 +6,7 @@ import { ChatMarkdown } from "@/components/ChatMarkdown";
 const AGENT_ID = "agent_9401kvw93hayexdrbs6z367s52m9";
 const IDLE_MS = 5 * 60 * 1000;
 const UNAVAILABLE = "De Bijenkenner is even niet bereikbaar, probeer het later opnieuw";
+const GREETING = "Hoi, ik ben de bijenkenner van Happybeez. Waar kan ik je mee helpen?";
 
 /* Huisstijl happybeez.nl */
 const GREEN = "#0f6b34"; // diep groen voor koppen en tekst
@@ -27,7 +28,7 @@ export function EmbedBijenkenner() {
 function BijenkennerPage() {
   const [mode, setMode] = useState<"chat" | "voice">("chat");
   const [embed, setEmbed] = useState(false);
-  const [messages, setMessages] = useState<Msg[]>([]);
+  const [messages, setMessages] = useState<Msg[]>([{ role: "assistant", content: GREETING }]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
