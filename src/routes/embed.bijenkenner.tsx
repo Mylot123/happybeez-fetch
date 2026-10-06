@@ -238,7 +238,9 @@ function BijenkennerPage() {
           {!(embed && mode === "voice" && messages.length === 0) && (
           <div
             ref={scrollRef}
-            className="flex-1 min-h-0 overflow-y-auto rounded-xl p-3 sm:p-4 space-y-3 h-[360px] sm:h-[420px]"
+            className={embed
+              ? "overflow-y-auto rounded-xl p-3 sm:p-4 space-y-3 h-[360px] sm:h-[420px]"
+              : "flex-1 min-h-0 overflow-y-auto rounded-xl p-3 sm:p-4 space-y-3"}
             style={{ border: `1px solid ${GREEN_SOFT}`, background: "#ffffff", maxHeight: embed ? 420 : "50vh" }}
           >
             {messages.length === 0 ? (
