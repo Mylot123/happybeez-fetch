@@ -98,9 +98,13 @@ function BijenkennerPage() {
     endRef.current();
   }, []);
 
-  // Wissel van tab: lopende sessie van het andere kanaal sluiten
+  // Wissel van tab: lopende sessie sluiten en met een schoon gesprek starten
   useEffect(() => {
-    if (kindRef.current && kindRef.current !== mode) endRef.current();
+    endRef.current();
+    kindRef.current = null;
+    pendingRef.current = null;
+    setMessages([]);
+    setSending(false);
   }, [mode]);
 
   useEffect(() => {
@@ -188,15 +192,14 @@ function BijenkennerPage() {
     <div
       style={{
         background: embed ? "#ffffff" : PAGE,
-        ...(embed ? { height: "100vh" } : {}),
         color: GREEN,
         fontFamily: "'Open Sans', system-ui, -apple-system, sans-serif",
       }}
-      className={embed ? "w-full flex flex-col overflow-hidden m-0 p-0" : "min-h-screen flex flex-col"}
+      className={embed ? "w-full flex flex-col m-0 p-0" : "min-h-screen flex flex-col"}
       {...(embed ? { "data-embed": "1" } : {})}
     >
 
-      <main className={embed ? "w-full flex-1 min-h-0 flex flex-col" : "flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-5"}>
+      <main className={embed ? "w-full flex flex-col" : "flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-5"}>
         {!embed && (
         <header className="text-center">
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight" style={{ color: GREEN }}>
@@ -210,7 +213,7 @@ function BijenkennerPage() {
         )}
 
         <div
-          className={embed ? "bg-white p-3 flex flex-col gap-3 flex-1 min-h-0 rounded-none border-0" : "rounded-2xl bg-white p-2 sm:p-3 flex flex-col gap-4 flex-1 min-h-0"}
+          className={embed ? "bg-white p-3 flex flex-col gap-3 rounded-none border-0" : "rounded-2xl bg-white p-2 sm:p-3 flex flex-col gap-4 flex-1 min-h-0"}
           style={{ boxShadow: embed ? "none" : "0 12px 30px -20px rgba(20,60,35,0.45)" }}
         >
           <div className="flex justify-center sm:justify-start">
