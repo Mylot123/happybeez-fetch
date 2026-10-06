@@ -110,7 +110,8 @@ function BijenkennerPage() {
     endRef.current();
     kindRef.current = null;
     pendingRef.current = null;
-    setMessages([]);
+    skipGreetingRef.current = false;
+    setMessages([{ role: "assistant", content: GREETING }]);
     setSending(false);
   }, [mode]);
 
@@ -159,6 +160,7 @@ function BijenkennerPage() {
       } else {
         pendingRef.current = text;
         kindRef.current = "chat";
+        skipGreetingRef.current = true;
         conversation.startSession({
           agentId: AGENT_ID,
           textOnly: true,
@@ -184,6 +186,7 @@ function BijenkennerPage() {
     }
     try {
       kindRef.current = "voice";
+      skipGreetingRef.current = true;
       conversation.startSession({
         agentId: AGENT_ID,
         connectionType: "webrtc",
