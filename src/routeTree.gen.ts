@@ -26,7 +26,6 @@ import { Route as PlanningRouteImport } from './routes/planning'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SeoRouteImport } from './routes/seo'
 import { Route as SocialProfielenRouteImport } from './routes/social-profielen'
-import { Route as ApiPublicBeeChatRouteImport } from './routes/api/public/bee-chat'
 import { Route as ApiPublicCronAnalyticsRouteImport } from './routes/api/public/cron/analytics'
 import { Route as ApiPublicCronPublishRouteImport } from './routes/api/public/cron/publish'
 import { Route as ApiPublicCronSeoTrackingRouteImport } from './routes/api/public/cron/seo-tracking'
@@ -118,11 +117,6 @@ const SocialProfielenRoute = SocialProfielenRouteImport.update({
   path: '/social-profielen',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicBeeChatRoute = ApiPublicBeeChatRouteImport.update({
-  id: '/api/public/bee-chat',
-  path: '/api/public/bee-chat',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicCronAnalyticsRoute = ApiPublicCronAnalyticsRouteImport.update({
   id: '/api/public/cron/analytics',
   path: '/api/public/cron/analytics',
@@ -169,7 +163,6 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
-  '/api/public/bee-chat': typeof ApiPublicBeeChatRoute
   '/api/public/cron/analytics': typeof ApiPublicCronAnalyticsRoute
   '/api/public/cron/publish': typeof ApiPublicCronPublishRoute
   '/api/public/cron/seo-tracking': typeof ApiPublicCronSeoTrackingRoute
@@ -194,7 +187,6 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
-  '/api/public/bee-chat': typeof ApiPublicBeeChatRoute
   '/api/public/cron/analytics': typeof ApiPublicCronAnalyticsRoute
   '/api/public/cron/publish': typeof ApiPublicCronPublishRoute
   '/api/public/cron/seo-tracking': typeof ApiPublicCronSeoTrackingRoute
@@ -220,7 +212,6 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/seo': typeof SeoRoute
   '/social-profielen': typeof SocialProfielenRoute
-  '/api/public/bee-chat': typeof ApiPublicBeeChatRoute
   '/api/public/cron/analytics': typeof ApiPublicCronAnalyticsRoute
   '/api/public/cron/publish': typeof ApiPublicCronPublishRoute
   '/api/public/cron/seo-tracking': typeof ApiPublicCronSeoTrackingRoute
@@ -247,7 +238,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/seo'
     | '/social-profielen'
-    | '/api/public/bee-chat'
     | '/api/public/cron/analytics'
     | '/api/public/cron/publish'
     | '/api/public/cron/seo-tracking'
@@ -272,7 +262,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/seo'
     | '/social-profielen'
-    | '/api/public/bee-chat'
     | '/api/public/cron/analytics'
     | '/api/public/cron/publish'
     | '/api/public/cron/seo-tracking'
@@ -297,7 +286,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/seo'
     | '/social-profielen'
-    | '/api/public/bee-chat'
     | '/api/public/cron/analytics'
     | '/api/public/cron/publish'
     | '/api/public/cron/seo-tracking'
@@ -323,7 +311,6 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SeoRoute: typeof SeoRoute
   SocialProfielenRoute: typeof SocialProfielenRoute
-  ApiPublicBeeChatRoute: typeof ApiPublicBeeChatRoute
   ApiPublicCronAnalyticsRoute: typeof ApiPublicCronAnalyticsRoute
   ApiPublicCronPublishRoute: typeof ApiPublicCronPublishRoute
   ApiPublicCronSeoTrackingRoute: typeof ApiPublicCronSeoTrackingRoute
@@ -452,13 +439,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SocialProfielenRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/bee-chat': {
-      id: '/api/public/bee-chat'
-      path: '/api/public/bee-chat'
-      fullPath: '/api/public/bee-chat'
-      preLoaderRoute: typeof ApiPublicBeeChatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/cron/analytics': {
       id: '/api/public/cron/analytics'
       path: '/api/public/cron/analytics'
@@ -515,7 +495,6 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SeoRoute: SeoRoute,
   SocialProfielenRoute: SocialProfielenRoute,
-  ApiPublicBeeChatRoute: ApiPublicBeeChatRoute,
   ApiPublicCronAnalyticsRoute: ApiPublicCronAnalyticsRoute,
   ApiPublicCronPublishRoute: ApiPublicCronPublishRoute,
   ApiPublicCronSeoTrackingRoute: ApiPublicCronSeoTrackingRoute,

@@ -9,4 +9,4 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
-Public Bijenkenner chat uses request-local AI SDK Responses helpers in server-only modules and UI message streaming, so answers reach visitors word by word without exposing credentials or storing public conversations.
+Public Bijenkenner chat and voice both use the same ElevenLabs agent client-side (chat in textOnly mode with dynamicVariables kanaal), so prompt, model and knowledge base live in one place.

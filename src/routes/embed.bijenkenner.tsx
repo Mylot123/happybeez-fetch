@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useConversation, ConversationProvider } from "@elevenlabs/react";
-import { Mic, MicOff, Send, Loader2, ArrowLeft, MessageSquare } from "lucide-react";
+import { Mic, MicOff, Send, Loader2, MessageSquare } from "lucide-react";
 import { ChatMarkdown } from "@/components/ChatMarkdown";
-import { DefaultChatTransport, readUIMessageStream, type UIMessage } from "ai";
 
 const AGENT_ID = "agent_9401kvw93hayexdrbs6z367s52m9";
+const IDLE_MS = 5 * 60 * 1000;
+const UNAVAILABLE = "De Bijenkenner is even niet bereikbaar, probeer het later opnieuw";
 
 /* Huisstijl happybeez.nl */
-const DARK = "#23301f"; // donkergroene balk
 const GREEN = "#0f6b34"; // diep groen voor koppen en tekst
 const GREEN_SOFT = "#e7efe7"; // zacht groen vlak
 const PAGE = "#e8efe8"; // paginaachtergrond
@@ -33,18 +33,75 @@ function BijenkennerPage() {
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const kindRef = useRef<"chat" | "voice" | null>(null);
+  const pendingRef = useRef<string | null>(null);
+  const connectedRef = useRef(false);
+  const idleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const endRef = useRef<() => void>(() => {});
 
   const conversation = useConversation({
+    onConnect: () => {
+      connectedRef.current = true;
+      const pending = pendingRef.current;
+      pendingRef.current = null;
+      if (pending && kindRef.current === "chat") {
+        // kleine vertraging zodat de sessie volledig klaar is
+        setTimeout(() => conversation.sendUserMessage(pending), 50);
+      }
+    },
+    onDisconnect: () => {
+      const wasConnected = connectedRef.current;
+      connectedRef.current = false;
+      kindRef.current = null;
+      if (pendingRef.current || (!wasConnected && sendingRef.current)) {
+        pendingRef.current = null;
+        setSending(false);
+        setError(UNAVAILABLE);
+      }
+    },
     onMessage: (m: { message?: string; source?: string }) => {
       if (!m.message) return;
-      setMessages((prev) => [
-        ...prev,
-        { role: m.source === "user" ? "user" : "assistant", content: m.message as string },
-      ]);
+      const isUser = m.source === "user";
+      // In chat voegen we de vraag zelf al toe
+      if (isUser && kindRef.current === "chat") return;
+      const content = isUser
+        ? m.message
+        : m.message.replace(/\s+[—–]\s+/g, ", ").replace(/([^\n]) +- +/g, "$1, ");
+      setMessages((prev) => [...prev, { role: isUser ? "user" : "assistant", content }]);
+      if (!isUser) setSending(false);
+      resetIdle();
     },
-    onError: () => setError("Verbindingsfout met de spraakassistent."),
+    onError: () => {
+      pendingRef.current = null;
+      setSending(false);
+      setError(UNAVAILABLE);
+    },
   });
   const isConnected = conversation.status === "connected";
+  const sendingRef = useRef(false);
+  sendingRef.current = sending;
+  endRef.current = () => {
+    try {
+      conversation.endSession();
+    } catch {
+      /* al gesloten */
+    }
+  };
+
+  function resetIdle() {
+    if (idleRef.current) clearTimeout(idleRef.current);
+    idleRef.current = setTimeout(() => endRef.current(), IDLE_MS);
+  }
+
+  useEffect(() => () => {
+    if (idleRef.current) clearTimeout(idleRef.current);
+    endRef.current();
+  }, []);
+
+  // Wissel van tab: lopende sessie van het andere kanaal sluiten
+  useEffect(() => {
+    if (kindRef.current && kindRef.current !== mode) endRef.current();
+  }, [mode]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -77,52 +134,53 @@ function BijenkennerPage() {
     };
   }, []);
 
-
-
-  async function send() {
+  function send() {
     const text = input.trim();
     if (!text || sending) return;
     setError(null);
     setInput("");
-    const next: Msg[] = [...messages, { role: "user", content: text }];
-    setMessages(next);
+    setMessages((prev) => [...prev, { role: "user", content: text }]);
     setSending(true);
+    resetIdle();
     try {
-      const transport = new DefaultChatTransport({
-        api: "/api/public/bee-chat",
-        prepareSendMessagesRequest: () => ({ body: { messages: next } }),
-      });
-      const uiMessages: UIMessage[] = next.map((m, i) => ({
-        id: String(i), role: m.role, parts: [{ type: "text", text: m.content }],
-      }));
-      const stream = await transport.sendMessages({
-        trigger: "submit-message", chatId: "bijenkenner", messages: uiMessages,
-        messageId: undefined, abortSignal: undefined,
-      });
-      let received = false;
-      for await (const message of readUIMessageStream({ stream, terminateOnError: true })) {
-        const content = message.parts.filter((p) => p.type === "text").map((p) => p.text).join("")
-          .replace(/\s+[—–]\s+/g, ", ").replace(/([^\n]) +- +/g, "$1, ");
-        if (!content) continue;
-        received = true;
-        setMessages([...next, { role: "assistant", content }]);
+      if (connectedRef.current && kindRef.current === "chat") {
+        conversation.sendUserMessage(text);
+      } else {
+        pendingRef.current = text;
+        kindRef.current = "chat";
+        conversation.startSession({
+          agentId: AGENT_ID,
+          textOnly: true,
+          connectionType: "websocket",
+          dynamicVariables: { kanaal: "chat" },
+        });
       }
-      if (!received) setError("Er is geen antwoord ontvangen. Stel je vraag opnieuw.");
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Geen verbinding. Probeer het opnieuw.");
-    } finally {
+    } catch {
+      pendingRef.current = null;
       setSending(false);
-      inputRef.current?.focus();
+      setError(UNAVAILABLE);
     }
+    inputRef.current?.focus();
   }
 
   async function startVoice() {
     setError(null);
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
-      await conversation.startSession({ agentId: AGENT_ID, connectionType: "webrtc" });
     } catch {
       setError("Geef toestemming voor de microfoon om te kunnen praten.");
+      return;
+    }
+    try {
+      kindRef.current = "voice";
+      conversation.startSession({
+        agentId: AGENT_ID,
+        connectionType: "webrtc",
+        dynamicVariables: { kanaal: "spraak" },
+      });
+      resetIdle();
+    } catch {
+      setError(UNAVAILABLE);
     }
   }
 
@@ -137,41 +195,6 @@ function BijenkennerPage() {
       className={embed ? "w-full flex flex-col overflow-hidden m-0 p-0" : "min-h-screen flex flex-col"}
       {...(embed ? { "data-embed": "1" } : {})}
     >
-      {!embed && (
-      <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-4">
-        <div
-          style={{ background: DARK, borderRadius: 8 }}
-          className="flex items-center justify-between px-4 sm:px-6 py-3"
-        >
-          <span className="text-base font-bold tracking-tight" style={{ color: "#ffffff" }}>
-            happybeez
-          </span>
-          <a
-            href="https://www.happybeez.nl"
-            target="_top"
-            rel="noopener"
-            onClick={(e) => {
-              const url = "https://www.happybeez.nl";
-              try {
-                if (window.top && window.top !== window.self) {
-                  e.preventDefault();
-                  window.top.location.href = url;
-                  return;
-                }
-              } catch {
-                /* sandboxed cross-origin top — fall through to same-frame nav */
-              }
-              e.preventDefault();
-              window.location.href = url;
-            }}
-            className="inline-flex items-center gap-2 text-sm font-semibold cursor-pointer"
-            style={{ color: "#ffffff" }}
-          >
-            <ArrowLeft className="w-4 h-4" /> Terug naar happybeez.nl
-          </a>
-        </div>
-      </div>
-      )}
 
       <main className={embed ? "w-full flex-1 min-h-0 flex flex-col" : "flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-5"}>
         {!embed && (

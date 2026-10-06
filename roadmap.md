@@ -1,0 +1,1 @@
+- [x] Chat via ElevenLabs text-only (kanaal-variabele, start bij eerste bericht, 5 min idle), oude chat weg, donkere balk weg
