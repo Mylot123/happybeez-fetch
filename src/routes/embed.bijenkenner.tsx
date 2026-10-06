@@ -238,8 +238,8 @@ function BijenkennerPage() {
           {!(embed && mode === "voice" && messages.length === 0) && (
           <div
             ref={scrollRef}
-            className="flex-1 min-h-0 overflow-y-auto rounded-xl p-3 sm:p-4 space-y-3"
-            style={{ border: `1px solid ${GREEN_SOFT}`, background: "#ffffff", minHeight: embed ? 0 : 300, maxHeight: embed ? "none" : "50vh" }}
+            className="flex-1 min-h-0 overflow-y-auto rounded-xl p-3 sm:p-4 space-y-3 h-[360px] sm:h-[420px]"
+            style={{ border: `1px solid ${GREEN_SOFT}`, background: "#ffffff", maxHeight: embed ? 420 : "50vh" }}
           >
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center gap-2 py-10">
@@ -309,7 +309,7 @@ function BijenkennerPage() {
               </button>
             </div>
           ) : (
-            <div className={embed && messages.length === 0 ? "flex-1 flex items-center justify-center" : "flex justify-center"}>
+            <div className="flex justify-center py-2 sm:py-4">
               {isConnected ? (
                 <button
                   onClick={() => void conversation.endSession()}
