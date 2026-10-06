@@ -6,6 +6,7 @@ import { ChatMarkdown } from "@/components/ChatMarkdown";
 const AGENT_ID = "agent_9401kvw93hayexdrbs6z367s52m9";
 const IDLE_MS = 5 * 60 * 1000;
 const UNAVAILABLE = "De Bijenkenner is even niet bereikbaar, probeer het later opnieuw";
+const GREETING = "Hoi, ik ben de bijenkenner van Happybeez. Waar kan ik je mee helpen?";
 
 /* Huisstijl happybeez.nl */
 const GREEN = "#0f6b34"; // diep groen voor koppen en tekst
@@ -27,7 +28,7 @@ export function EmbedBijenkenner() {
 function BijenkennerPage() {
   const [mode, setMode] = useState<"chat" | "voice">("chat");
   const [embed, setEmbed] = useState(false);
-  const [messages, setMessages] = useState<Msg[]>([]);
+  const [messages, setMessages] = useState<Msg[]>([{ role: "assistant", content: GREETING }]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +38,7 @@ function BijenkennerPage() {
   const pendingRef = useRef<string | null>(null);
   const connectedRef = useRef(false);
   const idleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const skipGreetingRef = useRef(false);
   const endRef = useRef<() => void>(() => {});
 
   const conversation = useConversation({
@@ -64,6 +66,11 @@ function BijenkennerPage() {
       const isUser = m.source === "user";
       // In chat voegen we de vraag zelf al toe
       if (isUser && kindRef.current === "chat") return;
+      // Eerste agent-bericht na sessiestart is de begroeting; die tonen we al zelf
+      if (!isUser && skipGreetingRef.current) {
+        skipGreetingRef.current = false;
+        return;
+      }
       const content = isUser
         ? m.message
         : m.message.replace(/\s+[—–]\s+/g, ", ").replace(/([^\n]) +- +/g, "$1, ");
@@ -103,7 +110,8 @@ function BijenkennerPage() {
     endRef.current();
     kindRef.current = null;
     pendingRef.current = null;
-    setMessages([]);
+    skipGreetingRef.current = false;
+    setMessages([{ role: "assistant", content: GREETING }]);
     setSending(false);
   }, [mode]);
 
@@ -152,6 +160,7 @@ function BijenkennerPage() {
       } else {
         pendingRef.current = text;
         kindRef.current = "chat";
+        skipGreetingRef.current = true;
         conversation.startSession({
           agentId: AGENT_ID,
           textOnly: true,
@@ -177,6 +186,7 @@ function BijenkennerPage() {
     }
     try {
       kindRef.current = "voice";
+      skipGreetingRef.current = true;
       conversation.startSession({
         agentId: AGENT_ID,
         connectionType: "webrtc",
