@@ -38,6 +38,7 @@ function BijenkennerPage() {
   const pendingRef = useRef<string | null>(null);
   const connectedRef = useRef(false);
   const idleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const skipGreetingRef = useRef(false);
   const endRef = useRef<() => void>(() => {});
 
   const conversation = useConversation({
@@ -65,6 +66,11 @@ function BijenkennerPage() {
       const isUser = m.source === "user";
       // In chat voegen we de vraag zelf al toe
       if (isUser && kindRef.current === "chat") return;
+      // Eerste agent-bericht na sessiestart is de begroeting; die tonen we al zelf
+      if (!isUser && skipGreetingRef.current) {
+        skipGreetingRef.current = false;
+        return;
+      }
       const content = isUser
         ? m.message
         : m.message.replace(/\s+[—–]\s+/g, ", ").replace(/([^\n]) +- +/g, "$1, ");
