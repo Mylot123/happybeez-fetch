@@ -113,9 +113,8 @@ function AuthPage() {
 
         <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
           <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsList className="hidden">
               <TabsTrigger value="signin">Inloggen</TabsTrigger>
-              <TabsTrigger value="signup">Registreren</TabsTrigger>
             </TabsList>
 
             <TabsContent value="signin">
