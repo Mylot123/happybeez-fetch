@@ -116,10 +116,12 @@ function BijenkennerPage() {
       setError(UNAVAILABLE);
     },
     clientTools: {
-      // Jozef kan hiermee zelf het gesprek afronden
+      // Jozef kan hiermee zelf het gesprek afronden. Klaar is klaar:
+      // korte afscheidszin, dan stopt de sessie meteen.
       gesprek_beeindigen: () => {
-        setTimeout(() => endRef.current(), 2500);
-        return "Gesprek wordt beëindigd";
+        endReasonRef.current = "agent";
+        setTimeout(() => endRef.current(), 1500);
+        return "Gesprek beëindigd. Zeg niets meer.";
       },
     },
   });
