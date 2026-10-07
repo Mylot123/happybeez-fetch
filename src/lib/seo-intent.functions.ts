@@ -164,6 +164,7 @@ Geef JSON:
  "acties": ["max 5 concrete verbeterpunten, belangrijkste eerst"]
 }
 Verzin geen prijzen, cijfers of levertijden.`,
+      INTENT_SCHEMA,
     );
 
     const okCount = checks.filter((c) => c.ok).length;
@@ -211,6 +212,7 @@ JSON:
  "interne_links": ["2 tot 3 suggesties voor links naar productpagina's van Happybeez"]
 }
 Verzin geen cijfers, onderzoeken of klanten.`,
+      BLOG_SCHEMA,
     );
     const str = (v: unknown) => (typeof v === "string" ? v : "");
     const arr = (v: unknown) => (Array.isArray(v) ? v.map(str).filter(Boolean) : []);
