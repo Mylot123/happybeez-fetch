@@ -668,6 +668,20 @@ function Seo() {
 
               {snapshots.length > 1 && hasHistoryMetricData ? (
                 <Section title="Verloop domein" subtitle={`${snapshots.length} metingen bewaard — vergelijk hoe je domein zich ontwikkelt.`} icon={TrendingUp}>
+                  <details className="mb-4 rounded-md border border-border bg-secondary/30 p-3 text-sm">
+                    <summary className="cursor-pointer font-medium text-ink select-none">
+                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs mr-2">?</span>
+                      Wat betekenen deze cijfers?
+                    </summary>
+                    <div className="mt-3 space-y-2 text-muted-foreground">
+                      <p>Elke rij is een meting van hoe zoekmachines happybeez.nl op dat moment zien. Zo zie je of je website groeit.</p>
+                      <p><span className="font-medium text-ink">Globale rank:</span> de plek van je website tussen alle websites ter wereld. 4.4M betekent ongeveer plek 4,4 miljoen. Lager is beter. Een streepje betekent dat de site te klein is om mee te tellen in die wereldlijst.</p>
+                      <p><span className="font-medium text-ink">Organische KW:</span> op hoeveel zoekwoorden je website in de top 100 van Google staat, zonder te betalen. Hoger is beter.</p>
+                      <p><span className="font-medium text-ink">Verkeer (mnd):</span> hoeveel bezoekers per maand je naar schatting gratis via Google krijgt. Een streepje betekent dat je posities nog te laag staan (meestal pagina 2 of verder) om bezoekers te schatten.</p>
+                      <p><span className="font-medium text-ink">Verkeerwaarde:</span> wat die gratis bezoekers zouden kosten als je ze via Google Ads had moeten kopen. Ook hier betekent een streepje: nog te weinig bezoekers om te berekenen.</p>
+                      <p><span className="font-medium text-ink">Tip:</span> kijk vooral of Organische KW stijgt. Dat is het eerste teken dat je SEO-werk effect heeft.</p>
+                    </div>
+                  </details>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
