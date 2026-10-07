@@ -176,6 +176,7 @@ function BijenkennerPage() {
     skipGreetingRef.current = false;
     setMessages([{ role: "assistant", content: GREETING }]);
     setSending(false);
+    setNotice(null);
   }, [mode]);
 
   useEffect(() => {
@@ -404,7 +405,7 @@ function BijenkennerPage() {
             <div className="flex justify-center py-2 sm:py-4">
               {isConnected ? (
                 <button
-                  onClick={() => void conversation.endSession()}
+                  onClick={() => endRef.current()}
                   className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium"
                   style={{ background: GREEN_SOFT, color: GREEN, border: `1px solid ${GREEN}` }}
                 >
