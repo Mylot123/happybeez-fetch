@@ -6,6 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 const AGENT_ID = "agent_9401kvw93hayexdrbs6z367s52m9";
 const IDLE_MS = 5 * 60 * 1000;
+const VOICE_IDLE_MS = 45 * 1000; // spraak: na 45 sec stilte ophangen
+const VOICE_MAX_MS = 4 * 60 * 1000; // spraak: harde stop na 4 minuten
+const ENDED_NOTE = "Het gesprek is afgerond. Start gerust een nieuw gesprek.";
+const MAX_NOTE = "De maximale gespreksduur van 4 minuten is bereikt. Start gerust een nieuw gesprek.";
 const UNAVAILABLE = "De Bijenkenner is even niet bereikbaar, probeer het later opnieuw";
 const GREETING = "Hoi, ik ben de bijenkenner van Happybeez. Waar kan ik je mee helpen?";
 
@@ -67,13 +71,23 @@ function BijenkennerPage() {
     },
     onDisconnect: () => {
       const wasConnected = connectedRef.current;
+      const wasVoice = kindRef.current === "voice";
       connectedRef.current = false;
       kindRef.current = null;
+      clearTimers();
       if (pendingRef.current || (!wasConnected && sendingRef.current)) {
         pendingRef.current = null;
         setSending(false);
         setError(UNAVAILABLE);
+        return;
       }
+      if (wasConnected && wasVoice) {
+        // Gesprek voorbij: venster leegmaken en schoon beginnen
+        setMessages([{ role: "assistant", content: GREETING }]);
+        setSending(false);
+        setNotice(endReasonRef.current === "max" ? MAX_NOTE : ENDED_NOTE);
+      }
+      endReasonRef.current = null;
     },
     onMessage: (m: { message?: string; source?: string }) => {
       if (!m.message) return;
@@ -98,11 +112,19 @@ function BijenkennerPage() {
       setSending(false);
       setError(UNAVAILABLE);
     },
+    clientTools: {
+      // Jozef kan hiermee zelf het gesprek afronden
+      gesprek_beeindigen: () => {
+        setTimeout(() => endRef.current(), 2500);
+        return "Gesprek wordt beëindigd";
+      },
+    },
   });
   const isConnected = conversation.status === "connected";
   const sendingRef = useRef(false);
   sendingRef.current = sending;
   endRef.current = () => {
+    clearTimers();
     try {
       conversation.endSession();
     } catch {
@@ -110,14 +132,37 @@ function BijenkennerPage() {
     }
   };
 
+  function clearTimers() {
+    if (idleRef.current) clearTimeout(idleRef.current);
+    if (maxRef.current) clearTimeout(maxRef.current);
+    idleRef.current = null;
+    maxRef.current = null;
+  }
+
   function resetIdle() {
     if (idleRef.current) clearTimeout(idleRef.current);
-    idleRef.current = setTimeout(() => endRef.current(), IDLE_MS);
+    const ms = kindRef.current === "voice" ? VOICE_IDLE_MS : IDLE_MS;
+    idleRef.current = setTimeout(() => endRef.current(), ms);
   }
 
   useEffect(() => () => {
-    if (idleRef.current) clearTimeout(idleRef.current);
     endRef.current();
+  }, []);
+
+  // Tab of venster verlaten tijdens spraak: direct ophangen
+  useEffect(() => {
+    const stop = () => {
+      if (kindRef.current === "voice") endRef.current();
+    };
+    const onVis = () => {
+      if (document.visibilityState === "hidden") stop();
+    };
+    window.addEventListener("pagehide", stop);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("pagehide", stop);
+      document.removeEventListener("visibilitychange", onVis);
+    };
   }, []);
 
   // Wissel van tab: lopende sessie sluiten en met een schoon gesprek starten
