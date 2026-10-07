@@ -8,6 +8,13 @@
       "when": 1791367990157,
       "tag": "0000_bijenkenner_messages",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791384867105,
+      "tag": "0001_editors_full_access",
+      "breakpoints": true
     }
   ]
 }
