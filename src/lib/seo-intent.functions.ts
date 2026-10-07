@@ -2,31 +2,79 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-async function aiJson(system: string, prompt: string): Promise<Record<string, unknown>> {
+const S = { type: "string" } as const;
+const SA = { type: "array", items: S } as const;
+const obj = (props: Record<string, unknown>) => ({
+  type: "object",
+  properties: props,
+  required: Object.keys(props),
+  additionalProperties: false,
+});
+const INTENT_SCHEMA = obj({
+  intent_expected: S,
+  intent_page: S,
+  match: { type: "boolean" },
+  uitleg: S,
+  snippet_voorstel: S,
+  vraagkoppen: { type: "array", items: obj({ vraag: S, antwoord: S }) },
+  acties: SA,
+});
+const BLOG_SCHEMA = obj({
+  titel: S,
+  meta: S,
+  intro: S,
+  secties: { type: "array", items: obj({ kop: S, antwoord: S, punten: SA }) },
+  ervaring: SA,
+  interne_links: SA,
+});
+
+async function aiJson(system: string, prompt: string, schema: object): Promise<Record<string, unknown>> {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) throw new Error("AI is niet beschikbaar.");
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
     method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "X-Lovable-AIG-SDK": "fetch",
+    },
     body: JSON.stringify({
-      model: "openai/gpt-5-mini",
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: system + " Antwoord uitsluitend in geldig JSON. Schrijf de merknaam als Happybeez. Gebruik geen gedachtestreepjes." },
-        { role: "user", content: prompt },
-      ],
+      model: "openai/gpt-6-astra",
+      stream: true,
+      store: false,
+      reasoning: { effort: "low" },
+      instructions: system + " Schrijf de merknaam als Happybeez. Gebruik geen gedachtestreepjes.",
+      input: [{ role: "user", content: prompt }],
+      text: { format: { type: "json_schema", name: "result", strict: true, schema } },
     }),
   });
   if (res.status === 429) throw new Error("Even te veel aanvragen, probeer het zo opnieuw.");
   if (res.status === 402) throw new Error("AI-tegoed is op.");
-  if (!res.ok) throw new Error(`AI-fout (${res.status})`);
-  const j = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-  let t = j.choices?.[0]?.message?.content?.trim() ?? "{}";
-  if (t.startsWith("```")) t = t.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+  if (!res.ok || !res.body) throw new Error(`AI-fout (${res.status})`);
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "";
+  let out = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const lines = buf.split("\n");
+    buf = lines.pop() ?? "";
+    for (const l of lines) {
+      if (!l.startsWith("data:")) continue;
+      const d = l.slice(5).trim();
+      if (!d || d === "[DONE]") continue;
+      try {
+        const ev = JSON.parse(d) as { type?: string; delta?: string };
+        if (ev.type === "response.output_text.delta" && ev.delta) out += ev.delta;
+      } catch { /* noop */ }
+    }
+  }
   try {
-    return JSON.parse(t);
+    return JSON.parse(out);
   } catch {
-    const m = t.match(/\{[\s\S]*\}/);
+    const m = out.match(/\{[\s\S]*\}/);
     return m ? JSON.parse(m[0]) : {};
   }
 }
