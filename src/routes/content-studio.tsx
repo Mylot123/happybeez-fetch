@@ -706,6 +706,33 @@ LINKEDIN PLAYBOOK (verplicht volgen voor LinkedIn):
 • HASHTAGS: maximaal 3 onderaan, relevant (bv. #biodiversiteit #wildebijen #bijenhotel).
 • Vermijd: clickbait, overdreven claims ("red de bijen", "perfecte oplossing"), generieke "bijen" — gebruik "wilde bijen" / "solitaire bijen". Benadruk dat een bijenhotel alleen werkt mét bloemen, zon, beschutting en gifvrije omgeving.
 • Relevant voor: bedrijven met groen terrein, scholen, zorginstellingen, gemeenten, hoveniers, vastgoed, recreatieparken, duurzame ondernemers, HR/CSR/ESG-verantwoordelijken én tuinliefhebbers.
+
+LINKEDIN ALGORITME 2026 (verplicht):
+• DE VOUW: LinkedIn kapt op mobiel af na ca. 210 tekens ("...meer weergeven"). De eerste 2 regels moeten samen onder 210 tekens blijven en nieuwsgierigheid wekken zonder clickbait. Geen begroeting, geen aanloop, geen "Vandaag wil ik iets delen".
+• GEEN EXTERNE LINK in de posttekst (halveert het bereik). Verwijs hooguit naar "link in de eerste reactie".
+• HASHTAGS: 0 tot 3 specifieke niche-hashtags. Liever 1 goede dan 5 algemene.
+• Schrijf voor "dwell time": concrete details, getallen en een herkenbare situatie houden lezers vast.
+• De slotvraag moet een reactie van minimaal een zin uitlokken (ervaring, mening, voorbeeld), geen ja/nee-vraag.
+
+HOOKFORMULES (kies er precies één die past bij het onderwerp):
+1. Misverstand: "De meeste bijenhotels in tuinen blijven leeg. Dit is de reden."
+2. Contra-intuïtief inzicht: een stelling die tegen de gangbare aanname ingaat.
+3. Concreet getal: "Nederland heeft 360 soorten wilde bijen. De helft staat op de Rode Lijst."
+4. Mini-verhaal uit de werkplaats in Boekel: begin midden in een moment.
+5. Observatie uit de praktijk: "Vorige week zag ik bij een schoolplein..."
+6. Voor/na: hoe een plek veranderde nadat er bloemen, zon en nestgelegenheid kwamen.
+7. Fout die we zelf maakten en wat we ervan leerden.
+8. Vraag die klanten ons steeds stellen, met een verrassend antwoord.
+9. Kleine actie, groot effect: één concrete handeling met meetbaar resultaat.
+10. Stelling voor professionals (MVO, ESG, groen terrein) die discussie uitnodigt.
+Feiten en getallen moeten kloppen; verzin geen cijfers, klanten of anekdotes. Gebruik bij twijfel een algemene observatie.
+
+HUMANIZER-REGELS (AI-tells vermijden, verplicht):
+• Verboden woorden: "in het huidige landschap", "duik in", "ontgrendel", "naadloos", "cruciaal", "essentieel", "baanbrekend", "game changer", "revolutionair", "navigeren", "faciliteren", "optimaliseren", "synergie", "holistisch", "transformeren", "tapijt", "paradigma".
+• Geen staccato-trucjes zoals "Kort. Krachtig. Klaar." of "Niet X. Niet Y. Maar Z."
+• Geen retorische drieslagen achter elkaar, geen "Het resultaat?" als losse zin.
+• Geen gedachtestreepjes of koppelstreepjes tussen zinsdelen.
+• Wissel korte en langere zinnen natuurlijk af, schrijf zoals een vakman praat: concreet, nuchter, met een persoonlijke blik.
 `;
 
       const blogPlaybook = `
