@@ -4,7 +4,7 @@ import { CheckCircle2, Copy, FileText, Loader2, Sparkles, XCircle } from "lucide
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { checkIntentSnippet, generateBlogConcept, type BlogConcept, type IntentCheck } from "@/lib/seo-intent.functions";
+import { checkIntentSnippet, checkProductPage, generateBlogConcept, type BlogConcept, type IntentCheck, type ProductCheck } from "@/lib/seo-intent.functions";
 
 const copy = (t: string) => {
   navigator.clipboard.writeText(t);
@@ -179,6 +179,111 @@ export function SeoBlogConcept({ initialKeyword = "" }: { initialKeyword?: strin
           {res.interne_links.length ? (
             <div><p className="font-medium text-ink">Link naar</p><ul className="list-disc pl-5">{res.interne_links.map((e) => <li key={e}>{e}</li>)}</ul></div>
           ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export function SeoProductChecker() {
+  const run = useServerFn(checkProductPage);
+  const [url, setUrl] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [res, setRes] = useState<ProductCheck | null>(null);
+
+  const go = async () => {
+    if (!url.trim()) return toast.error("Vul de link van een productpagina in.");
+    setBusy(true);
+    try {
+      setRes(await run({ data: { url } }));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Controle mislukt");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const color = (s: number) => (s >= 75 ? "text-emerald-700" : s >= 50 ? "text-amber-600" : "text-red-600");
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+      <div>
+        <h3 className="font-heading text-xl text-ink">Productpagina en AI-vindbaarheid</h3>
+        <p className="text-sm text-muted-foreground mt-1">
+          Controleert een productpagina op koopsignalen, meet hoe goed AI-zoekmachines je tekst kunnen citeren en maakt de Google-productcode klaar om te plakken.
+        </p>
+      </div>
+      <div className="flex gap-3">
+        <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="happybeez.nl/product/bijenhotel" />
+        <Button onClick={go} disabled={busy} className="bg-wine text-white hover:bg-wine/90">
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Controleer product
+        </Button>
+      </div>
+
+      {res ? (
+        <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg bg-muted/40 p-4">
+              <div className={`text-4xl font-bold ${color(res.productScore)}`}>{res.productScore}</div>
+              <p className="font-medium text-ink">Productpagina-score</p>
+              <p className="text-sm text-muted-foreground">Hoe compleet de pagina is voor kopers en Google.</p>
+            </div>
+            <div className="rounded-lg bg-muted/40 p-4">
+              <div className={`text-4xl font-bold ${color(res.citability.score)}`}>{res.citability.score}</div>
+              <p className="font-medium text-ink">AI-citeerbaarheid</p>
+              <p className="text-sm text-muted-foreground">{res.citability.uitleg || "Hoe makkelijk ChatGPT of Google AI je tekst als bron gebruikt."}</p>
+            </div>
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-2">
+            {res.checks.map((c) => (
+              <div key={c.label} className="flex gap-2 text-sm rounded-md border border-border p-2">
+                {c.ok ? <CheckCircle2 className="h-4 w-4 text-emerald-700 shrink-0 mt-0.5" /> : <XCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />}
+                <div>
+                  <p className="font-medium text-ink">{c.label}</p>
+                  {!c.ok ? <p className="text-muted-foreground">{c.tip}</p> : null}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {res.titelVoorstel ? (
+            <div className="rounded-lg border border-border p-3 flex items-center justify-between gap-2">
+              <p className="text-sm"><b>Voorstel paginatitel:</b> {res.titelVoorstel}</p>
+              <Button size="sm" variant="ghost" onClick={() => copy(res.titelVoorstel)}><Copy className="h-4 w-4" /></Button>
+            </div>
+          ) : null}
+
+          {res.productTips.length ? (
+            <div>
+              <p className="font-medium text-ink mb-1">Beter verkopen en gevonden worden</p>
+              <ol className="list-decimal pl-5 text-sm space-y-1">{res.productTips.map((a) => <li key={a}>{a}</li>)}</ol>
+            </div>
+          ) : null}
+
+          <div className="rounded-lg border border-border p-3 space-y-2 text-sm">
+            <p className="font-medium text-ink">Beter geciteerd worden door AI</p>
+            {res.citability.zinnen.length ? (
+              <div>
+                <p className="text-muted-foreground">Deze zinnen zijn nu al goed bruikbaar als antwoord:</p>
+                <ul className="list-disc pl-5">{res.citability.zinnen.map((z) => <li key={z}>"{z}"</li>)}</ul>
+              </div>
+            ) : null}
+            {res.citability.tips.length ? <ol className="list-decimal pl-5">{res.citability.tips.map((t) => <li key={t}>{t}</li>)}</ol> : null}
+          </div>
+
+          <div className="rounded-lg border border-border p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="font-medium text-ink">Google-productcode (Product Schema)</p>
+              <Button size="sm" variant="outline" onClick={() => copy(res.jsonLd)}><Copy className="h-4 w-4" /> Kopieer code</Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Geef dit aan de webbeheerder. Die plakt het in de productpagina (bijvoorbeeld via een HTML-blok of een SEO-plugin). Gebruikt de webshop al een plugin die dit automatisch doet, dan is plakken niet nodig.
+            </p>
+            <pre className="text-xs bg-muted/40 rounded-md p-3 overflow-x-auto max-h-72">{res.jsonLd}</pre>
+            {res.ontbreekt.length ? (
+              <ul className="list-disc pl-5 text-sm text-amber-700">{res.ontbreekt.map((o) => <li key={o}>Let op: {o}</li>)}</ul>
+            ) : null}
+          </div>
         </div>
       ) : null}
     </div>

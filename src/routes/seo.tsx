@@ -28,7 +28,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
-import { SeoBlogConcept, SeoIntentChecker } from "@/components/SeoPageTools";
+import { SeoBlogConcept, SeoIntentChecker, SeoProductChecker } from "@/components/SeoPageTools";
 import { analyzeDomain, auditPage, discoverRankedKeywords, researchKeyword, trackKeywordScrape } from "@/lib/seo.functions";
 import {
   addSeoCompetitor,
@@ -1299,6 +1299,7 @@ function Seo() {
         <div className="space-y-6">
           <div>
             <SeoIntentChecker defaultUrl={domain ? `https://${domain}` : ""} />
+            <div className="mt-6"><SeoProductChecker /></div>
             <h2 className="font-heading text-2xl text-ink mt-6">Technische pagina-audit</h2>
             <p className="text-sm text-muted-foreground mt-1">
               Analyseer meta, content, techniek, snelheid en Core Web Vitals.
