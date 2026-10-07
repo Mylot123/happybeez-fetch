@@ -581,3 +581,33 @@ function SectionCard({ section }: { section: Section }) {
     </article>
   );
 }
+
+function AutoTagButton({ ids, onDone }: { ids: string[]; onDone: () => void }) {
+  const autoTag = useServerFn(autoTagPhotos);
+  const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState(0);
+  if (ids.length === 0) return null;
+  async function run() {
+    setBusy(true);
+    setProgress(0);
+    let done = 0;
+    try {
+      for (let i = 0; i < ids.length; i += 5) {
+        const r = await autoTag({ data: { photo_ids: ids.slice(i, i + 5) } });
+        done += r.done;
+        setProgress(Math.min(ids.length, i + 5));
+      }
+      toast.success(`${done} foto's automatisch beschreven en getagd.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Automatisch taggen mislukt.");
+    } finally {
+      setBusy(false);
+      onDone();
+    }
+  }
+  return (
+    <Button type="button" variant="outline" disabled={busy} onClick={() => void run()}>
+      {busy ? `AI bekijkt foto's… ${progress}/${ids.length}` : `AI-tags voor ${ids.length} foto's`}
+    </Button>
+  );
+}
