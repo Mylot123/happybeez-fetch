@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 Public Bijenkenner chat and voice both use the same ElevenLabs agent client-side (chat in textOnly mode with dynamicVariables kanaal), so prompt, model and knowledge base live in one place.
+- Alle teamleden (editor) hebben volledige rechten in alle modules; geen admin-only acties in de app.

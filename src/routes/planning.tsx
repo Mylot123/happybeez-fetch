@@ -69,7 +69,8 @@ function PlanningPage() {
   const { currentOrgId, currentRole } = useCurrentOrg();
   const qc = useQueryClient();
 
-  const isAdmin = currentRole === "org_admin" || currentRole === "agency_admin";
+  // Alle teamleden mogen alles bedienen (keuren, inplannen, publiceren).
+  const isAdmin = !!currentRole;
 
   const submit = useServerFn(submitPostForReview);
   const revert = useServerFn(revertPostToDraft);
