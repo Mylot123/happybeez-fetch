@@ -213,6 +213,7 @@ function BijenkennerPage() {
     const text = input.trim();
     if (!text || sending) return;
     setError(null);
+    setNotice(null);
     setInput("");
     setMessages((prev) => [...prev, { role: "user", content: text }]);
     setSending(true);
@@ -244,6 +245,8 @@ function BijenkennerPage() {
 
   async function startVoice() {
     setError(null);
+    setNotice(null);
+    endReasonRef.current = null;
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
@@ -260,6 +263,11 @@ function BijenkennerPage() {
         dynamicVariables: { kanaal: "spraak" },
       });
       resetIdle();
+      if (maxRef.current) clearTimeout(maxRef.current);
+      maxRef.current = setTimeout(() => {
+        endReasonRef.current = "max";
+        endRef.current();
+      }, VOICE_MAX_MS);
     } catch {
       setError(UNAVAILABLE);
     }
@@ -356,6 +364,11 @@ function BijenkennerPage() {
           {error && (
             <p className="text-xs" style={{ color: "#a33" }} role="alert">
               {error}
+            </p>
+          )}
+          {notice && !error && (
+            <p className="text-xs text-center" style={{ color: MUTED }} role="status">
+              {notice}
             </p>
           )}
 
