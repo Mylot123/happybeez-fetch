@@ -672,7 +672,15 @@ INSTAGRAM VIRAL-PLAYBOOK (verplicht volgen voor Instagram):
 • CTA: save/share/DM/profielbezoek.
 • HASHTAGS: 3–5 onderaan, mix branded + niche.
 • Vermijd absolute claims, generieke "bijen" (gebruik "wilde bijen").
+
+INSTAGRAM HUMANIZER (AI-tells vermijden, verplicht):
+• Verboden woorden en frases: "duik mee in", "ontdek de wereld van", "in de wereld van", "cruciaal", "essentieel", "transformerend", "transformeren", "naadloos", "ontgrendel", "baanbrekend", "game changer", "revolutionair", "magisch", "betoverend", "een ware", "niet zomaar", "laten we eens kijken", "het geheim van", "alles wat je moet weten", "next level", "must have", "het is geen geheim dat", "in een notendop", "stel je voor".
+• Geen opening met "Wist je dat" of "Ben jij ook", geen holle afsluiters als "Wat vind jij?" of "Laat het weten in de comments!".
+• Geen staccato-trucjes ("Simpel. Natuurlijk. Mooi."), geen "Niet X, maar Y"-constructies, geen drieslagen achter elkaar.
+• Geen gedachtestreepjes, geen emoji-rijen (nooit 🔥🔥🔥), geen uitroeptekens achter elke zin.
+• Schrijf zoals een vakman uit de werkplaats in Boekel praat: concreet, nuchter, met een eigen observatie.
 `;
+      const CAROUSEL_RULES = `Structuur: slide 1 is de cover (maximaal 6 woorden, met een duidelijke belofte). Slide 2 is een tweede cover die op zichzelf ook werkt, want Instagram toont slide 2 opnieuw aan wie slide 1 oversloeg. Slides 3 tot en met de voorlaatste geven elk precies één idee, inzicht of stap (maximaal 60 tekens per slide). De voorlaatste slide is een recap die je kunt screenshotten. De laatste slide is één CTA met één actie (opslaan, delen of DM). Geen gedachtestreepjes.`;
       const facebookPlaybook = `
 FACEBOOK PLAYBOOK (verplicht volgen voor Facebook):
 • Doel: reacties + delen + community-gevoel. Niet "stoppen met scrollen" maar "meedoen met gesprek".
@@ -800,8 +808,8 @@ TITEL: <kloppende titel, max 70 tekens>
 POST:
 <de volledige posttekst>
 ${carouselMode ? `CAROUSEL:
-<verplicht 5 slides, elk op een eigen regel als "1) Slide-tekst". Elke slide is maximaal 60 tekens, staat op zichzelf en bouwt het verhaal op: slide 1 is de hook, slides 2 t/m 4 geven inzicht of stappen, slide 5 is de uitnodiging.>` : (channel === "instagram" || channel === "facebook" ? `CAROUSEL:
-<alleen als het onderwerp technisch of stapsgewijs is: 4-6 slides, elk op een eigen regel als "1) Slide-titel". Anders schrijf je precies: geen>` : "")}`;
+<verplicht 6 tot 10 slides, elk op een eigen regel als "1) Slide-tekst". ${CAROUSEL_RULES}>` : (channel === "instagram" || channel === "facebook" ? `CAROUSEL:
+<alleen als het onderwerp technisch of stapsgewijs is: 6 tot 10 slides, elk op een eigen regel als "1) Slide-tekst". ${CAROUSEL_RULES} Anders schrijf je precies: geen>` : "")}`;
       const { text } = await generate({ data: { prompt } });
       const titleMatch = text.match(/^\s*TITEL:\s*(.+)$/m);
       const postMatch = text.match(/POST:\s*\n?([\s\S]*?)(?:\n\s*CAROUSEL:|$)/);
