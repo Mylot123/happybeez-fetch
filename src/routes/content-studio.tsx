@@ -687,14 +687,28 @@ FACEBOOK PLAYBOOK (verplicht volgen voor Facebook):
 • Persoonlijker dan Instagram. Open met een herkenbare vraag of observatie ("Heb jij vroeger ook meer bijen in de tuin gezien dan nu?").
 • EÉN HOOFDBOODSCHAP per post.
 • STRUCTUUR: herkenbare opening → kort probleem → praktische uitleg → Happybeez-koppeling (zacht, pas ná de educatieve waarde) → één concrete vraag of deel-CTA.
-• LENGTE: 120–220 woorden. Mag iets langer en persoonlijker dan Instagram, maar nooit wollig. B1, "je/jij".
+• LENGTE: standaard KORT, 40 tot 80 woorden. Korte posts krijgen op Facebook de meeste reacties. Alleen bij een verhaal of uitleg die echt ruimte nodig heeft mag het 120 tot 180 woorden worden. Nooit wollig. B1, "je/jij".
+• DE EERSTE REGEL is de hook: Facebook kapt af na ca. 2 regels. Die regel moet zonder de rest begrijpelijk en prikkelend zijn.
+• KIES PRECIES ÉÉN VORM die past bij het doel (reacties, delen of klik):
+  1. Herkenningsvraag (reacties): "Zie jij dit jaar ook minder bijen in je tuin?"
+  2. Deze of die (reacties): twee opties, lezer kiest. "Lavendel of tijm, wat trekt bij jou meer bijen?"
+  3. Herinnering/nostalgie (reacties): "Weet je nog hoe het vroeger zoemde in de tuin van je opa?"
+  4. Praktische tip (delen): één concrete handeling die iemand vandaag kan doen.
+  5. Misverstand rechtzetten (delen): een veelgehoorde fout en wat wel klopt.
+  6. Achter de schermen in de werkplaats in Boekel (reacties + vertrouwen).
+  7. Seizoensmoment (delen): wat er nu in de natuur gebeurt en wat je ermee doet.
+  8. Mini-verhaal van een echte observatie (reacties). Nooit verzinnen.
+  9. Kinderen en natuur (delen): iets om samen met kinderen te doen of te leren.
+  10. Aankondiging of nieuw product (klik): kort, met één duidelijke reden waarom nu.
+• ONTWERP OM TE DELEN: delen weegt het zwaarst in het Facebook-algoritme. Vraag jezelf: zou iemand dit doorsturen naar een buurman, ouder of vriend met een tuin? Nuttig, herkenbaar of hartverwarmend.
 • GEEN MARKDOWN. Geen sterretjes/bullets met * of -. Korte alinea's, witregels tussen blokken.
 • TOON: rustig, deskundig, natuurvriendelijk, menselijk. Lokale trots ("handgemaakt in Boekel") werkt hier sterker dan op Instagram.
 • WAARDEN die delen uitlokken: zorg voor natuur, tegen verstening, kinderen iets leren, ambacht, biodiversiteit dichtbij huis, kleine actie groot effect.
-• CTA: reactievraag of deel-CTA — NOOIT "sla op". Voorbeelden: "Deel dit met iemand met een tuin.", "Herken jij dit in jouw tuin?", "Welke bloemen doen het goed bij jou?", "Tag iemand die zijn tuin bijvriendelijker wil maken."
-• Vermijd te algemene vragen ("Wat vind jij hiervan?") — die leveren zwakke reacties.
+• CTA: één concrete reactievraag of deel-CTA, NOOIT "sla op". Voorbeelden: "Deel dit met iemand met een tuin.", "Herken jij dit in jouw tuin?", "Welke bloemen doen het goed bij jou?"
+• VERBODEN (engagement bait, wordt door Facebook afgestraft): "tag iemand", "like als", "reageer met JA", "deel als je het eens bent", "typ 1 als", en ja/nee-vragen zonder inhoud. Ook geen te algemene vragen ("Wat vind jij hiervan?").
+• LINKS: zet een link liever in de eerste reactie dan in de posttekst, tenzij het doel een klik is.
 • Vermijd harde verkoop. Educatie eerst, product als oplossing.
-• HASHTAGS: maximaal 2–4 onderaan, of helemaal geen. Geen lijst van 10 hashtags — dat oogt als marketing.
+• HASHTAGS: maximaal 0 tot 2 onderaan, liever geen. Geen lijst hashtags.
 • Vermijd absolute claims, generieke "bijen" (gebruik "wilde bijen" / "solitaire bijen").
 `;
       const linkedinPlaybook = `
