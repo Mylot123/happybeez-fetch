@@ -191,10 +191,16 @@ function Kennisbank() {
               automatisch een licht <span className="font-semibold text-ink">Happybeez</span>-watermerk
               rechtsonder toegevoegd voordat de foto wordt opgeslagen.
             </div>
-            <PhotoUploadButton
-              folderId={activeFolder !== "all" && activeFolder !== "none" ? activeFolder : null}
-              onUploaded={() => void load()}
-            />
+            <div className="flex items-center gap-2 flex-wrap">
+              <AutoTagButton
+                ids={photos.filter((p) => !p.tags.includes("ai-getagd")).map((p) => p.id)}
+                onDone={() => void load()}
+              />
+              <PhotoUploadButton
+                folderId={activeFolder !== "all" && activeFolder !== "none" ? activeFolder : null}
+                onUploaded={() => void load()}
+              />
+            </div>
           </div>
           <div className="mb-4 rounded-lg border border-border bg-card px-4 py-3">
             <div className="flex flex-wrap items-center gap-2">
