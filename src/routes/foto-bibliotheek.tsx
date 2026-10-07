@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PhotoUploadButton } from "@/components/PhotoUploadButton";
+import { useServerFn } from "@tanstack/react-start";
+import { autoTagPhotos } from "@/lib/photo-tagging.functions";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
@@ -191,10 +193,16 @@ function Kennisbank() {
               automatisch een licht <span className="font-semibold text-ink">Happybeez</span>-watermerk
               rechtsonder toegevoegd voordat de foto wordt opgeslagen.
             </div>
-            <PhotoUploadButton
-              folderId={activeFolder !== "all" && activeFolder !== "none" ? activeFolder : null}
-              onUploaded={() => void load()}
-            />
+            <div className="flex items-center gap-2 flex-wrap">
+              <AutoTagButton
+                ids={photos.filter((p) => !p.tags.includes("ai-getagd")).map((p) => p.id)}
+                onDone={() => void load()}
+              />
+              <PhotoUploadButton
+                folderId={activeFolder !== "all" && activeFolder !== "none" ? activeFolder : null}
+                onUploaded={() => void load()}
+              />
+            </div>
           </div>
           <div className="mb-4 rounded-lg border border-border bg-card px-4 py-3">
             <div className="flex flex-wrap items-center gap-2">
@@ -573,5 +581,35 @@ function SectionCard({ section }: { section: Section }) {
         </p>
       )}
     </article>
+  );
+}
+
+function AutoTagButton({ ids, onDone }: { ids: string[]; onDone: () => void }) {
+  const autoTag = useServerFn(autoTagPhotos);
+  const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState(0);
+  if (ids.length === 0) return null;
+  async function run() {
+    setBusy(true);
+    setProgress(0);
+    let done = 0;
+    try {
+      for (let i = 0; i < ids.length; i += 5) {
+        const r = await autoTag({ data: { photo_ids: ids.slice(i, i + 5) } });
+        done += r.done;
+        setProgress(Math.min(ids.length, i + 5));
+      }
+      toast.success(`${done} foto's automatisch beschreven en getagd.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Automatisch taggen mislukt.");
+    } finally {
+      setBusy(false);
+      onDone();
+    }
+  }
+  return (
+    <Button type="button" variant="outline" disabled={busy} onClick={() => void run()}>
+      {busy ? `AI bekijkt foto's… ${progress}/${ids.length}` : `AI-tags voor ${ids.length} foto's`}
+    </Button>
   );
 }

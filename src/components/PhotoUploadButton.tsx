@@ -4,6 +4,7 @@ import { Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { uploadUserPhoto } from "@/lib/image.functions";
+import { autoTagPhotos } from "@/lib/photo-tagging.functions";
 import { watermarkImage } from "@/lib/watermark";
 import { useCurrentOrg } from "@/hooks/use-current-org";
 
@@ -19,6 +20,7 @@ const MAX_BYTES = 15 * 1024 * 1024; // 15 MB source
 export function PhotoUploadButton({ onUploaded, compact, folderId }: Props) {
   const { currentOrgId } = useCurrentOrg();
   const upload = useServerFn(uploadUserPhoto);
+  const autoTag = useServerFn(autoTagPhotos);
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
 
@@ -31,6 +33,7 @@ export function PhotoUploadButton({ onUploaded, compact, folderId }: Props) {
     setBusy(true);
     let ok = 0;
     let fail = 0;
+    const newIds: string[] = [];
     for (const file of Array.from(files)) {
       if (!file.type.startsWith("image/")) {
         fail++;
@@ -44,7 +47,7 @@ export function PhotoUploadButton({ onUploaded, compact, folderId }: Props) {
       }
       try {
         const { b64, contentType, filename } = await watermarkImage(file);
-        await upload({
+        const row = await upload({
           data: {
             org_id: currentOrgId,
             filename,
@@ -54,6 +57,7 @@ export function PhotoUploadButton({ onUploaded, compact, folderId }: Props) {
             folder_id: folderId ?? null,
           },
         });
+        if (row?.id) newIds.push(row.id);
         ok++;
       } catch (err) {
         fail++;
@@ -64,10 +68,18 @@ export function PhotoUploadButton({ onUploaded, compact, folderId }: Props) {
     if (ok > 0) {
       toast.success(
         ok === 1
-          ? "Foto geüpload met Happybeez-watermerk."
-          : `${ok} foto's geüpload met watermerk.`,
+          ? "Foto geüpload met Happybeez-watermerk. AI beschrijft hem nu…"
+          : `${ok} foto's geüpload met watermerk. AI beschrijft ze nu…`,
       );
       onUploaded?.();
+      if (newIds.length) {
+        autoTag({ data: { photo_ids: newIds.slice(0, 10) } })
+          .then((r) => {
+            if (r.done) toast.success(`${r.done} foto('s) automatisch beschreven en getagd.`);
+            onUploaded?.();
+          })
+          .catch((e) => toast.error(e instanceof Error ? e.message : "Automatisch taggen mislukt."));
+      }
     }
     if (inputRef.current) inputRef.current.value = "";
   }
