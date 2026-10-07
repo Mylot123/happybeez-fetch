@@ -227,3 +227,133 @@ Verzin geen cijfers, onderzoeken of klanten.`,
       interne_links: arr(ai.interne_links),
     };
   });
+
+const PRODUCT_SCHEMA = obj({
+  citability_score: { type: "number" },
+  citability_uitleg: S,
+  citeerbare_zinnen: SA,
+  citability_tips: SA,
+  product_tips: SA,
+  titel_voorstel: S,
+  korte_beschrijving: S,
+});
+
+export type ProductCheck = {
+  url: string;
+  productScore: number;
+  checks: Array<{ label: string; ok: boolean; tip: string }>;
+  citability: { score: number; uitleg: string; zinnen: string[]; tips: string[] };
+  productTips: string[];
+  titelVoorstel: string;
+  jsonLd: string;
+  ontbreekt: string[];
+};
+
+function attr(html: string, prop: string) {
+  const re = new RegExp(`<meta[^>]+(?:property|name|itemprop)=["']${prop}["'][^>]+content=["']([^"']*)`, "i");
+  const re2 = new RegExp(`<meta[^>]+content=["']([^"']*)["'][^>]+(?:property|name|itemprop)=["']${prop}["']`, "i");
+  return clean(html.match(re)?.[1] ?? html.match(re2)?.[1] ?? "");
+}
+
+export const checkProductPage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ url: z.string().min(3).max(400) }).parse(d))
+  .handler(async ({ data }): Promise<ProductCheck> => {
+    const url = /^https?:\/\//i.test(data.url) ? data.url : `https://${data.url}`;
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; HappybeezSEO/1.0)", Accept: "text/html" },
+      redirect: "follow",
+    }).catch(() => null);
+    if (!res || !res.ok) throw new Error(`Kon de pagina niet ophalen${res ? ` (status ${res.status})` : ""}.`);
+    const html = (await res.text()).slice(0, 500_000);
+    const p = parsePage(html);
+    const words = p.text.split(/\s+/).filter(Boolean);
+    const low = p.text.toLowerCase();
+
+    const name = attr(html, "og:title") || p.h1 || p.title;
+    const image = attr(html, "og:image");
+    const price = attr(html, "product:price:amount") || attr(html, "og:price:amount") || attr(html, "price");
+    const currency = attr(html, "product:price:currency") || attr(html, "og:price:currency") || "EUR";
+    const desc = p.meta || attr(html, "og:description");
+    const hasProductSchema = p.schema.includes("Product");
+    const hasOffer = p.schema.includes("Offer") || p.schema.includes("AggregateOffer");
+
+    const checks = [
+      { label: "Product-schema aanwezig", ok: hasProductSchema, tip: "Plak de Product-code hieronder in de pagina." },
+      { label: "Prijs en voorraad in schema (Offer)", ok: hasOffer, tip: "Zorg dat de webshop prijs en beschikbaarheid in de code zet." },
+      { label: "Afmetingen genoemd", ok: /\d+\s?(x|×)\s?\d+|\d+\s?(cm|mm)\b/.test(low), tip: "Noem de afmetingen in cm." },
+      { label: "Houtsoort of materiaal genoemd", ok: /(hout|eiken|lariks|douglas|vuren|grenen|bamboe|riet|materiaal)/.test(low), tip: "Vertel welke houtsoort of welk materiaal je gebruikt." },
+      { label: "Boorgaten of nestgangen beschreven", ok: /(boorgat|nestgang|gaatje|diameter|\d\s?mm)/.test(low), tip: "Noem de diameters van de nestgangen, dat zoeken kenners." },
+      { label: "Ophangen of plaatsing uitgelegd", ok: /(ophang|plaats|zuid|zon|hoogte|windrichting)/.test(low), tip: "Leg kort uit waar en hoe je het bijenhotel ophangt." },
+      { label: "Productafbeelding voor delen (og:image)", ok: !!image, tip: "Stel een uitgelichte productfoto in." },
+      { label: "Genoeg producttekst", ok: words.length >= 250, tip: "Schrijf minstens 250 woorden over het product." },
+      { label: "Pakkende metabeschrijving", ok: p.meta.length >= 70 && p.meta.length <= 160, tip: "Schrijf een beschrijving van 70 tot 160 tekens." },
+    ];
+
+    const ai = await aiJson(
+      "Je bent een SEO- en GEO-specialist voor Happybeez, maker van handgemaakte bijenhotels uit Boekel voor wilde en solitaire bijen (geen honing). Je beoordeelt hoe goed AI-zoekmachines (Google AI Overviews, ChatGPT, Perplexity) een tekst kunnen citeren.",
+      `Pagina: ${url}
+Titel: ${p.title}
+H1: ${p.h1}
+Meta: ${p.meta}
+Koppen: ${p.headings.map((h) => h.text).join(" | ")}
+Tekst: ${words.slice(0, 900).join(" ")}
+
+Geef JSON:
+{
+ "citability_score": 0 tot 100, hoe makkelijk een AI deze tekst letterlijk als bron gebruikt (duidelijke feitelijke zinnen, definities, concrete specificaties, zelfstandig leesbare alinea's, vraag en antwoord),
+ "citability_uitleg": "1 tot 2 zinnen in gewone taal",
+ "citeerbare_zinnen": ["max 3 zinnen uit de tekst die nu al goed citeerbaar zijn, letterlijk overgenomen"],
+ "citability_tips": ["max 4 concrete tips om beter geciteerd te worden"],
+ "product_tips": ["max 4 tips om de productpagina beter te laten verkopen en vinden"],
+ "titel_voorstel": "paginatitel max 60 tekens in vorm [Product] [kenmerk] | Happybeez",
+ "korte_beschrijving": "productbeschrijving van max 2 zinnen voor in de schema-code, alleen feiten uit de tekst"
+}
+Verzin geen prijzen, voorraad, levertijden, cijfers of recensies.`,
+      PRODUCT_SCHEMA,
+    );
+    const str = (v: unknown) => (typeof v === "string" ? v : "");
+    const arr = (v: unknown) => (Array.isArray(v) ? v.map(str).filter(Boolean) : []);
+
+    const ld: Record<string, unknown> = {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name,
+      description: str(ai.korte_beschrijving) || desc,
+      brand: { "@type": "Brand", name: "Happybeez" },
+      url,
+    };
+    if (image) ld.image = [image];
+    const ontbreekt: string[] = [];
+    if (!image) ontbreekt.push("productfoto (image)");
+    if (price) {
+      ld.offers = {
+        "@type": "Offer",
+        price: price.replace(",", "."),
+        priceCurrency: currency,
+        availability: "https://schema.org/InStock",
+        url,
+      };
+      ontbreekt.push("controleer of 'InStock' (op voorraad) klopt");
+    } else {
+      ontbreekt.push("prijs (niet gevonden op de pagina, vul zelf 'offers' aan of laat de webshop dit doen)");
+    }
+
+    const okCount = checks.filter((c) => c.ok).length;
+    const cit = Math.max(0, Math.min(100, Math.round(Number(ai.citability_score) || 0)));
+    return {
+      url,
+      productScore: Math.round((okCount / checks.length) * 100),
+      checks,
+      citability: {
+        score: cit,
+        uitleg: str(ai.citability_uitleg),
+        zinnen: arr(ai.citeerbare_zinnen).slice(0, 3),
+        tips: arr(ai.citability_tips).slice(0, 5),
+      },
+      productTips: arr(ai.product_tips).slice(0, 5),
+      titelVoorstel: str(ai.titel_voorstel),
+      jsonLd: `<script type="application/ld+json">\n${JSON.stringify(ld, null, 2)}\n</script>`,
+      ontbreekt,
+    };
+  });
