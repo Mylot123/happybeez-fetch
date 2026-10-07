@@ -67,25 +67,6 @@ function AuthPage() {
     navigate({ to: "/" });
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBusy(true);
-    const redirectTo = `${window.location.origin}/`;
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectTo,
-        data: { display_name: displayName || email.split("@")[0] },
-      },
-    });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Account aangemaakt — check je e-mail om te bevestigen.");
-  };
 
   const handleGoogle = async () => {
     setBusy(true);
