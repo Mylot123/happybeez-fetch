@@ -28,6 +28,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
+import { SeoBlogConcept, SeoIntentChecker } from "@/components/SeoPageTools";
 import { analyzeDomain, auditPage, discoverRankedKeywords, researchKeyword, trackKeywordScrape } from "@/lib/seo.functions";
 import {
   addSeoCompetitor,
@@ -98,7 +99,8 @@ const TABS = [
   { id: "tracking", label: "Keywords", icon: Target },
   { id: "ranglijst", label: "Rankings", icon: Trophy },
   { id: "research", label: "Research", icon: Lightbulb },
-  { id: "audit", label: "On-page", icon: FileSearch },
+  { id: "audit", label: "Pagina verbeteren", icon: FileSearch },
+  { id: "blog", label: "Blog schrijven", icon: Sparkles },
   { id: "competitors", label: "Concurrenten", icon: Compass },
   { id: "backlinks", label: "Backlinks", icon: ExternalLink },
   { id: "settings", label: "Instellingen", icon: Crosshair },
@@ -606,6 +608,22 @@ function Seo() {
           </div>
 
 
+
+      <div className="mb-6 grid gap-3 sm:grid-cols-3">
+        {([
+          ["1", "Kansen vinden", "Welke zoekwoorden zoeken tuinliefhebbers?", "research"],
+          ["2", "Pagina verbeteren", "Past je pagina bij de zoekvraag?", "audit"],
+          ["3", "Blog schrijven", "Maak een blogopzet die kans maakt op een direct antwoord.", "blog"],
+        ] as const).map(([n, t, d, id]) => (
+          <button key={id} onClick={() => setTab(id)} className={`text-left rounded-lg border p-3 transition-colors ${tab === id ? "border-wine bg-wine/5" : "border-border bg-card hover:bg-muted/40"}`}>
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Stap {n}</p>
+            <p className="font-heading text-ink">{t}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{d}</p>
+          </button>
+        ))}
+      </div>
+
+      {tab === "blog" ? <SeoBlogConcept /> : null}
 
       {/* ──────────────── Overview ──────────────── */}
       {tab === "overview" ? (
@@ -1266,7 +1284,8 @@ function Seo() {
       {tab === "audit" ? (
         <div className="space-y-6">
           <div>
-            <h2 className="font-heading text-2xl text-ink">On-page Audit</h2>
+            <SeoIntentChecker defaultUrl={domain ? `https://${domain}` : ""} />
+            <h2 className="font-heading text-2xl text-ink mt-6">Technische pagina-audit</h2>
             <p className="text-sm text-muted-foreground mt-1">
               Analyseer meta, content, techniek, snelheid en Core Web Vitals.
             </p>
