@@ -14,6 +14,7 @@ import { Route as AgentRouteImport } from './routes/agent'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BijenkennerRouteImport } from './routes/bijenkenner'
+import { Route as BijenspecialistAnalyseRouteImport } from './routes/bijenspecialist-analyse'
 import { Route as BoekRouteImport } from './routes/boek'
 import { Route as CampagnesRouteImport } from './routes/campagnes'
 import { Route as ContentStudioRouteImport } from './routes/content-studio'
@@ -55,6 +56,11 @@ const AuthRoute = AuthRouteImport.update({
 const BijenkennerRoute = BijenkennerRouteImport.update({
   id: '/bijenkenner',
   path: '/bijenkenner',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BijenspecialistAnalyseRoute = BijenspecialistAnalyseRouteImport.update({
+  id: '/bijenspecialist-analyse',
+  path: '/bijenspecialist-analyse',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BoekRoute = BoekRouteImport.update({
@@ -151,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/bijenkenner': typeof BijenkennerRoute
+  '/bijenspecialist-analyse': typeof BijenspecialistAnalyseRoute
   '/boek': typeof BoekRoute
   '/campagnes': typeof CampagnesRoute
   '/content-studio': typeof ContentStudioRoute
@@ -175,6 +182,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/bijenkenner': typeof BijenkennerRoute
+  '/bijenspecialist-analyse': typeof BijenspecialistAnalyseRoute
   '/boek': typeof BoekRoute
   '/campagnes': typeof CampagnesRoute
   '/content-studio': typeof ContentStudioRoute
@@ -200,6 +208,7 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/bijenkenner': typeof BijenkennerRoute
+  '/bijenspecialist-analyse': typeof BijenspecialistAnalyseRoute
   '/boek': typeof BoekRoute
   '/campagnes': typeof CampagnesRoute
   '/content-studio': typeof ContentStudioRoute
@@ -226,6 +235,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auth'
     | '/bijenkenner'
+    | '/bijenspecialist-analyse'
     | '/boek'
     | '/campagnes'
     | '/content-studio'
@@ -250,6 +260,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auth'
     | '/bijenkenner'
+    | '/bijenspecialist-analyse'
     | '/boek'
     | '/campagnes'
     | '/content-studio'
@@ -274,6 +285,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auth'
     | '/bijenkenner'
+    | '/bijenspecialist-analyse'
     | '/boek'
     | '/campagnes'
     | '/content-studio'
@@ -299,6 +311,7 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   AuthRoute: typeof AuthRoute
   BijenkennerRoute: typeof BijenkennerRoute
+  BijenspecialistAnalyseRoute: typeof BijenspecialistAnalyseRoute
   BoekRoute: typeof BoekRoute
   CampagnesRoute: typeof CampagnesRoute
   ContentStudioRoute: typeof ContentStudioRoute
@@ -353,6 +366,13 @@ declare module '@tanstack/react-router' {
       path: '/bijenkenner'
       fullPath: '/bijenkenner'
       preLoaderRoute: typeof BijenkennerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bijenspecialist-analyse': {
+      id: '/bijenspecialist-analyse'
+      path: '/bijenspecialist-analyse'
+      fullPath: '/bijenspecialist-analyse'
+      preLoaderRoute: typeof BijenspecialistAnalyseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/boek': {
@@ -483,6 +503,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   AuthRoute: AuthRoute,
   BijenkennerRoute: BijenkennerRoute,
+  BijenspecialistAnalyseRoute: BijenspecialistAnalyseRoute,
   BoekRoute: BoekRoute,
   CampagnesRoute: CampagnesRoute,
   ContentStudioRoute: ContentStudioRoute,

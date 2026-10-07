@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useConversation, ConversationProvider } from "@elevenlabs/react";
 import { Mic, MicOff, Send, Loader2, MessageSquare } from "lucide-react";
 import { ChatMarkdown } from "@/components/ChatMarkdown";
+import { supabase } from "@/integrations/supabase/client";
 
 const AGENT_ID = "agent_9401kvw93hayexdrbs6z367s52m9";
 const IDLE_MS = 5 * 60 * 1000;
@@ -40,6 +41,19 @@ function BijenkennerPage() {
   const idleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skipGreetingRef = useRef(false);
   const endRef = useRef<() => void>(() => {});
+  const sessionRef = useRef<string | null>(null);
+
+  function newSession() {
+    sessionRef.current = crypto.randomUUID();
+  }
+  function logMsg(role: "user" | "assistant", content: string, kanaal: "chat" | "spraak") {
+    const sid = sessionRef.current;
+    if (!sid || !content.trim()) return;
+    void supabase
+      .from("bijenkenner_messages")
+      .insert({ session_id: sid, kanaal, role, content: content.slice(0, 4000) })
+      .then(() => {}, () => {});
+  }
 
   const conversation = useConversation({
     onConnect: () => {
@@ -75,6 +89,7 @@ function BijenkennerPage() {
         ? m.message
         : m.message.replace(/\s+[—–]\s+/g, ", ").replace(/([^\n]) +- +/g, "$1, ");
       setMessages((prev) => [...prev, { role: isUser ? "user" : "assistant", content }]);
+      logMsg(isUser ? "user" : "assistant", content, kindRef.current === "voice" ? "spraak" : "chat");
       if (!isUser) setSending(false);
       resetIdle();
     },
@@ -156,11 +171,14 @@ function BijenkennerPage() {
     resetIdle();
     try {
       if (connectedRef.current && kindRef.current === "chat") {
+        logMsg("user", text, "chat");
         conversation.sendUserMessage(text);
       } else {
         pendingRef.current = text;
         kindRef.current = "chat";
         skipGreetingRef.current = true;
+        newSession();
+        logMsg("user", text, "chat");
         conversation.startSession({
           agentId: AGENT_ID,
           textOnly: true,
@@ -187,6 +205,7 @@ function BijenkennerPage() {
     try {
       kindRef.current = "voice";
       skipGreetingRef.current = true;
+      newSession();
       conversation.startSession({
         agentId: AGENT_ID,
         connectionType: "webrtc",

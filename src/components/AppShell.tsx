@@ -63,6 +63,7 @@ const navGroups: NavGroup[] = [
       { path: "/google-ads", label: "Google Ads Studio", icon: Megaphone },
       { path: "/social-profielen", label: "Social Profielen", icon: Users },
       { path: "/agent", label: "De Bijenspecialist (AI)", icon: Mic, ai: true },
+      { path: "/bijenspecialist-analyse", label: "Vragen-analyse", icon: BarChart3 },
     ],
   },
 ];

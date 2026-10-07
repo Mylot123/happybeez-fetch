@@ -112,6 +112,36 @@ export type Database = {
           },
         ]
       }
+      bijenkenner_messages: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string
+          id: string
+          kanaal: string
+          role: string
+          session_id: string
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          kanaal: string
+          role: string
+          session_id: string
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          kanaal?: string
+          role?: string
+          session_id?: string
+        }
+        Relationships: []
+      }
       book_contents: {
         Row: {
           chapter: string | null
