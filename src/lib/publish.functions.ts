@@ -140,17 +140,11 @@ export const publishPostNow = createServerFn({ method: "POST" })
     const orgId = (post as any).org_id;
     if (!orgId) throw new Error("Post heeft geen organisatie.");
 
-    const { data: isAdmin } = await context.supabase.rpc("has_org_role", {
+    const { data: isMember } = await context.supabase.rpc("is_org_member", {
       _user_id: context.userId,
       _org_id: orgId,
-      _role: "org_admin",
     });
-    const { data: isAgency } = await context.supabase.rpc("has_org_role", {
-      _user_id: context.userId,
-      _org_id: orgId,
-      _role: "agency_admin",
-    });
-    if (!isAdmin && !isAgency) throw new Error("Alleen beheerders mogen publiceren.");
+    if (!isMember) throw new Error("Je bent geen lid van deze organisatie.");
 
     return publishOne(context.supabase, post, orgId);
   });
