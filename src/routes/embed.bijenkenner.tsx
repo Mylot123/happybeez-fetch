@@ -6,6 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 const AGENT_ID = "agent_9401kvw93hayexdrbs6z367s52m9";
 const IDLE_MS = 5 * 60 * 1000;
+const VOICE_IDLE_MS = 45 * 1000; // spraak: na 45 sec stilte ophangen
+const VOICE_MAX_MS = 4 * 60 * 1000; // spraak: harde stop na 4 minuten
+const ENDED_NOTE = "Het gesprek is afgerond. Start gerust een nieuw gesprek.";
+const MAX_NOTE = "De maximale gespreksduur van 4 minuten is bereikt. Start gerust een nieuw gesprek.";
 const UNAVAILABLE = "De Bijenkenner is even niet bereikbaar, probeer het later opnieuw";
 const GREETING = "Hoi, ik ben de bijenkenner van Happybeez. Waar kan ik je mee helpen?";
 
@@ -42,6 +46,9 @@ function BijenkennerPage() {
   const skipGreetingRef = useRef(false);
   const endRef = useRef<() => void>(() => {});
   const sessionRef = useRef<string | null>(null);
+  const maxRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const endReasonRef = useRef<"max" | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   function newSession() {
     sessionRef.current = crypto.randomUUID();
@@ -67,13 +74,23 @@ function BijenkennerPage() {
     },
     onDisconnect: () => {
       const wasConnected = connectedRef.current;
+      const wasVoice = kindRef.current === "voice";
       connectedRef.current = false;
       kindRef.current = null;
+      clearTimers();
       if (pendingRef.current || (!wasConnected && sendingRef.current)) {
         pendingRef.current = null;
         setSending(false);
         setError(UNAVAILABLE);
+        return;
       }
+      if (wasConnected && wasVoice) {
+        // Gesprek voorbij: venster leegmaken en schoon beginnen
+        setMessages([{ role: "assistant", content: GREETING }]);
+        setSending(false);
+        setNotice(endReasonRef.current === "max" ? MAX_NOTE : ENDED_NOTE);
+      }
+      endReasonRef.current = null;
     },
     onMessage: (m: { message?: string; source?: string }) => {
       if (!m.message) return;
@@ -98,11 +115,19 @@ function BijenkennerPage() {
       setSending(false);
       setError(UNAVAILABLE);
     },
+    clientTools: {
+      // Jozef kan hiermee zelf het gesprek afronden
+      gesprek_beeindigen: () => {
+        setTimeout(() => endRef.current(), 2500);
+        return "Gesprek wordt beëindigd";
+      },
+    },
   });
   const isConnected = conversation.status === "connected";
   const sendingRef = useRef(false);
   sendingRef.current = sending;
   endRef.current = () => {
+    clearTimers();
     try {
       conversation.endSession();
     } catch {
@@ -110,14 +135,37 @@ function BijenkennerPage() {
     }
   };
 
+  function clearTimers() {
+    if (idleRef.current) clearTimeout(idleRef.current);
+    if (maxRef.current) clearTimeout(maxRef.current);
+    idleRef.current = null;
+    maxRef.current = null;
+  }
+
   function resetIdle() {
     if (idleRef.current) clearTimeout(idleRef.current);
-    idleRef.current = setTimeout(() => endRef.current(), IDLE_MS);
+    const ms = kindRef.current === "voice" ? VOICE_IDLE_MS : IDLE_MS;
+    idleRef.current = setTimeout(() => endRef.current(), ms);
   }
 
   useEffect(() => () => {
-    if (idleRef.current) clearTimeout(idleRef.current);
     endRef.current();
+  }, []);
+
+  // Tab of venster verlaten tijdens spraak: direct ophangen
+  useEffect(() => {
+    const stop = () => {
+      if (kindRef.current === "voice") endRef.current();
+    };
+    const onVis = () => {
+      if (document.visibilityState === "hidden") stop();
+    };
+    window.addEventListener("pagehide", stop);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("pagehide", stop);
+      document.removeEventListener("visibilitychange", onVis);
+    };
   }, []);
 
   // Wissel van tab: lopende sessie sluiten en met een schoon gesprek starten
@@ -128,6 +176,7 @@ function BijenkennerPage() {
     skipGreetingRef.current = false;
     setMessages([{ role: "assistant", content: GREETING }]);
     setSending(false);
+    setNotice(null);
   }, [mode]);
 
   useEffect(() => {
@@ -165,6 +214,7 @@ function BijenkennerPage() {
     const text = input.trim();
     if (!text || sending) return;
     setError(null);
+    setNotice(null);
     setInput("");
     setMessages((prev) => [...prev, { role: "user", content: text }]);
     setSending(true);
@@ -196,6 +246,8 @@ function BijenkennerPage() {
 
   async function startVoice() {
     setError(null);
+    setNotice(null);
+    endReasonRef.current = null;
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
@@ -212,6 +264,11 @@ function BijenkennerPage() {
         dynamicVariables: { kanaal: "spraak" },
       });
       resetIdle();
+      if (maxRef.current) clearTimeout(maxRef.current);
+      maxRef.current = setTimeout(() => {
+        endReasonRef.current = "max";
+        endRef.current();
+      }, VOICE_MAX_MS);
     } catch {
       setError(UNAVAILABLE);
     }
@@ -310,6 +367,11 @@ function BijenkennerPage() {
               {error}
             </p>
           )}
+          {notice && !error && (
+            <p className="text-xs text-center" style={{ color: MUTED }} role="status">
+              {notice}
+            </p>
+          )}
 
           {mode === "chat" ? (
             <div className="flex items-end gap-2">
@@ -343,7 +405,7 @@ function BijenkennerPage() {
             <div className="flex justify-center py-2 sm:py-4">
               {isConnected ? (
                 <button
-                  onClick={() => void conversation.endSession()}
+                  onClick={() => endRef.current()}
                   className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium"
                   style={{ background: GREEN_SOFT, color: GREEN, border: `1px solid ${GREEN}` }}
                 >
