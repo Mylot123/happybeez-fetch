@@ -89,6 +89,7 @@ function BijenkennerPage() {
         ? m.message
         : m.message.replace(/\s+[—–]\s+/g, ", ").replace(/([^\n]) +- +/g, "$1, ");
       setMessages((prev) => [...prev, { role: isUser ? "user" : "assistant", content }]);
+      logMsg(isUser ? "user" : "assistant", content, kindRef.current === "voice" ? "spraak" : "chat");
       if (!isUser) setSending(false);
       resetIdle();
     },
