@@ -171,11 +171,14 @@ function BijenkennerPage() {
     resetIdle();
     try {
       if (connectedRef.current && kindRef.current === "chat") {
+        logMsg("user", text, "chat");
         conversation.sendUserMessage(text);
       } else {
         pendingRef.current = text;
         kindRef.current = "chat";
         skipGreetingRef.current = true;
+        newSession();
+        logMsg("user", text, "chat");
         conversation.startSession({
           agentId: AGENT_ID,
           textOnly: true,
@@ -202,6 +205,7 @@ function BijenkennerPage() {
     try {
       kindRef.current = "voice";
       skipGreetingRef.current = true;
+      newSession();
       conversation.startSession({
         agentId: AGENT_ID,
         connectionType: "webrtc",
