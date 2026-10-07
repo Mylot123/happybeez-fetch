@@ -46,6 +46,9 @@ function BijenkennerPage() {
   const skipGreetingRef = useRef(false);
   const endRef = useRef<() => void>(() => {});
   const sessionRef = useRef<string | null>(null);
+  const maxRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const endReasonRef = useRef<"max" | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   function newSession() {
     sessionRef.current = crypto.randomUUID();
