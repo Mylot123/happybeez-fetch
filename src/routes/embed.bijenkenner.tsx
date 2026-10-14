@@ -10,7 +10,7 @@ const VOICE_IDLE_MS = 45 * 1000; // spraak: na 45 sec stilte ophangen
 const VOICE_MAX_MS = 4 * 60 * 1000; // spraak: harde stop na 4 minuten
 const ENDED_NOTE = "Het gesprek is afgerond. Start gerust een nieuw gesprek.";
 const MAX_NOTE = "De maximale gespreksduur van 4 minuten is bereikt. Start gerust een nieuw gesprek.";
-const UNAVAILABLE = "De Bijenkenner is even niet bereikbaar, probeer het later opnieuw";
+const UNAVAILABLE = "De Bijenkenner kon geen verbinding maken. Gebruik je een adblocker of privacy-extensie (zoals Privacy Badger of Brave)? Sta 'elevenlabs.io' toe of schakel de extensie tijdelijk uit op deze pagina.";
 const GREETING = "Hoi, ik ben de bijenkenner van Happybeez. Waar kan ik je mee helpen?";
 
 /* Huisstijl happybeez.nl */
