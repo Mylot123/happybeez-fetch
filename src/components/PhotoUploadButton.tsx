@@ -8,6 +8,8 @@ import { uploadUserPhoto } from "@/lib/image.functions";
 import { autoTagPhotos } from "@/lib/photo-tagging.functions";
 import { watermarkImage } from "@/lib/watermark";
 import { useCurrentOrg } from "@/hooks/use-current-org";
+import { speciesFromPath } from "@/lib/photo-taxonomy";
+import { FolderUp } from "lucide-react";
 
 type Props = {
   onUploaded?: () => void;
@@ -40,6 +42,7 @@ export function PhotoUploadButton({ onUploaded, compact, folderId }: Props) {
   const upload = useServerFn(uploadUserPhoto);
   const autoTag = useServerFn(autoTagPhotos);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dirRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
 
@@ -49,7 +52,8 @@ export function PhotoUploadButton({ onUploaded, compact, folderId }: Props) {
       toast.error("Geen organisatie gekozen.");
       return;
     }
-    const list = Array.from(files);
+    const list = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    if (!list.length) return toast.error("Geen foto's gevonden in deze selectie.");
     setBusy(true);
     setProgress({ done: 0, total: list.length });
     let ok = 0;
@@ -60,7 +64,13 @@ export function PhotoUploadButton({ onUploaded, compact, folderId }: Props) {
         if (!file.type.startsWith("image/")) throw new Error(`${file.name}: geen afbeelding.`);
         if (file.size > MAX_BYTES) throw new Error(`${file.name}: te groot (max 15 MB).`);
         const rel = (file as File & { webkitRelativePath?: string }).webkitRelativePath ?? "";
-        const folderPath = rel.split("/").slice(0, -1).join(" ");
+        const segs = rel.split("/").slice(1, -1); // zonder hoofdmap en bestandsnaam
+        const species = speciesFromPath(segs);
+        const deepest = segs[segs.length - 1]?.replace(/\b(19|20)\d{2}\b/g, "").replace(/\s+/g, " ").trim();
+        const base = file.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ");
+        const tags = [...species, ...tagsFromFilename(file.name, segs.join(" "))].filter(
+          (t, i, a) => a.indexOf(t) === i,
+        ).slice(0, 14);
         const { b64, contentType, filename } = await watermarkImage(file);
         const row = await upload({
           data: {
@@ -68,9 +78,9 @@ export function PhotoUploadButton({ onUploaded, compact, folderId }: Props) {
             filename,
             content_type: contentType,
             b64,
-            title: file.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").slice(0, 120) || "Upload",
+            title: (deepest ? `${deepest} · ${base}` : base).slice(0, 120) || "Upload",
             folder_id: folderId ?? null,
-            extra_tags: tagsFromFilename(file.name, folderPath),
+            extra_tags: tags,
           },
         });
         if (row?.id) newIds.push(row.id);
@@ -84,6 +94,7 @@ export function PhotoUploadButton({ onUploaded, compact, folderId }: Props) {
     setBusy(false);
     setProgress(null);
     if (inputRef.current) inputRef.current.value = "";
+    if (dirRef.current) dirRef.current.value = "";
     if (ok > 0) {
       toast.success(
         `${ok} foto('s) geüpload met watermerk${fail ? `, ${fail} mislukt` : ""}. AI beschrijft ze nu…`,
@@ -117,6 +128,15 @@ export function PhotoUploadButton({ onUploaded, compact, folderId }: Props) {
         className="hidden"
         onChange={(e) => void handleFiles(e.target.files)}
       />
+      <input
+        ref={dirRef}
+        type="file"
+        multiple
+        className="hidden"
+        {...({ webkitdirectory: "", directory: "" } as Record<string, string>)}
+        onChange={(e) => void handleFiles(e.target.files)}
+      />
+      <div className="flex gap-2 flex-wrap">
       <Button
         type="button"
         size={compact ? "sm" : "default"}
@@ -131,6 +151,12 @@ export function PhotoUploadButton({ onUploaded, compact, folderId }: Props) {
             ? "Upload foto's"
             : "Foto's uploaden"}
       </Button>
+      {!busy && (
+        <Button type="button" size={compact ? "sm" : "default"} variant="outline" onClick={() => dirRef.current?.click()}>
+          <FolderUp className="h-4 w-4 mr-1.5" /> Hele map uploaden
+        </Button>
+      )}
+      </div>
       {progress && progress.total > 1 && (
         <Progress value={(progress.done / progress.total) * 100} className="h-1.5" />
       )}

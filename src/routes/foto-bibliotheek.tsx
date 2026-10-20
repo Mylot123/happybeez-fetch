@@ -14,6 +14,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
 import { useCurrentOrg } from "@/hooks/use-current-org";
 import { downloadImage } from "@/lib/download";
+import { groupsForTags } from "@/lib/photo-taxonomy";
 
 type Book = Database["public"]["Tables"]["library_books"]["Row"];
 type Section = Database["public"]["Tables"]["library_book_sections"]["Row"];
@@ -53,6 +54,8 @@ function Kennisbank() {
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [group, setGroup] = useState<string | null>(null);
+  const [channel, setChannel] = useState<string | null>(null);
 
   useEffect(() => {
     void load();
@@ -111,14 +114,22 @@ function Kennisbank() {
       if (activeFolder === "none" && p.folder_id) return false;
       if (activeFolder !== "all" && activeFolder !== "none" && p.folder_id !== activeFolder)
         return false;
+      if (group && !groupsForTags(p.tags).includes(group)) return false;
+      if (channel && !p.suggested_channels.includes(channel)) return false;
       if (!q) return true;
-      return (
-        p.title.toLowerCase().includes(q) ||
-        (p.caption ?? "").toLowerCase().includes(q) ||
-        p.tags.some((t) => t.toLowerCase().includes(q))
+      return q.split(/\s+/).every((w) =>
+        p.title.toLowerCase().includes(w) ||
+        (p.caption ?? "").toLowerCase().includes(w) ||
+        p.tags.some((t) => t.toLowerCase().includes(w)),
       );
     });
-  }, [photos, query, activeFolder]);
+  }, [photos, query, activeFolder, group, channel]);
+
+  const groupCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const p of photos) for (const g of groupsForTags(p.tags)) m.set(g, (m.get(g) ?? 0) + 1);
+    return [...m.entries()].sort((a, b) => b[1] - a[1]);
+  }, [photos]);
 
   async function createFolder() {
     const name = newFolder.trim();
@@ -243,6 +254,24 @@ function Kennisbank() {
             <p className="mt-2 text-xs text-muted-foreground">
               Kies eerst een mapje, dan komen nieuwe uploads daar automatisch in terecht.
             </p>
+          </div>
+
+          <div className="mb-4 rounded-lg border border-border bg-card px-4 py-3 space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold text-ink mr-1">Groep:</span>
+              <FolderChip active={!group} label="Alles" onClick={() => setGroup(null)} />
+              {groupCounts.map(([g, n]) => (
+                <FolderChip key={g} active={group === g} label={`${g} (${n})`} onClick={() => setGroup(group === g ? null : g)} />
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold text-ink mr-1">Kanaal:</span>
+              <FolderChip active={!channel} label="Alle" onClick={() => setChannel(null)} />
+              {["instagram", "facebook", "linkedin", "blog"].map((c) => (
+                <FolderChip key={c} active={channel === c} label={c[0].toUpperCase() + c.slice(1)} onClick={() => setChannel(channel === c ? null : c)} />
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">{filteredPhotos.length} foto's gevonden. Zoek ook op Latijnse of Nederlandse soortnaam, bv. "barbilabris" of "witbaardzandbij".</p>
           </div>
 
           {loading ? (
