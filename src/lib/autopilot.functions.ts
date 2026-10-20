@@ -154,7 +154,7 @@ Drie verschillende onderwerpen. Geef per post 3 tot 6 Nederlandse zoekwoorden om
         org_id: data.orgId,
         title: stripDashes(p.title),
         channel: p.channel,
-        content_type: "post",
+        content_type: "seizoen",
         status: "review",
         source_type: "autopilot",
         publish_date,
