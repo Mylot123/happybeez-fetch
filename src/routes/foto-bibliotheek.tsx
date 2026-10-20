@@ -118,8 +118,6 @@ function Kennisbank() {
       if (channel && !p.suggested_channels.includes(channel)) return false;
       if (!q) return true;
       return q.split(/\s+/).every((w) =>
-        p.title.toLowerCase().includes(q) ||
-        (p.caption ?? "").toLowerCase().includes(q) ||
         p.title.toLowerCase().includes(w) ||
         (p.caption ?? "").toLowerCase().includes(w) ||
         p.tags.some((t) => t.toLowerCase().includes(w)),
