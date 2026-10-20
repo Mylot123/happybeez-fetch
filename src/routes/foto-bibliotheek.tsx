@@ -205,10 +205,6 @@ function Kennisbank() {
               rechtsonder toegevoegd voordat de foto wordt opgeslagen.
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <AutoTagButton
-                ids={photos.filter((p) => !p.tags.includes("ai-getagd")).map((p) => p.id)}
-                onDone={() => void load()}
-              />
               <PhotoUploadButton
                 folderId={activeFolder !== "all" && activeFolder !== "none" ? activeFolder : null}
                 onUploaded={() => void load()}
