@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { uploadUserPhoto } from "@/lib/image.functions";
-import { autoTagPhotos } from "@/lib/photo-tagging.functions";
 import { watermarkImage } from "@/lib/watermark";
 import { useCurrentOrg } from "@/hooks/use-current-org";
 import { speciesFromPath } from "@/lib/photo-taxonomy";
@@ -40,7 +39,6 @@ export function tagsFromFilename(name: string, folderPath = ""): string[] {
 export function PhotoUploadButton({ onUploaded, compact, folderId }: Props) {
   const { currentOrgId } = useCurrentOrg();
   const upload = useServerFn(uploadUserPhoto);
-  const autoTag = useServerFn(autoTagPhotos);
   const inputRef = useRef<HTMLInputElement>(null);
   const dirRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
