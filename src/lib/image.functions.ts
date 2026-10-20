@@ -23,7 +23,7 @@ const uploadSchema = z.object({
   title: z.string().min(1).max(200),
   caption: z.string().max(500).optional(),
   channel: z.string().max(50).optional(),
-  extra_tags: z.array(z.string().max(40)).max(10).optional(),
+  extra_tags: z.array(z.string().max(40)).max(16).optional(),
   folder_id: z.string().uuid().nullable().optional(),
 });
 
