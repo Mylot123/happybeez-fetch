@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrg } from "@/hooks/use-current-org";
 import { approveAndSchedule, generateWeekProposals, swapPostPhoto } from "@/lib/autopilot.functions";
 import { rejectPost } from "@/lib/posts.functions";
+import { withFreshImageUrls } from "@/lib/signed-images";
 
 const LABEL: Record<string, string> = { instagram: "Instagram", facebook: "Facebook", linkedin: "LinkedIn", blog: "Blog" };
 
@@ -16,6 +17,7 @@ type Item = {
   channel: string;
   content_text: string | null;
   image_url: string | null;
+  image_storage_path?: string | null;
   publish_date: string | null;
 };
 
@@ -37,12 +39,12 @@ export function ReviewInbox() {
     queryFn: async (): Promise<Item[]> => {
       const { data, error } = await supabase
         .from("content_calendar_items")
-        .select("id,title,channel,content_text,image_url,publish_date")
+        .select("id,title,channel,content_text,image_url,image_storage_path,publish_date")
         .eq("org_id", currentOrg!.id)
         .eq("status", "review")
         .order("publish_date", { ascending: true });
       if (error) throw error;
-      return data ?? [];
+      return withFreshImageUrls(data ?? []);
     },
   });
   const refresh = () => qc.invalidateQueries({ queryKey: key });
