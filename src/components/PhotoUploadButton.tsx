@@ -96,23 +96,10 @@ export function PhotoUploadButton({ onUploaded, compact, folderId }: Props) {
     if (inputRef.current) inputRef.current.value = "";
     if (dirRef.current) dirRef.current.value = "";
     if (ok > 0) {
-      toast.success(
-        `${ok} foto('s) geüpload met watermerk${fail ? `, ${fail} mislukt` : ""}. AI beschrijft ze nu…`,
-      );
+      // Geen automatische AI-tagging meer: tags komen gratis uit map- en bestandsnamen.
+      toast.success(`${ok} foto('s) geüpload met watermerk${fail ? `, ${fail} mislukt` : ""}.`);
       onUploaded?.();
-      void (async () => {
-        let tagged = 0;
-        for (let i = 0; i < newIds.length; i += 10) {
-          try {
-            const r = await autoTag({ data: { photo_ids: newIds.slice(i, i + 10) } });
-            tagged += r.done ?? 0;
-          } catch {
-            /* ga door met volgende groep */
-          }
-        }
-        if (tagged) toast.success(`${tagged} foto('s) automatisch beschreven en getagd.`);
-        onUploaded?.();
-      })();
+
     } else if (fail) {
       toast.error(`${fail} foto('s) konden niet worden geüpload.`);
     }
