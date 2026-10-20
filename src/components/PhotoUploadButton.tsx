@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { uploadUserPhoto } from "@/lib/image.functions";
 import { autoTagPhotos } from "@/lib/photo-tagging.functions";
 import { watermarkImage } from "@/lib/watermark";
@@ -17,12 +18,30 @@ type Props = {
 const ACCEPT = "image/png,image/jpeg,image/jpg,image/webp";
 const MAX_BYTES = 15 * 1024 * 1024; // 15 MB source
 
+const STOP = new Set(["img", "dsc", "dscn", "jpg", "jpeg", "png", "webp", "foto", "photo", "kopie", "copy", "final", "edit", "def", "van", "de", "het", "een", "en"]);
+
+/** Turn a filename (and folder names) into search tags, e.g. "witbaardzandbij_Andrena-barbilabris_03.jpg". */
+export function tagsFromFilename(name: string, folderPath = ""): string[] {
+  const raw = `${folderPath} ${name.replace(/\.[^.]+$/, "")}`
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .toLowerCase()
+    .split(/[^a-zà-ÿ]+/i);
+  const out: string[] = [];
+  for (const w of raw) {
+    if (w.length < 3 || STOP.has(w) || out.includes(w)) continue;
+    out.push(w.slice(0, 40));
+    if (out.length >= 10) break;
+  }
+  return out;
+}
+
 export function PhotoUploadButton({ onUploaded, compact, folderId }: Props) {
   const { currentOrgId } = useCurrentOrg();
   const upload = useServerFn(uploadUserPhoto);
   const autoTag = useServerFn(autoTagPhotos);
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
 
   async function handleFiles(files: FileList | null) {
     if (!files?.length) return;
@@ -30,22 +49,18 @@ export function PhotoUploadButton({ onUploaded, compact, folderId }: Props) {
       toast.error("Geen organisatie gekozen.");
       return;
     }
+    const list = Array.from(files);
     setBusy(true);
+    setProgress({ done: 0, total: list.length });
     let ok = 0;
     let fail = 0;
     const newIds: string[] = [];
-    for (const file of Array.from(files)) {
-      if (!file.type.startsWith("image/")) {
-        fail++;
-        toast.error(`${file.name}: geen afbeelding.`);
-        continue;
-      }
-      if (file.size > MAX_BYTES) {
-        fail++;
-        toast.error(`${file.name}: te groot (max 15 MB).`);
-        continue;
-      }
+    for (const file of list) {
       try {
+        if (!file.type.startsWith("image/")) throw new Error(`${file.name}: geen afbeelding.`);
+        if (file.size > MAX_BYTES) throw new Error(`${file.name}: te groot (max 15 MB).`);
+        const rel = (file as File & { webkitRelativePath?: string }).webkitRelativePath ?? "";
+        const folderPath = rel.split("/").slice(0, -1).join(" ");
         const { b64, contentType, filename } = await watermarkImage(file);
         const row = await upload({
           data: {
@@ -53,39 +68,47 @@ export function PhotoUploadButton({ onUploaded, compact, folderId }: Props) {
             filename,
             content_type: contentType,
             b64,
-            title: file.name.replace(/\.[^.]+$/, "").slice(0, 120) || "Upload",
+            title: file.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").slice(0, 120) || "Upload",
             folder_id: folderId ?? null,
+            extra_tags: tagsFromFilename(file.name, folderPath),
           },
         });
         if (row?.id) newIds.push(row.id);
         ok++;
       } catch (err) {
         fail++;
-        toast.error(err instanceof Error ? err.message : `Upload van ${file.name} mislukt.`);
+        if (fail <= 5) toast.error(err instanceof Error ? err.message : `Upload van ${file.name} mislukt.`);
       }
+      setProgress({ done: ok + fail, total: list.length });
     }
     setBusy(false);
+    setProgress(null);
+    if (inputRef.current) inputRef.current.value = "";
     if (ok > 0) {
       toast.success(
-        ok === 1
-          ? "Foto geüpload met Happybeez-watermerk. AI beschrijft hem nu…"
-          : `${ok} foto's geüpload met watermerk. AI beschrijft ze nu…`,
+        `${ok} foto('s) geüpload met watermerk${fail ? `, ${fail} mislukt` : ""}. AI beschrijft ze nu…`,
       );
       onUploaded?.();
-      if (newIds.length) {
-        autoTag({ data: { photo_ids: newIds.slice(0, 10) } })
-          .then((r) => {
-            if (r.done) toast.success(`${r.done} foto('s) automatisch beschreven en getagd.`);
-            onUploaded?.();
-          })
-          .catch((e) => toast.error(e instanceof Error ? e.message : "Automatisch taggen mislukt."));
-      }
+      void (async () => {
+        let tagged = 0;
+        for (let i = 0; i < newIds.length; i += 10) {
+          try {
+            const r = await autoTag({ data: { photo_ids: newIds.slice(i, i + 10) } });
+            tagged += r.done ?? 0;
+          } catch {
+            /* ga door met volgende groep */
+          }
+        }
+        if (tagged) toast.success(`${tagged} foto('s) automatisch beschreven en getagd.`);
+        onUploaded?.();
+      })();
+    } else if (fail) {
+      toast.error(`${fail} foto('s) konden niet worden geüpload.`);
     }
-    if (inputRef.current) inputRef.current.value = "";
   }
 
   return (
-    <>
+    <div className="inline-flex flex-col gap-1.5 min-w-[180px]">
       <input
         ref={inputRef}
         type="file"
@@ -101,13 +124,16 @@ export function PhotoUploadButton({ onUploaded, compact, folderId }: Props) {
         disabled={busy}
         onClick={() => inputRef.current?.click()}
       >
-        {busy ? (
-          <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-        ) : (
-          <Upload className="h-4 w-4 mr-1.5" />
-        )}
-        {busy ? "Uploaden…" : compact ? "Upload foto" : "Foto uploaden"}
+        {busy ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Upload className="h-4 w-4 mr-1.5" />}
+        {busy && progress
+          ? `Foto ${Math.min(progress.done + 1, progress.total)} van ${progress.total}…`
+          : compact
+            ? "Upload foto's"
+            : "Foto's uploaden"}
       </Button>
-    </>
+      {progress && progress.total > 1 && (
+        <Progress value={(progress.done / progress.total) * 100} className="h-1.5" />
+      )}
+    </div>
   );
 }
