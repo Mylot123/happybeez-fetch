@@ -63,51 +63,6 @@ const cards: Card[] = [
   },
 ];
 
-function DashboardPage() {
-  return (
-    <ProtectedRoute>
-      <Dashboard />
-    </ProtectedRoute>
-  );
-}
-
-type Card = { icon: LucideIcon; title: string; body: string; to: string };
-
-const cards: Card[] = [
-  {
-    icon: Sparkles,
-    title: "Welkom",
-    body: "Fijn dat je er bent. Dit is jouw Social Studio.",
-    to: "/content-studio",
-  },
-  {
-    icon: CalendarDays,
-    title: "Kalender",
-    body: "Plan en publiceer je posts in één overzicht.",
-    to: "/kalender",
-  },
-  {
-    icon: BookOpen,
-    title: "Boekbibliotheek",
-    body: "Hergebruik citaten en hoofdstukken uit je boek.",
-    to: "/boek",
-  },
-  {
-    icon: Newspaper,
-    title: "Nieuws",
-    body: "Volg relevante nieuwsberichten om op in te haken.",
-    to: "/nieuws",
-  },
-];
-
-type Today = { channel: string; time: string; title: string; state: string; ok?: boolean; sage?: boolean };
-
-const todayItems: Today[] = [
-  { channel: "IG", time: "12:00", title: "Carrousel: 5 lessen uit hoofdstuk 3", state: "Gepland ✓", ok: true },
-  { channel: "LI", time: "08:30", title: "Artikel: waarom consistentie wint van talent", state: "Wacht op goedkeuring", sage: true },
-  { channel: "FB", time: "19:00", title: "Weekvraag aan de community", state: "Concept" },
-];
-
 function Dashboard() {
   const { user } = useAuth();
   const name =
