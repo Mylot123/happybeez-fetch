@@ -9,13 +9,18 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ReviewInbox } from "@/components/ReviewInbox";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Dashboard — SocialMotor" },
-      { name: "description", content: "Overzicht van je social-media activiteit." },
+      { title: "Dashboard | Happybeez Social Studio" },
+      { name: "description", content: "Keur je klaargezette weekberichten met één klik goed." },
+      { property: "og:title", content: "Dashboard | Happybeez Social Studio" },
+      { property: "og:description", content: "Keur je klaargezette weekberichten met één klik goed." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: DashboardPage,
@@ -58,14 +63,6 @@ const cards: Card[] = [
   },
 ];
 
-type Today = { channel: string; time: string; title: string; state: string; ok?: boolean; sage?: boolean };
-
-const todayItems: Today[] = [
-  { channel: "IG", time: "12:00", title: "Carrousel: 5 lessen uit hoofdstuk 3", state: "Gepland ✓", ok: true },
-  { channel: "LI", time: "08:30", title: "Artikel: waarom consistentie wint van talent", state: "Wacht op goedkeuring", sage: true },
-  { channel: "FB", time: "19:00", title: "Weekvraag aan de community", state: "Concept" },
-];
-
 function Dashboard() {
   const { user } = useAuth();
   const name =
@@ -96,12 +93,10 @@ function Dashboard() {
             </span>
             <b className="text-ink font-bold">de Bijenspecialist</b> actief
           </span>
-          <span className="text-line">·</span>
-          <span><b className="text-ink font-bold">6</b> posts deze week</span>
-          <span className="text-line">·</span>
-          <span><b className="text-ink font-bold">3</b> wachten op goedkeuring</span>
         </div>
       </div>
+
+      <ReviewInbox />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         {cards.map(({ icon: Icon, title, body, to }) => (
@@ -125,30 +120,6 @@ function Dashboard() {
         ))}
       </div>
 
-      <div className="bg-white border border-line rounded-[18px] px-6 py-5">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-heading text-[14.5px] font-bold text-ink">Vandaag op de planning</h2>
-          <span className="text-[11.5px] text-[#9C9C94]">{todayItems.length} items</span>
-        </div>
-        <div className="divide-y divide-line-soft">
-          {todayItems.map((it) => (
-            <div key={it.title} className="flex items-center gap-3.5 py-3">
-              <span
-                className={`font-mono text-[10.5px] font-bold tracking-wide w-[34px] text-center rounded-md py-1 ${
-                  it.sage ? "text-sage bg-sage-soft" : "text-signal-deep bg-signal-soft"
-                }`}
-              >
-                {it.channel}
-              </span>
-              <span className="font-mono text-[11.5px] text-[#9C9C94] w-12">{it.time}</span>
-              <span className="flex-1 text-[13px] font-semibold text-ink">{it.title}</span>
-              <span className={`text-[11.5px] font-semibold ${it.ok ? "text-sage" : "text-[#9C9C94]"}`}>
-                {it.state}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
