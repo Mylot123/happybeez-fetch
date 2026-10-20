@@ -9,13 +9,18 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ReviewInbox } from "@/components/ReviewInbox";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Dashboard — SocialMotor" },
-      { name: "description", content: "Overzicht van je social-media activiteit." },
+      { title: "Dashboard | Happybeez Social Studio" },
+      { name: "description", content: "Keur je klaargezette weekberichten met één klik goed." },
+      { property: "og:title", content: "Dashboard | Happybeez Social Studio" },
+      { property: "og:description", content: "Keur je klaargezette weekberichten met één klik goed." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: DashboardPage,
@@ -102,6 +107,8 @@ function Dashboard() {
           <span><b className="text-ink font-bold">3</b> wachten op goedkeuring</span>
         </div>
       </div>
+
+      <ReviewInbox />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         {cards.map(({ icon: Icon, title, body, to }) => (
