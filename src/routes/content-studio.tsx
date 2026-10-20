@@ -376,10 +376,6 @@ function ContentStudio() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentOrg, search.date, search.channel, search.type]);
 
-  useEffect(() => {
-    void loadPhotos();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     if (!currentOrg) {
@@ -401,12 +397,34 @@ function ContentStudio() {
   }, [currentOrg]);
 
 
-  async function loadPhotos() {
-    const { data, error } = await supabase
+  // Zoek in de database alleen kandidaten die passen bij onderwerp/zoekwoorden,
+  // in plaats van alle (12.000+) foto's in de browser te laden.
+  async function loadPhotos(searchTokens: string[] = []) {
+    const toks = Array.from(new Set(searchTokens)).slice(0, 10);
+    let q = supabase
       .from("library_photos")
-      .select("id,title,caption,tags,storage_path,image_url");
+      .select("id,title,caption,tags,storage_path,image_url")
+      .order("created_at", { ascending: false })
+      .limit(toks.length ? 150 : 60);
+    if (toks.length) {
+      const ors = [
+        `tags.ov.{${toks.join(",")}}`,
+        ...toks.map((t) => `title.ilike.*${t}*`),
+        ...toks.map((t) => `caption.ilike.*${t}*`),
+      ];
+      q = q.or(ors.join(","));
+    }
+    const { data, error } = await q;
     if (error) return;
-    const rows = (data ?? []) as Photo[];
+    let rows = (data ?? []) as Photo[];
+    if (toks.length && rows.length === 0) {
+      const { data: latest } = await supabase
+        .from("library_photos")
+        .select("id,title,caption,tags,storage_path,image_url")
+        .order("created_at", { ascending: false })
+        .limit(60);
+      rows = (latest ?? []) as Photo[];
+    }
     const paths = rows
       .map((r) => r.storage_path)
       .filter((p): p is string => Boolean(p));
@@ -420,13 +438,30 @@ function ContentStudio() {
         if (path && entry.signedUrl) urlMap[path] = entry.signedUrl;
       });
     }
-    setPhotos(
-      rows.map((r) => ({
-        ...r,
-        image_url: (r.storage_path && urlMap[r.storage_path]) || r.image_url,
-      })),
-    );
+    const fresh = rows.map((r) => ({
+      ...r,
+      image_url: (r.storage_path && urlMap[r.storage_path]) || r.image_url,
+    }));
+    // Behoud eerder gekozen foto's zodat een keuze nooit verdwijnt.
+    setPhotos((prev) => {
+      const ids = new Set(fresh.map((p) => p.id));
+      const keep = prev.filter((p) => !ids.has(p.id) && Object.values(photoByChannelRef.current).includes(p.id));
+      return [...fresh, ...keep];
+    });
   }
+
+  const photoByChannelRef = useRef(photoByChannel);
+  photoByChannelRef.current = photoByChannel;
+
+  const photoSearchKey = useMemo(
+    () => tokenize([topic, keywords, generated.slice(0, 400)].filter(Boolean).join(" ")).slice(0, 10).join(" "),
+    [topic, keywords, generated],
+  );
+  useEffect(() => {
+    const t = setTimeout(() => void loadPhotos(photoSearchKey ? photoSearchKey.split(" ") : []), 500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photoSearchKey]);
 
   const rankedPhotos = useMemo(() => {
     const contextText = [topic, keywords, generated, channel].filter(Boolean).join(" ");
