@@ -60,7 +60,13 @@ export function PhotoUploadButton({ onUploaded, compact, folderId }: Props) {
         if (!file.type.startsWith("image/")) throw new Error(`${file.name}: geen afbeelding.`);
         if (file.size > MAX_BYTES) throw new Error(`${file.name}: te groot (max 15 MB).`);
         const rel = (file as File & { webkitRelativePath?: string }).webkitRelativePath ?? "";
-        const folderPath = rel.split("/").slice(0, -1).join(" ");
+        const segs = rel.split("/").slice(1, -1); // zonder hoofdmap en bestandsnaam
+        const species = speciesFromPath(segs);
+        const deepest = segs[segs.length - 1]?.replace(/\b(19|20)\d{2}\b/g, "").replace(/\s+/g, " ").trim();
+        const base = file.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ");
+        const tags = [...species, ...tagsFromFilename(file.name, segs.join(" "))].filter(
+          (t, i, a) => a.indexOf(t) === i,
+        ).slice(0, 14);
         const { b64, contentType, filename } = await watermarkImage(file);
         const row = await upload({
           data: {
@@ -68,9 +74,9 @@ export function PhotoUploadButton({ onUploaded, compact, folderId }: Props) {
             filename,
             content_type: contentType,
             b64,
-            title: file.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").slice(0, 120) || "Upload",
+            title: (deepest ? `${deepest} · ${base}` : base).slice(0, 120) || "Upload",
             folder_id: folderId ?? null,
-            extra_tags: tagsFromFilename(file.name, folderPath),
+            extra_tags: tags,
           },
         });
         if (row?.id) newIds.push(row.id);
