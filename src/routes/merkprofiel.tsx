@@ -806,8 +806,7 @@ function PaletteField({
 }
 
 const FONT_SUGGESTIONS = [
-  "Playfair Display",
-  "Inter",
+  "Open Sans",
   "Lora",
   "Merriweather",
   "Montserrat",
@@ -860,7 +859,7 @@ function FontRolesField({
                 value={current.family}
                 onChange={(e) => update(r.key, e.target.value)}
                 className="h-8 bg-background w-52"
-                placeholder="Bv. Playfair Display"
+                placeholder="Bv. Open Sans"
               />
               <span
                 className="flex-1 truncate text-base text-ink"

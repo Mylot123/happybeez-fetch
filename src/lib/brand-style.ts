@@ -16,13 +16,13 @@ export const FONT_ROLES: { key: FontRoleKey; label: string; hint: string }[] = [
 ];
 
 export const DEFAULT_FONT_ROLES: BrandFontRole[] = [
-  { role: "heading", family: "Playfair Display" },
-  { role: "body", family: "Inter" },
-  { role: "overlay", family: "Playfair Display" },
-  { role: "accent", family: "Inter" },
+  { role: "heading", family: "Open Sans" },
+  { role: "body", family: "Open Sans" },
+  { role: "overlay", family: "Open Sans" },
+  { role: "accent", family: "Open Sans" },
 ];
 
-const GENERIC_FALLBACK = 'Georgia, "Times New Roman", serif';
+const GENERIC_FALLBACK = "ui-sans-serif, system-ui, sans-serif";
 
 export function isHex(v: string) {
   return /^#[0-9a-f]{6}$/i.test(v.trim());
@@ -66,7 +66,7 @@ export function normalizeFontRoles(raw: unknown): BrandFontRole[] {
 
 export function fontFor(roles: BrandFontRole[] | null | undefined, role: FontRoleKey): string {
   const list = normalizeFontRoles(roles ?? []);
-  return list.find((r) => r.role === role)?.family ?? "Playfair Display";
+  return list.find((r) => r.role === role)?.family ?? "Open Sans";
 }
 
 /** CSS font-family string, inclusief fallbacks. */
