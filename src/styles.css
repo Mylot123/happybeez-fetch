@@ -164,25 +164,25 @@
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.3 0.015 50);
   --input: oklch(0.3 0.015 50);
-  --ring: oklch(0.5 0.14 8);
+  --ring: oklch(0.6 0.12 152);
 
-  --wine: oklch(0.5 0.14 8);
-  --gold: oklch(0.7 0.13 78);
+  --wine: oklch(0.6 0.12 152);
+  --gold: oklch(0.66 0.16 45);
   --cream: oklch(0.92 0.018 80);
   --parchment: oklch(0.27 0.015 50);
   --ink: oklch(0.92 0.018 80);
-  --forest: oklch(0.6 0.07 160);
-  --honey: oklch(0.7 0.13 78);
+  --forest: oklch(0.6 0.12 152);
+  --honey: oklch(0.66 0.16 45);
   --bark: oklch(0.92 0.018 80);
 
   --sidebar: oklch(0.225 0.015 50);
   --sidebar-foreground: oklch(0.92 0.018 80);
-  --sidebar-primary: oklch(0.5 0.14 8);
+  --sidebar-primary: oklch(0.6 0.12 152);
   --sidebar-primary-foreground: oklch(0.92 0.018 80);
   --sidebar-accent: oklch(0.27 0.015 50);
   --sidebar-accent-foreground: oklch(0.92 0.018 80);
   --sidebar-border: oklch(0.3 0.015 50);
-  --sidebar-ring: oklch(0.5 0.14 8);
+  --sidebar-ring: oklch(0.6 0.12 152);
 }
 
 @layer base {
@@ -201,7 +201,7 @@
   }
 }
 
-/* Decoratieve gouden lijn onder titels */
+/* Decoratieve oranje lijn onder titels */
 .ruled-heading::after {
   content: "";
   display: block;
