@@ -5,7 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Happybeez design system — warm cream + deep wine + gold, geïnspireerd op Mondovino.
+ * Happybeez design system — huisstijl van happybeez.nl:
+ * Open Sans, diepgroen (#0f6b34) en oranje CTA's (#e2662a).
  * Alle kleuren in oklch.
  */
 
@@ -74,8 +75,8 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-heading: "Playfair Display", Georgia, serif;
-  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Open Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Open Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
